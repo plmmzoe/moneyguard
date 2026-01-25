@@ -1,7 +1,8 @@
+import { ArrowUpRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { Separator } from '@/components/ui/separator';
-import { ArrowUpRight } from 'lucide-react';
 
 export function PoweredByPaddle() {
   return (

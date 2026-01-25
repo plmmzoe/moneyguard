@@ -37,7 +37,7 @@ export function PaymentMethodDetails({ type, card }: Props) {
         <span className={'text-base text-secondary leading-4'}>**** {card?.last4}</span>
       </>
     );
-  } else {
-    return type ? <span className={'text-base text-secondary leading-4'}>{PaymentMethodLabels[type]}</span> : '-';
   }
+  return type ? <span className={'text-base text-secondary leading-4'}>{PaymentMethodLabels[type]}</span> : '-';
+
 }

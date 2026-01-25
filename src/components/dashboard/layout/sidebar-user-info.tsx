@@ -1,10 +1,11 @@
 'use client';
 
-import { Separator } from '@/components/ui/separator';
 import { LogOut } from 'lucide-react';
-import { createClient } from '@/utils/supabase/client';
 import { MouseEvent } from 'react';
+
+import { Separator } from '@/components/ui/separator';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { createClient } from '@/utils/supabase/client';
 
 export function SidebarUserInfo() {
   const supabase = createClient();

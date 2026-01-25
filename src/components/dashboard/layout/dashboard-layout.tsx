@@ -1,10 +1,12 @@
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { ReactNode } from 'react';
-import { DashboardGradient } from '@/components/gradients/dashboard-gradient';
+
 import '../../../styles/dashboard.css';
+
 import { Sidebar } from '@/components/dashboard/layout/sidebar';
 import { SidebarUserInfo } from '@/components/dashboard/layout/sidebar-user-info';
+import { DashboardGradient } from '@/components/gradients/dashboard-gradient';
 
 interface Props {
   children: ReactNode;

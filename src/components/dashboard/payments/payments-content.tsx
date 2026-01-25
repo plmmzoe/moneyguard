@@ -1,13 +1,14 @@
 'use client';
 
-import { getTransactions } from '@/utils/paddle/get-transactions';
-import { ErrorContent } from '@/components/dashboard/layout/error-content';
-import { DataTable } from '@/components/dashboard/payments/components/data-table';
-import { columns } from '@/components/dashboard/payments/components/columns';
 import { useEffect, useState } from 'react';
+
+import { ErrorContent } from '@/components/dashboard/layout/error-content';
 import { LoadingScreen } from '@/components/dashboard/layout/loading-screen';
+import { columns } from '@/components/dashboard/payments/components/columns';
+import { DataTable } from '@/components/dashboard/payments/components/data-table';
 import { usePagination } from '@/hooks/usePagination';
 import { TransactionResponse } from '@/lib/api.types';
+import { getTransactions } from '@/utils/paddle/get-transactions';
 
 interface Props {
   subscriptionId: string;
@@ -37,7 +38,7 @@ export function PaymentsContent({ subscriptionId }: Props) {
 
   if (!transactionResponse || transactionResponse.error) {
     return <ErrorContent />;
-  } else if (loading) {
+  } if (loading) {
     return <LoadingScreen />;
   }
 

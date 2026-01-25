@@ -1,11 +1,12 @@
 'use client';
 
-import { ColumnDef } from '@tanstack/react-table';
 import { Transaction } from '@paddle/paddle-node-sdk';
+import { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
-import { parseMoney } from '@/utils/paddle/parse-money';
+
 import { Status } from '@/components/shared/status/status';
 import { getPaymentReason } from '@/utils/paddle/data-helpers';
+import { parseMoney } from '@/utils/paddle/parse-money';
 
 // Column size is set as `auto` as React table column sizing is not working well.
 const columnSize = 'auto' as unknown as number;

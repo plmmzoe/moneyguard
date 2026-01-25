@@ -1,8 +1,9 @@
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Subscription } from '@paddle/paddle-node-sdk';
-import { Fragment } from 'react';
-import { parseMoney } from '@/utils/paddle/parse-money';
 import Image from 'next/image';
+import { Fragment } from 'react';
+
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { parseMoney } from '@/utils/paddle/parse-money';
 
 interface Props {
   subscription?: Subscription;
@@ -16,7 +17,7 @@ export function SubscriptionLineItems({ subscription }: Props) {
       </CardTitle>
       <CardContent className={'p-0 pt-10'}>
         <div className={'grid grid-cols-12'}>
-          <div className={'col-span-6'}></div>
+          <div className={'col-span-6'} />
           <div className={'flex gap-6 w-full col-span-6'}>
             <div className={'col-span-2 w-full text-base leading-4 font-semibold'}>Qty</div>
             <div className={'col-span-2 w-full text-base leading-4 font-semibold'}>Tax</div>
@@ -56,7 +57,7 @@ export function SubscriptionLineItems({ subscription }: Props) {
               </Fragment>
             );
           })}
-          <div className={'col-span-6'}></div>
+          <div className={'col-span-6'} />
           <div className={'flex flex-col w-full col-span-6 pt-6'}>
             <div className={'flex justify-between py-4 pt-0 border-border border-b'}>
               <div className={'col-span-3 w-full text-base leading-4 text-secondary'}>Amount</div>

@@ -1,12 +1,13 @@
 'use client';
 
-import { PriceSection } from '@/components/checkout/price-section';
-import { CheckoutFormGradients } from '@/components/gradients/checkout-form-gradients';
 import { type Environments, initializePaddle, type Paddle } from '@paddle/paddle-js';
 import type { CheckoutEventsData } from '@paddle/paddle-js/types/checkout/events';
 import throttle from 'lodash.throttle';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+
+import { PriceSection } from '@/components/checkout/price-section';
+import { CheckoutFormGradients } from '@/components/gradients/checkout-form-gradients';
 
 interface PathParams {
   priceId: string;
@@ -27,6 +28,7 @@ export function CheckoutContents({ userEmail }: Props) {
     setCheckoutData(event);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const updateItems = useCallback(
     throttle((paddle: Paddle, priceId: string, quantity: number) => {
       paddle.Checkout.updateItems([{ priceId, quantity }]);
@@ -56,12 +58,12 @@ export function CheckoutContents({ userEmail }: Props) {
             successUrl: '/checkout/success',
           },
         },
-      }).then(async (paddle) => {
+      }).then((paddle) => {
         if (paddle && priceId) {
           setPaddle(paddle);
           paddle.Checkout.open({
             ...(userEmail && { customer: { email: userEmail } }),
-            items: [{ priceId: priceId, quantity: 1 }],
+            items: [{ priceId, quantity: 1 }],
           });
         }
       });

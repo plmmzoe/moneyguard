@@ -1,10 +1,11 @@
 'use client';
 
-import { DashboardPageHeader } from '@/components/dashboard/layout/dashboard-page-header';
-import { PaymentsContent } from '@/components/dashboard/payments/payments-content';
-import { LoadingScreen } from '@/components/dashboard/layout/loading-screen';
-import { Suspense } from 'react';
 import { useParams } from 'next/navigation';
+import { Suspense } from 'react';
+
+import { DashboardPageHeader } from '@/components/dashboard/layout/dashboard-page-header';
+import { LoadingScreen } from '@/components/dashboard/layout/loading-screen';
+import { PaymentsContent } from '@/components/dashboard/payments/payments-content';
 
 export default function SubscriptionsPaymentPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>();

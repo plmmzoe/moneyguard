@@ -1,7 +1,8 @@
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { PaymentMethodDetails } from '@/components/dashboard/subscriptions/components/payment-method-details';
 import { PaymentType, Transaction } from '@paddle/paddle-node-sdk';
+import Link from 'next/link';
+
+import { PaymentMethodDetails } from '@/components/dashboard/subscriptions/components/payment-method-details';
+import { Button } from '@/components/ui/button';
 
 function findPaymentMethodDetails(transactions?: Transaction[]) {
   const transactionWithPaymentDetails = transactions?.find((transaction) => transaction.payments[0]?.methodDetails);

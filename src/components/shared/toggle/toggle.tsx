@@ -1,5 +1,5 @@
-import { BillingFrequency, IBillingFrequency } from '@/constants/billing-frequency';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BillingFrequency, IBillingFrequency } from '@/constants/billing-frequency';
 
 interface Props {
   frequency: IBillingFrequency;
@@ -11,9 +11,12 @@ export function Toggle({ setFrequency, frequency }: Props) {
     <div className="flex justify-center mb-8">
       <Tabs
         value={frequency.value}
-        onValueChange={(value) =>
-          setFrequency(BillingFrequency.find((billingFrequency) => value === billingFrequency.value)!)
-        }
+        onValueChange={(value) => {
+          const billingFrequency = BillingFrequency.find((bf) => value === bf.value);
+          if (billingFrequency) {
+            setFrequency(billingFrequency);
+          }
+        }}
       >
         <TabsList>
           {BillingFrequency.map((billingFrequency) => (

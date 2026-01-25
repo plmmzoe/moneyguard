@@ -1,9 +1,10 @@
+import { CheckoutEventsData } from '@paddle/paddle-js/types/checkout/events';
+
 import { CheckoutLineItems } from '@/components/checkout/checkout-line-items';
-import { CheckoutPriceContainer } from '@/components/checkout/checkout-price-container';
 import { CheckoutPriceAmount } from '@/components/checkout/checkout-price-amount';
+import { CheckoutPriceContainer } from '@/components/checkout/checkout-price-container';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
-import { CheckoutEventsData } from '@paddle/paddle-js/types/checkout/events';
 
 interface Props {
   checkoutData: CheckoutEventsData | null;

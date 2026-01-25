@@ -1,8 +1,9 @@
+import { CheckoutEventsData } from '@paddle/paddle-js/types/checkout/events';
+
 import { QuantityField } from '@/components/checkout/quantity-field';
 import { Separator } from '@/components/ui/separator';
-import { CheckoutEventsData } from '@paddle/paddle-js/types/checkout/events';
-import { formatMoney } from '@/utils/paddle/parse-money';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatMoney } from '@/utils/paddle/parse-money';
 
 interface LoadingTextProps {
   value: number | undefined;
@@ -12,9 +13,9 @@ interface LoadingTextProps {
 function LoadingText({ value, currencyCode }: LoadingTextProps) {
   if (value === undefined) {
     return <Skeleton className="h-[20px] w-[75px] bg-border" />;
-  } else {
-    return formatMoney(value, currencyCode);
   }
+  return formatMoney(value, currencyCode);
+
 }
 
 interface Props {

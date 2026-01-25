@@ -1,7 +1,7 @@
-import { DashboardUsageCardGroup } from '@/components/dashboard/landing/components/dashboard-usage-card-group';
 import { DashboardSubscriptionCardGroup } from '@/components/dashboard/landing/components/dashboard-subscription-card-group';
-import { DashboardTutorialCard } from '@/components/dashboard/landing/components/dashboard-tutorial-card';
 import { DashboardTeamMembersCard } from '@/components/dashboard/landing/components/dashboard-team-members-card';
+import { DashboardTutorialCard } from '@/components/dashboard/landing/components/dashboard-tutorial-card';
+import { DashboardUsageCardGroup } from '@/components/dashboard/landing/components/dashboard-usage-card-group';
 
 export function DashboardLandingPage() {
   return (

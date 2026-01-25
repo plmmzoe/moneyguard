@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
-import { useUserInfo } from '@/hooks/useUserInfo';
+
 import '../../styles/home-page.css';
-import { LocalizationBanner } from '@/components/home/header/localization-banner';
-import Header from '@/components/home/header/header';
-import { HeroSection } from '@/components/home/hero-section/hero-section';
-import { Pricing } from '@/components/home/pricing/pricing';
+
 import { HomePageBackground } from '@/components/gradients/home-page-background';
 import { Footer } from '@/components/home/footer/footer';
+import Header from '@/components/home/header/header';
+import { LocalizationBanner } from '@/components/home/header/localization-banner';
+import { HeroSection } from '@/components/home/hero-section/hero-section';
+import { Pricing } from '@/components/home/pricing/pricing';
+import { useUserInfo } from '@/hooks/useUserInfo';
+import { createClient } from '@/utils/supabase/client';
 
 export function HomePage() {
   const supabase = createClient();

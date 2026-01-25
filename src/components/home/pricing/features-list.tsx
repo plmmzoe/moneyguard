@@ -1,5 +1,6 @@
-import { Tier } from '@/constants/pricing-tier';
 import { CircleCheck } from 'lucide-react';
+
+import { Tier } from '@/constants/pricing-tier';
 
 interface Props {
   tier: Tier;

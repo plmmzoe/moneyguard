@@ -1,8 +1,9 @@
 'use client';
 
-import { LoadingScreen } from '@/components/dashboard/layout/loading-screen';
-import { Suspense } from 'react';
 import { useParams } from 'next/navigation';
+import { Suspense } from 'react';
+
+import { LoadingScreen } from '@/components/dashboard/layout/loading-screen';
 import { SubscriptionDetail } from '@/components/dashboard/subscriptions/components/subscription-detail';
 
 export default function SubscriptionPage() {
