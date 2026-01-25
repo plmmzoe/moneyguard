@@ -1,11 +1,12 @@
 'use client';
 
-import { cancelSubscription } from '@/app/dashboard/subscriptions/actions';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
 import { CircleAlert, CircleCheck } from 'lucide-react';
 import { useState } from 'react';
+
+import { cancelSubscription } from '@/app/dashboard/subscriptions/actions';
 import { Confirmation } from '@/components/shared/confirmation/confirmation';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 interface Props {
   subscriptionId: string;

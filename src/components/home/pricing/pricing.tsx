@@ -1,8 +1,9 @@
-import { Toggle } from '@/components/shared/toggle/toggle';
-import { PriceCards } from '@/components/home/pricing/price-cards';
-import { useEffect, useState } from 'react';
-import { BillingFrequency, IBillingFrequency } from '@/constants/billing-frequency';
 import { Environments, initializePaddle, Paddle } from '@paddle/paddle-js';
+import { useEffect, useState } from 'react';
+
+import { PriceCards } from '@/components/home/pricing/price-cards';
+import { Toggle } from '@/components/shared/toggle/toggle';
+import { BillingFrequency, IBillingFrequency } from '@/constants/billing-frequency';
 import { usePaddlePrices } from '@/hooks/usePaddlePrices';
 
 interface Props {

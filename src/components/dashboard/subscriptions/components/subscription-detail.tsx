@@ -1,16 +1,17 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
+import { ErrorContent } from '@/components/dashboard/layout/error-content';
+import { LoadingScreen } from '@/components/dashboard/layout/loading-screen';
+import { SubscriptionHeader } from '@/components/dashboard/subscriptions/components/subscription-header';
+import { SubscriptionLineItems } from '@/components/dashboard/subscriptions/components/subscription-line-items';
+import { SubscriptionNextPaymentCard } from '@/components/dashboard/subscriptions/components/subscription-next-payment-card';
+import { SubscriptionPastPaymentsCard } from '@/components/dashboard/subscriptions/components/subscription-past-payments-card';
+import { Separator } from '@/components/ui/separator';
+import { SubscriptionDetailResponse, TransactionResponse } from '@/lib/api.types';
 import { getSubscription } from '@/utils/paddle/get-subscription';
 import { getTransactions } from '@/utils/paddle/get-transactions';
-import { SubscriptionPastPaymentsCard } from '@/components/dashboard/subscriptions/components/subscription-past-payments-card';
-import { SubscriptionNextPaymentCard } from '@/components/dashboard/subscriptions/components/subscription-next-payment-card';
-import { SubscriptionLineItems } from '@/components/dashboard/subscriptions/components/subscription-line-items';
-import { SubscriptionHeader } from '@/components/dashboard/subscriptions/components/subscription-header';
-import { Separator } from '@/components/ui/separator';
-import { ErrorContent } from '@/components/dashboard/layout/error-content';
-import { useEffect, useState } from 'react';
-import { LoadingScreen } from '@/components/dashboard/layout/loading-screen';
-import { SubscriptionDetailResponse, TransactionResponse } from '@/lib/api.types';
 
 interface Props {
   subscriptionId: string;
@@ -41,7 +42,7 @@ export function SubscriptionDetail({ subscriptionId }: Props) {
 
   if (loading) {
     return <LoadingScreen />;
-  } else if (subscription?.data && transactions?.data) {
+  } if (subscription?.data && transactions?.data) {
     return (
       <>
         <div>
@@ -59,7 +60,7 @@ export function SubscriptionDetail({ subscriptionId }: Props) {
         </div>
       </>
     );
-  } else {
-    return <ErrorContent />;
   }
+  return <ErrorContent />;
+
 }

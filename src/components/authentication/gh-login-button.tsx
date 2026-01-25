@@ -1,9 +1,10 @@
 'use client';
 
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { signInWithGithub } from '@/app/login/actions';
 import Image from 'next/image';
+
+import { signInWithGithub } from '@/app/login/actions';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 interface Props {
   label: string;

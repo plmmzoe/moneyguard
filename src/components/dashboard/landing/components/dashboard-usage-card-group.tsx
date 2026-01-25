@@ -1,4 +1,5 @@
 import { Bolt, Image, Shapes, Timer } from 'lucide-react';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const cards = [

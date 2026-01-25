@@ -1,8 +1,9 @@
-import { Card } from '@/components/ui/card';
 import { Subscription, Transaction } from '@paddle/paddle-node-sdk';
 import dayjs from 'dayjs';
-import { parseMoney } from '@/utils/paddle/parse-money';
+
 import { PaymentMethodSection } from '@/components/dashboard/subscriptions/components/payment-method-section';
+import { Card } from '@/components/ui/card';
+import { parseMoney } from '@/utils/paddle/parse-money';
 
 interface Props {
   transactions?: Transaction[];

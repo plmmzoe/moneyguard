@@ -1,8 +1,9 @@
+import { ArrowUpRight, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CountryDropdown } from '@/components/home/header/country-dropdown';
-import { ArrowUpRight, X } from 'lucide-react';
 import { useState } from 'react';
+
+import { CountryDropdown } from '@/components/home/header/country-dropdown';
 
 interface Props {
   country: string;

@@ -1,6 +1,7 @@
 import { Subscription } from '@paddle/paddle-node-sdk';
-import { Alert } from '@/components/ui/alert';
 import dayjs from 'dayjs';
+
+import { Alert } from '@/components/ui/alert';
 
 interface Props {
   subscription: Subscription;
@@ -13,7 +14,7 @@ export function SubscriptionAlerts({ subscription }: Props) {
         longer active.
       </Alert>
     );
-  } else if (subscription.scheduledChange && subscription.scheduledChange.action === 'cancel') {
+  } if (subscription.scheduledChange && subscription.scheduledChange.action === 'cancel') {
     return (
       <Alert className={'mb-10'}>
         This subscription is scheduled to be canceled on{' '}

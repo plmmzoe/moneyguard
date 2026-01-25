@@ -1,5 +1,6 @@
-import { Tier } from '@/constants/pricing-tier';
 import Image from 'next/image';
+
+import { Tier } from '@/constants/pricing-tier';
 import { cn } from '@/lib/utils';
 
 interface Props {
