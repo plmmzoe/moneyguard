@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import '../../styles/home-page.css';
-import { LocalizationBanner } from '@/components/home/header/localization-banner';
 import Header from '@/components/home/header/header';
 import { Footer } from '@/components/home/footer/footer';
 
@@ -15,9 +14,8 @@ export function HomePage() {
 
   return (
     <>
-      <LocalizationBanner country={country} onCountryChange={setCountry} />
       <div>
-        <Header user={user} />
+        <Header />
         <Footer />
       </div>
     </>

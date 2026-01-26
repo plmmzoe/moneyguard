@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={'min-h-full dark'}>
-      <body className={inter.className}>
+      <body>
         {children}
         <Toaster />
       </body>
