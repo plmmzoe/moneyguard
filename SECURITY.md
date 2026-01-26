@@ -11,4 +11,4 @@ report any vulnerabilities using https://vdp.paddle.com/p/Report-a-Vulnerability
 > [!WARNING]
 > Do not create issues for potential security vulnerabilities. Issues are public and can be seen by potentially malicious actors.
 
-Thanks fo ar helping to make the Paddle platform safe for everyone.
+Thanks for helping to make the Paddle platform safe for everyone.
