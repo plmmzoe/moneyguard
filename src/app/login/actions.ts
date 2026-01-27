@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+
 import { createClient } from '@/utils/supabase/server';
 
 interface FormData {
@@ -25,7 +26,7 @@ export async function signInWithGithub() {
   const { data } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
-      redirectTo: `https://paddle-billing.vercel.app/auth/callback`,
+      redirectTo: 'https://paddle-billing.vercel.app/auth/callback',
     },
   });
   if (data.url) {

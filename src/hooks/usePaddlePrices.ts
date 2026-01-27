@@ -1,5 +1,6 @@
 import { Paddle, PricePreviewParams, PricePreviewResponse } from '@paddle/paddle-js';
 import { useEffect, useState } from 'react';
+
 import { PricingTier } from '@/constants/pricing-tier';
 
 export type PaddlePrices = Record<string, string>;
@@ -11,8 +12,9 @@ function getLineItems(): PricePreviewParams['items'] {
 
 function getPriceAmounts(prices: PricePreviewResponse) {
   return prices.data.details.lineItems.reduce((acc, item) => {
-    acc[item.price.id] = item.formattedTotals.total;
-    return acc;
+    const result = { ...acc };
+    result[item.price.id] = item.formattedTotals.total;
+    return result;
   }, {} as PaddlePrices);
 }
 

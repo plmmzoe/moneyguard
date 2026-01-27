@@ -1,5 +1,5 @@
-import { Separator } from '@/components/ui/separator';
 import { MobileSidebar } from '@/components/dashboard/layout/mobile-sidebar';
+import { Separator } from '@/components/ui/separator';
 
 interface Props {
   pageTitle: string;

@@ -13,9 +13,9 @@ export function getErrorMessage() {
 export function getPaymentReason(origin: string) {
   if (origin === 'web' || origin === 'subscription_charge') {
     return 'New';
-  } else {
-    return 'Renewal of ';
   }
+  return 'Renewal of ';
+
 }
 
 const BillingCycleMap = {
@@ -35,7 +35,7 @@ const CustomBillingCycleMap = {
 export function formatBillingCycle({ frequency, interval }: CheckoutEventsTimePeriod) {
   if (frequency === 1) {
     return BillingCycleMap[interval];
-  } else {
-    return `every ${frequency} ${CustomBillingCycleMap[interval]}`;
   }
+  return `every ${frequency} ${CustomBillingCycleMap[interval]}`;
+
 }

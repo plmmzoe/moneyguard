@@ -1,6 +1,7 @@
-import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
 import Image from 'next/image';
+import Link from 'next/link';
+
 import { Button } from '@/components/ui/button';
 
 interface Props {

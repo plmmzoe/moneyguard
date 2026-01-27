@@ -1,13 +1,14 @@
 import { NextRequest } from 'next/server';
-import { ProcessWebhook } from '@/utils/paddle/process-webhook';
+
 import { getPaddleInstance } from '@/utils/paddle/get-paddle-instance';
+import { ProcessWebhook } from '@/utils/paddle/process-webhook';
 
 const webhookProcessor = new ProcessWebhook();
 
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('paddle-signature') || '';
   const rawRequestBody = await request.text();
-  const privateKey = process.env['PADDLE_NOTIFICATION_WEBHOOK_SECRET'] || '';
+  const privateKey = process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET || '';
 
   try {
     if (!signature || !rawRequestBody) {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ status: 200, eventName });
   } catch (e) {
-    console.log(e);
+    console.error('Webhook processing error:', e);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

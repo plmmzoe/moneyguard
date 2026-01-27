@@ -1,11 +1,12 @@
 import { Subscription } from '@paddle/paddle-node-sdk';
+import dayjs from 'dayjs';
 import Image from 'next/image';
+
+import { MobileSidebar } from '@/components/dashboard/layout/mobile-sidebar';
+import { SubscriptionAlerts } from '@/components/dashboard/subscriptions/components/subscription-alerts';
+import { SubscriptionHeaderActionButton } from '@/components/dashboard/subscriptions/components/subscription-header-action-button';
 import { Status } from '@/components/shared/status/status';
 import { parseMoney } from '@/utils/paddle/parse-money';
-import dayjs from 'dayjs';
-import { SubscriptionHeaderActionButton } from '@/components/dashboard/subscriptions/components/subscription-header-action-button';
-import { SubscriptionAlerts } from '@/components/dashboard/subscriptions/components/subscription-alerts';
-import { MobileSidebar } from '@/components/dashboard/layout/mobile-sidebar';
 
 interface Props {
   subscription: Subscription;

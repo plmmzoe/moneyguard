@@ -1,8 +1,9 @@
-import { LoginGradient } from '@/components/gradients/login-gradient';
 import '../../styles/login.css';
-import { LoginCardGradient } from '@/components/gradients/login-card-gradient';
+
 import { GhLoginButton } from '@/components/authentication/gh-login-button';
 import { SignupForm } from '@/components/authentication/sign-up-form';
+import { LoginCardGradient } from '@/components/gradients/login-card-gradient';
+import { LoginGradient } from '@/components/gradients/login-gradient';
 
 export default function SignupPage() {
   return (

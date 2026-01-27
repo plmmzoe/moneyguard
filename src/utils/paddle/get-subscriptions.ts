@@ -1,9 +1,9 @@
 'use server';
 
-import { getCustomerId } from '@/utils/paddle/get-customer-id';
-import { getPaddleInstance } from '@/utils/paddle/get-paddle-instance';
 import { SubscriptionResponse } from '@/lib/api.types';
 import { getErrorMessage } from '@/utils/paddle/data-helpers';
+import { getCustomerId } from '@/utils/paddle/get-customer-id';
+import { getPaddleInstance } from '@/utils/paddle/get-paddle-instance';
 
 export async function getSubscriptions(): Promise<SubscriptionResponse> {
   try {
