@@ -1,13 +1,8 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { ReactNode } from 'react';
-
 import '../styles/globals.css';
 import '../styles/layout.css';
-
+import { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://paddle-billing.vercel.app'),
@@ -23,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={'min-h-full dark'}>
-      <body className={inter.className}>
+      <body>
         {children}
         <Toaster />
       </body>
