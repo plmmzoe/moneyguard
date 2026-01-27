@@ -1,11 +1,8 @@
-import { Inter } from 'next/font/google';
 import '../styles/globals.css';
 import '../styles/layout.css';
 import { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://paddle-billing.vercel.app'),
