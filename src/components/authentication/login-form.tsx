@@ -1,10 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { login, loginAnonymously } from '@/app/login/actions';
 import { useState } from 'react';
+
+import { login, loginAnonymously } from '@/app/login/actions';
 import { AuthenticationForm } from '@/components/authentication/authentication-form';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 
