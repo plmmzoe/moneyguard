@@ -1,21 +1,21 @@
 'use client';
 
+// eslint-disable-next-line
 import { useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
-import { useUserInfo } from '@/hooks/useUserInfo';
-import '../../styles/home-page.css';
-import Header from '@/components/home/header/header';
 import { Footer } from '@/components/home/footer/footer';
+import Header from '@/components/home/header/header';
+import { useUserInfo } from '@/hooks/useUserInfo';
+import { createClient } from '@/utils/supabase/client';
+import '../../styles/home-page.css';
 
 export function HomePage() {
   const supabase = createClient();
   const { user } = useUserInfo(supabase);
-  const [country, setCountry] = useState('US');
 
   return (
     <>
       <div>
-        <Header />
+        <Header user={user}/>
         <Footer />
       </div>
     </>

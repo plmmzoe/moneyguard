@@ -14,6 +14,14 @@ export function SignupForm() {
   const [password, setPassword] = useState('');
 
   function handleSignup() {
+    if (password.length < 8) {
+      toast({
+        description: 'Password must be at least 8 characters long',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     signup({ email, password }).then((data) => {
       if (data?.error) {
         toast({ description: 'Something went wrong. Please try again', variant: 'destructive' });
