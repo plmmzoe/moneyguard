@@ -30,7 +30,6 @@ export default function Header({ user }: Props) {
             )}
           </div>
         </div>
-        <h1>header</h1>
       </div>
     </nav>
   );
