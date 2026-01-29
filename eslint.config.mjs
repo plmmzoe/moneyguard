@@ -2,13 +2,11 @@ import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
 import reactPlugin from 'eslint-plugin-react';
-import nextVitals from 'eslint-config-next/core-web-vitals'
-import nextTs from 'eslint-config-next/typescript'
-import { defineConfig } from 'eslint/config'
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
+import { defineConfig } from 'eslint/config';
 
 const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
@@ -26,6 +24,8 @@ const eslintConfig = defineConfig([
       '@typescript-eslint': typescriptEslint,
       import: importPlugin,
       react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
+      'jsx-a11y': jsxA11yPlugin,
     },
     settings: {
       react: {

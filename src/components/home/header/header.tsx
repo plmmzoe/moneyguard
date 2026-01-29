@@ -24,9 +24,14 @@ export default function Header({ user }: Props) {
                 <Link href={'/dashboard'}>Dashboard</Link>
               </Button>
             ) : (
-              <Button asChild={true} variant={'secondary'}>
-                <Link href={'/login'}>Sign in</Link>
-              </Button>
+              <>
+                <Button asChild={true} variant={'ghost'}>
+                  <Link href={'/login'}>Log in</Link>
+                </Button>
+                <Button asChild={true} variant={'secondary'}>
+                  <Link href={'/signup'}>Sign up</Link>
+                </Button>
+              </>
             )}
           </div>
         </div>
