@@ -2,11 +2,13 @@
 
 import * as Plot from '@observablehq/plot';
 import { SupabaseClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { Footer } from '@/components/home/footer/footer';
 import Header from '@/components/home/header/header';
 import PlotFigure from '@/components/plot/plot-figure';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { Tables } from '@/lib/database.types';
@@ -88,9 +90,14 @@ export function DashboardPage() {
   return (
     <>
       <div className={'h-full w-full'}>
-        <Header user={user}  />
-        <div className={'p-10 max-w-7xl m-auto'}>
-          Welcome Back, {profile.username}
+        <Header user={user} />
+        <div className="p-10 max-w-7xl m-auto space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h1 className="text-2xl font-semibold">Welcome back, {profile.username ?? 'there'}</h1>
+            <Button asChild>
+              <Link href="/analyze">Create New Analysis</Link>
+            </Button>
+          </div>
           {(transactions.length === 0) ?
 
             <Card>
