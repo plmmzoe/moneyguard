@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:extension": "vite build --config extension/vite.config.ts && node extension/copy-manifest.mjs",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
@@ -58,6 +59,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@types/d3": "^7.4.3",
     "@types/lodash.throttle": "^4.1.9",
+    "@types/chrome": "^0.0.268",
     "@types/node": "^25.0.10",
     "@types/react": "19.2.9",
     "@types/react-dom": "19.2.3",
@@ -72,8 +74,10 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.3",
     "eslint-plugin-react-hooks": "^5.1.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "lint-staged": "^16.2.7",
     "postcss": "^8.5.6",
+    "vite": "^6.0.3",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   },
