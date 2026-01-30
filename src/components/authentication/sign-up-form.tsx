@@ -7,6 +7,7 @@ import { signup } from '@/app/signup/actions';
 import { AuthenticationForm } from '@/components/authentication/authentication-form';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { validatePassword } from 'shared/auth';
 
 export function SignupForm() {
   const { toast } = useToast();
@@ -14,6 +15,12 @@ export function SignupForm() {
   const [password, setPassword] = useState('');
 
   function handleSignup() {
+    const { valid, message } = validatePassword(password);
+    if (!valid) {
+      toast({ description: message ?? 'Invalid password', variant: 'destructive' });
+      return;
+    }
+
     signup({ email, password }).then((data) => {
       if (data?.error) {
         toast({ description: 'Something went wrong. Please try again', variant: 'destructive' });

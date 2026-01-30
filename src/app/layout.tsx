@@ -1,7 +1,8 @@
 import '../styles/globals.css';
 import '../styles/layout.css';
-import { ReactNode } from 'react';
 import type { Metadata } from 'next';
+import { ReactNode } from 'react';
+
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
