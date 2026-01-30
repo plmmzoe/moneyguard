@@ -91,7 +91,7 @@ const BudgetCard = ({ totalSpending, profile }:{totalSpending:number, profile:Ta
         </p>
         <div className={'m-auto w-full pt-6'}>
           {(profile.monthly_budget && totalSpending / profile.monthly_budget < 1) ?
-            <LoadingBar percent={totalSpending / profile.monthly_budget}/>
+            <LoadingBar percent={100 * (totalSpending / profile.monthly_budget)}/>
             : <LoadingBar percent={100}/>
           }
         </div>
@@ -100,7 +100,7 @@ const BudgetCard = ({ totalSpending, profile }:{totalSpending:number, profile:Ta
   );
 };
 
-const IrrSpdCard = ({ profile }:{profile: Tables<'profiles'>}) => {
+const IrrSpdCard = ({ profile, spending }:{profile: Tables<'profiles'>, spending:number}) => {
   return (
     <Card>
       <CardHeader>
@@ -110,8 +110,18 @@ const IrrSpdCard = ({ profile }:{profile: Tables<'profiles'>}) => {
       </CardHeader>
       <CardContent>
         <p className={'font-bold text-4xl'}>
+          {(profile.monthly_irregular_spending) ?
+            spending : 0}$ /
           {profile.monthly_irregular_spending}$
         </p>
+        <div className={'m-auto w-full pt-6'}>
+          {(profile.monthly_irregular_spending &&
+            spending / profile.monthly_irregular_spending < 1) ?
+            <LoadingBar percent={(Math.max(spending, 0)
+              / profile.monthly_irregular_spending) * 100}/>
+            : <LoadingBar percent={100}/>
+          }
+        </div>
       </CardContent>
     </Card>
   );
@@ -128,15 +138,23 @@ const SavingsCard = ({ profile, totalSpending }:{profile: Tables<'profiles'>, to
       { profile.savings_goal_amount ?
         <CardContent>
           <p className={'font-bold text-4xl'}>
-            {Math.max(profile.savings_goal_amount - totalSpending, 0)}$ /
+            {(profile.monthly_budget) ?
+              Math.max(profile.monthly_budget - totalSpending, 0)
+              : 0}$ /
             {profile.savings_goal_amount}$
           </p>
           <div className={'m-auto w-full pt-6'}>
             {(profile.savings_goal_amount &&
-              profile.savings_goal_amount - totalSpending / profile.savings_goal_amount < 1) ?
-              <LoadingBar percent={Math.max(profile.savings_goal_amount - totalSpending, 1)
-                / profile.savings_goal_amount}/>
+              totalSpending / profile.savings_goal_amount < 1) ?
+              <LoadingBar percent={(Math.max(totalSpending, 0)
+                / profile.savings_goal_amount) * 100}/>
               : <LoadingBar percent={100}/>
+            }
+          </div>
+          <div>
+            {profile && profile.savings_goal_target_date ?
+              <p>Expires at {new Date(profile.savings_goal_target_date).toLocaleDateString()}</p>
+              : <p/>
             }
           </div>
         </CardContent>

@@ -1,8 +1,5 @@
 'use client';
 
-import * as Plot from '@observablehq/plot';
-import { SupabaseClient } from '@supabase/supabase-js';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { getProfile, getTransactions } from '@/app/dashboard/actions';
@@ -17,17 +14,7 @@ import { createClient } from '@/utils/supabase/client';
 import '../../styles/home-page.css';
 
 export function DashboardPage() {
-  const [profile, setProfile] = useState<Tables<'profiles'>>({
-    created_at: null,
-    currency: null,
-    monthly_budget: null,
-    monthly_irregular_spending: null,
-    savings_goal_amount: null,
-    savings_goal_reward: null,
-    updated_at: null,
-    user_id: '',
-    username: null,
-  });
+  const [profile, setProfile] = useState<Tables<'profiles'>>();
   const { toast } = useToast();
   const [transactions, setTransactions] = useState<TransactionDated[]>([]);
   const [totalSpending, setTotalSpending] = useState(0);
@@ -77,13 +64,21 @@ export function DashboardPage() {
         <Header user={user}  />
         <div className={'p-10 max-w-7xl m-auto'}>
           <p className={'font-bold text-3xl'}>
-            Welcome Back, {profile.username}
+            {(profile) ?
+              <p>Welcome Back, {profile.username}</p>
+              : <p>No profile detected</p>
+            }
           </p>
           <TransactionCard transactions={transactions}/>
           <div className={'grid grid-cols-3 '}>
-            <BudgetCard totalSpending={totalSpending} profile={profile}/>
-            <IrrSpdCard profile={profile}/>
-            <SavingsCard profile={profile} totalSpending={totalSpending}/>
+            {profile ?
+              <>
+                <BudgetCard totalSpending={totalSpending} profile={profile}/>
+                <IrrSpdCard profile={profile} spending={totalSpending}/>
+                <SavingsCard profile={profile} totalSpending={totalSpending}/>
+              </>
+              : <p>no profile detected</p>
+            }
           </div>
         </div>
         <Footer />
