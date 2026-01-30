@@ -4,25 +4,25 @@ import * as Plot from '@observablehq/plot';
 
 import PlotFigure from '@/components/plot/plot-figure';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import LoadingBar from '@/components/ui/loading-bar';
 import { TransactionDated } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 
 const TransactionCard = ({ transactions }:{transactions:TransactionDated[]}) => {
   return(<>
-    {(transactions.length === 0) ?
-      <Card>
+
+    <Card className={'grid grid-cols-2 m-auto m-4'}>
+      {(transactions.length === 0) ?
         <CardHeader>
           <CardTitle>
             <p className={'font-bold text-xl'}>No Transaction History</p>
           </CardTitle>
         </CardHeader>
-      </Card>
-      :
-      <Card className={'grid grid-cols-2 m-auto'}>
+        :
         <Card className={'border-transparent'}>
           <CardHeader>
             <CardTitle>
-              Transaction History
+                Transaction History
             </CardTitle>
           </CardHeader>
           <CardContent className={'min-w-[400px]'}>
@@ -39,22 +39,23 @@ const TransactionCard = ({ transactions }:{transactions:TransactionDated[]}) => 
             />
           </CardContent>
         </Card>
-        <Card>
-          <CardContent>
-            <div className={'grid grid-cols-3 ml-4 mt-4'}>
-              <p>Description</p>
-              <p>Amount</p>
-              <p>Time created</p>
-            </div>
-            <div className={'overflow-y-auto overflow-x-hidden h-[300px]'}>
-              {transactions.map((transaction) => {
-                return <TransactionElem transaction={transaction} key={transaction.transaction_id}/>;
-              })}
-            </div>
-          </CardContent>
-        </Card>
+      }
+
+      <Card>
+        <CardContent>
+          <div className={'grid grid-cols-3 ml-4 mt-4'}>
+            <p>Description</p>
+            <p>Amount</p>
+            <p>Time created</p>
+          </div>
+          <div className={'overflow-y-auto overflow-x-hidden h-[300px]'}>
+            {transactions.map((transaction) => {
+              return <TransactionElem transaction={transaction} key={transaction.transaction_id}/>;
+            })}
+          </div>
+        </CardContent>
       </Card>
-    }
+    </Card>
   </>
   );
 };
@@ -88,6 +89,12 @@ const BudgetCard = ({ totalSpending, profile }:{totalSpending:number, profile:Ta
           {totalSpending}$ /
           {profile.monthly_budget}$
         </p>
+        <div className={'m-auto w-full pt-2'}>
+          {(profile.monthly_budget && totalSpending / profile.monthly_budget < 1) ?
+            <LoadingBar percent={totalSpending / profile.monthly_budget}/>
+            : <LoadingBar percent={100}/>
+          }
+        </div>
       </CardContent>
     </Card>
   );
@@ -121,9 +128,17 @@ const SavingsCard = ({ profile, totalSpending }:{profile: Tables<'profiles'>, to
       { profile.savings_goal_amount ?
         <CardContent>
           <p className={'font-bold text-4xl'}>
-            {profile.savings_goal_amount - totalSpending}$ /
+            {Math.max(profile.savings_goal_amount - totalSpending, 0)}$ /
             {profile.savings_goal_amount}$
           </p>
+          <div className={'m-auto w-full pt-2'}>
+            {(profile.savings_goal_amount &&
+              profile.savings_goal_amount - totalSpending / profile.savings_goal_amount < 1) ?
+              <LoadingBar percent={Math.max(profile.savings_goal_amount - totalSpending, 1)
+                / profile.savings_goal_amount}/>
+              : <LoadingBar percent={100}/>
+            }
+          </div>
         </CardContent>
         :
         <CardContent>

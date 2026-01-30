@@ -73,7 +73,9 @@ export function DashboardPage() {
       <div className={'h-full w-full'}>
         <Header user={user}  />
         <div className={'p-10 max-w-7xl m-auto'}>
-          Welcome Back, {profile.username}
+          <p className={'font-bold text-3xl'}>
+            Welcome Back, {profile.username}
+          </p>
           <TransactionCard transactions={transactions}/>
           <div className={'grid grid-cols-3 '}>
             <BudgetCard totalSpending={totalSpending} profile={profile}/>

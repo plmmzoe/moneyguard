@@ -2,14 +2,14 @@ import { Progress } from 'radix-ui';
 import * as React from 'react';
 import { useEffect } from 'react';
 
-const ProgressDemo = (percent:number) => {
+const LoadingBar = ({ percent }:{percent:number}) => {
   const [progress, setProgress] = React.useState(0);
   useEffect(() => {
     setProgress(percent);
   }, [percent]);
   return (
     <Progress.Root
-      className="relative h-[25px] w-[300px] overflow-hidden rounded-full bg-blackA6"
+      className="relative h-[25px] w-full overflow-hidden rounded-full bg-blackA6"
       style={{
         transform: 'translateZ(0)',
       }}
@@ -23,4 +23,4 @@ const ProgressDemo = (percent:number) => {
   );
 };
 
-export default ProgressDemo;
+export default LoadingBar;
