@@ -1,6 +1,6 @@
 import '../../styles/login.css';
-import { LoginForm } from '@/components/authentication/login-form';
 import { GhLoginButton } from '@/components/authentication/gh-login-button';
+import { LoginForm } from '@/components/authentication/login-form';
 
 export default function LoginPage() {
   return (

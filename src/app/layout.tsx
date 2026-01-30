@@ -18,7 +18,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className={'min-h-full'}>
+    <html lang="en" className={'min-h-full dark'}>
       <body>
         {children}
         <Toaster />
