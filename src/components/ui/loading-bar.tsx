@@ -9,7 +9,7 @@ const LoadingBar = ({ percent }:{percent:number}) => {
   }, [percent]);
   return (
     <Progress.Root
-      className="relative h-[25px] w-full overflow-hidden rounded-full bg-blackA6"
+      className="relative h-[25px] w-full overflow-hidden rounded-full bg-blackA6 border-solid border-2 border-gray-800"
       style={{
         transform: 'translateZ(0)',
       }}

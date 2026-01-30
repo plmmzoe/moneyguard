@@ -89,7 +89,7 @@ const BudgetCard = ({ totalSpending, profile }:{totalSpending:number, profile:Ta
           {totalSpending}$ /
           {profile.monthly_budget}$
         </p>
-        <div className={'m-auto w-full pt-2'}>
+        <div className={'m-auto w-full pt-6'}>
           {(profile.monthly_budget && totalSpending / profile.monthly_budget < 1) ?
             <LoadingBar percent={totalSpending / profile.monthly_budget}/>
             : <LoadingBar percent={100}/>
@@ -131,7 +131,7 @@ const SavingsCard = ({ profile, totalSpending }:{profile: Tables<'profiles'>, to
             {Math.max(profile.savings_goal_amount - totalSpending, 0)}$ /
             {profile.savings_goal_amount}$
           </p>
-          <div className={'m-auto w-full pt-2'}>
+          <div className={'m-auto w-full pt-6'}>
             {(profile.savings_goal_amount &&
               profile.savings_goal_amount - totalSpending / profile.savings_goal_amount < 1) ?
               <LoadingBar percent={Math.max(profile.savings_goal_amount - totalSpending, 1)
