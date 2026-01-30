@@ -1,6 +1,7 @@
 'use client';
 
 import { User } from '@supabase/supabase-js';
+import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 
 import { signOut } from '@/app/login/actions';
@@ -35,8 +36,14 @@ export default function Header({ user }: Props) {
                 Profile
               </Link>
               <form action={signOut} className="inline">
-                <Button type="submit" variant="outline" size="sm">
-                  Sign out
+                <Button
+                  type="submit"
+                  variant="outline"
+                  size="icon"
+                  className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </form>
             </>

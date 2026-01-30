@@ -1,10 +1,7 @@
-// eslint-disable-next-line import/no-unresolved -- package in dependencies
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
-// Initialize Gemini
-// Note: It's important to keep the API key secure.
-// Do not hardcode it in client-side code.
+// Note: GEMINI_API_KEY must be set. Do not hardcode in client-side code.
 const apiKey = process.env.GEMINI_API_KEY;
 
 export async function POST(request: Request) {
@@ -49,6 +46,24 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ analysis: text });
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const is429 =
+      message.includes('429') ||
+      message.includes('Too Many Requests') ||
+      message.includes('quota') ||
+      message.includes('Quota exceeded');
+
+    if (is429) {
+      console.error('Gemini API quota/rate limit:', error);
+      return NextResponse.json(
+        {
+          error:
+            'Gemini API quota exceeded or rate limited. Check your plan at https://ai.google.dev/gemini-api/docs/rate-limits or try again in a minute.',
+        },
+        { status: 429 },
+      );
+    }
+
     console.error('Error analyzing spending:', error);
     return NextResponse.json(
       { error: 'Failed to analyze spending.' },
