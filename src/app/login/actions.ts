@@ -20,6 +20,14 @@ export async function login(data: FormData) {
   }
 
   revalidatePath('/', 'layout');
+  redirect('/dashboard');
+}
+
+export async function signOut() {
+  const supabase = await createClient();
+  const auth = createAuthApi(supabase);
+  await auth.signOut();
+  revalidatePath('/', 'layout');
   redirect('/');
 }
 
