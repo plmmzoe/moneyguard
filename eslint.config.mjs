@@ -1,12 +1,9 @@
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
-import importPlugin from 'eslint-plugin-import';
-import reactPlugin from 'eslint-plugin-react';
-import reactHooksPlugin from 'eslint-plugin-react-hooks';
-import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
-import { defineConfig } from 'eslint/config';
-
-const eslintConfig = defineConfig([
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
+const eslintConfig = [
+  ...nextVitals,
+  ...nextTs,
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
@@ -19,13 +16,6 @@ const eslintConfig = defineConfig([
         },
         project: './tsconfig.json',
       },
-    },
-    plugins: {
-      '@typescript-eslint': typescriptEslint,
-      import: importPlugin,
-      react: reactPlugin,
-      'react-hooks': reactHooksPlugin,
-      'jsx-a11y': jsxA11yPlugin,
     },
     settings: {
       react: {
@@ -44,13 +34,33 @@ const eslintConfig = defineConfig([
 
   },
   {
-    plugins: {
-      '@typescript-eslint': typescriptEslint,
-      import: importPlugin,
-      react: reactPlugin,
-      'react-hooks': reactHooksPlugin,
-      'jsx-a11y': jsxA11yPlugin,
+    rules: {
+      // TypeScript specific rules
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-var-requires': 'error',
+      '@typescript-eslint/ban-ts-comment': [
+        'warn',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true,
+          'ts-nocheck': true,
+          'ts-check': false,
+        },
+      ],
     },
+  },
+  {
     rules: {
       // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': [
@@ -76,29 +86,29 @@ const eslintConfig = defineConfig([
         },
       ],
 
-      // Import/Export rules
-      'import/order': [
-        'error',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-          ],
-          'newlines-between': 'always',
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
+        // Import/Export rules
+        'import/order': [
+          'error',
+          {
+            groups: [
+              'builtin',
+              'external',
+              'internal',
+              'parent',
+              'sibling',
+              'index',
+            ],
+            'newlines-between': 'always',
+            alphabetize: {
+              order: 'asc',
+              caseInsensitive: true,
+            },
           },
-        },
-      ],
-      'import/no-unresolved': 'error',
-      'import/no-duplicates': 'error',
-      'import/no-unused-modules': 'off', // Can be slow, enable if needed
-      'import/no-cycle': ['error', { maxDepth: 3 }],
+        ],
+        'import/no-unresolved': 'error',
+        'import/no-duplicates': 'error',
+        'import/no-unused-modules': 'off', // Can be slow, enable if needed
+        'import/no-cycle': ['error', { maxDepth: 3 }],
 
       // React rules
       'react/react-in-jsx-scope': 'off', // Not needed in Next.js
@@ -169,18 +179,18 @@ const eslintConfig = defineConfig([
         },
       ],
 
-      // Best practices
-      'eqeqeq': ['error', 'always', { null: 'ignore' }],
-      'curly': ['error', 'all'],
-      'default-case': 'warn',
-      'default-case-last': 'error',
-      'dot-notation': 'error',
-      'no-eval': 'error',
-      'no-implied-eval': 'error',
-      'no-new-func': 'error',
-      'no-return-await': 'error',
-      'require-await': 'error',
-      'yoda': 'error',
+        // Best practices
+        'eqeqeq': ['error', 'always', { null: 'ignore' }],
+        'curly': ['error', 'all'],
+        'default-case': 'warn',
+        'default-case-last': 'error',
+        'dot-notation': 'error',
+        'no-eval': 'error',
+        'no-implied-eval': 'error',
+        'no-new-func': 'error',
+        'no-return-await': 'error',
+        'require-await': 'error',
+        'yoda': 'error',
 
       // Style and formatting (handled by ESLint instead of Prettier)
       'semi': ['error', 'always'],
@@ -236,6 +246,6 @@ const eslintConfig = defineConfig([
       'next-env.d.ts',
     ],
   },
-])
+];
 
 export default eslintConfig
