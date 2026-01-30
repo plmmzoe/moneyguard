@@ -5,7 +5,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { Footer } from '@/components/home/footer/footer';
 import Header from '@/components/home/header/header';
 import PlotFigure from '@/components/plot/plot-figure';
 import { Button } from '@/components/ui/button';
@@ -61,7 +60,7 @@ export function DashboardPage() {
   const supabase = createClient();
   const { user } = useUserInfo(supabase);
   useEffect(() => {
-    if (user) {
+    if (user && supabase) {
       getUserProfile(user.id, supabase).then(profile => {
         if (profile && profile?.username) {
           setProfile(profile);
@@ -202,7 +201,6 @@ export function DashboardPage() {
             </Card>
           </div>
         </div>
-        <Footer />
       </div>
     </>
   );
