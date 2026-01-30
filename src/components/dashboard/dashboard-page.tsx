@@ -14,6 +14,10 @@ import { createClient } from '@/utils/supabase/client';
 
 import '../../styles/home-page.css';
 
+interface TransactionDated extends Tables<'transactions'> {
+  date: Date | null;
+}
+
 async function getUserProfile(userid:string, supabase: SupabaseClient) : Promise<Tables<'profiles'> | undefined> {
   const { data: profile, error } = await supabase.from('profiles').select('*').eq('user_id', userid).single();
   if (!error && profile) {
@@ -23,7 +27,15 @@ async function getUserProfile(userid:string, supabase: SupabaseClient) : Promise
 }
 
 async function getUserHistory(userid:string, supabase: SupabaseClient) : Promise<Tables<'transactions'>[] | undefined> {
-  const { data: profile, error } = await supabase.from('transactions').select('*').eq('user_id', userid);
+  const today = new Date();
+  const dayInMs = 86400000;
+  const past = new Date(today.getTime() - dayInMs * 7);
+  const { data: profile, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', userid)
+    .gte('created_at', past.toISOString())
+    .order('created_at', { ascending: true });
   if (!error && profile) {
     return profile;
   }
@@ -42,7 +54,8 @@ export function DashboardPage() {
     user_id: '',
     username: null,
   });
-  const [transactions, setTransactions] = useState<Tables<'transactions'>[]>([]);
+  const [transactions, setTransactions] = useState<TransactionDated[]>([]);
+  const [totalSpending, setTotalSpending] = useState(0);
   const supabase = createClient();
   const { user } = useUserInfo(supabase);
   useEffect(() => {
@@ -55,7 +68,17 @@ export function DashboardPage() {
       });
       getUserHistory(user.id, supabase).then(history => {
         if (history) {
-          setTransactions(history);
+          let total = 0;
+          const historyDated = history.map((h) => {
+            const hDated = h as TransactionDated;
+            hDated.date = new Date(h.created_at);
+            if (h.amount) {
+              total += h.amount;
+            }
+            return hDated;
+          });
+          setTotalSpending(total);
+          setTransactions(historyDated);
         }
       }).catch(_ => {
         console.error('failed to get user transaction history');
@@ -64,35 +87,36 @@ export function DashboardPage() {
   }, [supabase, user]);
   return (
     <>
-      <div className={'w-full h-full'}>
+      <div className={'h-full w-full'}>
         <Header user={user}  />
-        <div className={'p-10'}>
+        <div className={'p-10 max-w-7xl m-auto'}>
           Welcome Back, {profile.username}
           {(transactions.length === 0) ?
 
             <Card>
               <CardHeader>
                 <CardTitle>
-                  No Transaction History
+                  <p className={'font-bold text-xl'}>No Transaction History</p>
                 </CardTitle>
               </CardHeader>
             </Card>
             :
-            <Card className={'grid grid-cols-2'}>
+            <Card className={'grid grid-cols-2 m-auto'}>
               <Card className={'border-transparent'}>
                 <CardHeader>
                   <CardTitle>
                     Transaction History
                   </CardTitle>
                 </CardHeader>
-                <CardContent >
+                <CardContent className={'min-w-[400px]'}>
                   <PlotFigure
                     options={{
                       width: 600,
-                      height: 300,
+                      height: 270,
                       marks: [
-                        Plot.line(transactions, { x: 'amount', y: 'amount', curve: 'catmull-rom' }),
-                        Plot.dot(transactions, { x: 'amount', y: 'amount' }),
+                        Plot.axisX({ ticks: '12 hours' }),
+                        Plot.line(transactions, { x: 'date', y: 'amount', curve: 'linear' }),
+                        Plot.dot(transactions, { x: 'date', y: 'amount' }),
                       ],
                     }}
                   />
@@ -100,23 +124,31 @@ export function DashboardPage() {
               </Card>
               <Card>
                 <CardContent>
-                  {transactions.map((transaction) => {
-                    return <Card className={'grid grid-cols-2'} key={transaction.transaction_id}>
-                      <CardHeader>
-                        <CardTitle>
+                  <div className={'grid grid-cols-3 ml-4 mt-4'}>
+                    <p>Description</p>
+                    <p>Amount</p>
+                    <p>Time created</p>
+                  </div>
+                  <div className={'overflow-y-auto overflow-x-hidden h-[300px]'}>
+                    {transactions.map((transaction) => {
+                      return <Card className={'grid grid-cols-3 m-1 border-0 border-b-1 rounded-b-none p-3'} key={transaction.transaction_id}>
+                        <CardContent className={'flex items-center h-full w-full p-0'}>
                           {transaction.transaction_description}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {transaction.amount}
-                      </CardContent>
-                    </Card>;
-                  })}
+                        </CardContent>
+                        <CardContent className={'flex items-center h-full w-full p-0'}>
+                          {transaction.amount}
+                        </CardContent>
+                        <CardContent className={'flex items-center h-full w-full p-0'}>
+                          {transaction.date?.toDateString()}
+                        </CardContent>
+                      </Card>;
+                    })}
+                  </div>
                 </CardContent>
               </Card>
             </Card>
           }
-          <div className={'grid grid-cols-2 '}>
+          <div className={'grid grid-cols-3 '}>
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -124,8 +156,10 @@ export function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {profile.monthly_budget}
-                {profile.currency}
+                <p className={'font-bold text-4xl'}>
+                  {totalSpending}$ /
+                  {profile.monthly_budget}$
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -135,22 +169,31 @@ export function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {profile.monthly_irregular_spending}
-                {profile.currency}
+                <p className={'font-bold text-4xl'}>
+                  {profile.monthly_irregular_spending}$
+                </p>
               </CardContent>
             </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Savings Goal
+                </CardTitle>
+              </CardHeader>
+              { profile.savings_goal_amount ?
+                <CardContent>
+                  <p className={'font-bold text-4xl'}>
+                    {profile.savings_goal_amount - totalSpending}$ /
+                    {profile.savings_goal_amount}$
+                  </p>
+                </CardContent>
+                :
+                <CardContent>
+                  no saving goals set up yet
+                </CardContent>
+              }
+            </Card>
           </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-              Savings Goal
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {profile.savings_goal_amount}
-              {profile.currency}
-            </CardContent>
-          </Card>
         </div>
         <Footer />
       </div>

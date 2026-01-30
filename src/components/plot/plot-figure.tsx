@@ -1,9 +1,10 @@
 import * as Plot from '@observablehq/plot';
+import { PlotOptions } from '@observablehq/plot';
 import { useEffect, useRef } from 'react';
 
 // For server-side rendering, see https://codesandbox.io/s/plot-react-f1jetw?file=/src/PlotFigure.js:89-195
 
-export default function PlotFigure({ options }) {
+export default function PlotFigure({ options }: {options?: PlotOptions }) {
   const containerRef = useRef();
 
   useEffect(() => {
