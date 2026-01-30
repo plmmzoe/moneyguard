@@ -44,6 +44,13 @@ const eslintConfig = defineConfig([
 
   },
   {
+    plugins: {
+      '@typescript-eslint': typescriptEslint,
+      import: importPlugin,
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
+      'jsx-a11y': jsxA11yPlugin,
+    },
     rules: {
       // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': [
@@ -220,6 +227,8 @@ const eslintConfig = defineConfig([
       'out/**',
       'build/**',
       'dist/**',
+      'dist-extension/**',
+      'extension/**',
       '*.config.{js,mjs}',
       'public/**',
       '.vercel/**',

@@ -7,6 +7,7 @@ import { signup } from '@/app/signup/actions';
 import { AuthenticationForm } from '@/components/authentication/authentication-form';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { validatePassword } from 'shared/auth';
 
 export function SignupForm() {
   const { toast } = useToast();
@@ -14,11 +15,9 @@ export function SignupForm() {
   const [password, setPassword] = useState('');
 
   function handleSignup() {
-    if (password.length < 8) {
-      toast({
-        description: 'Password must be at least 8 characters long',
-        variant: 'destructive',
-      });
+    const { valid, message } = validatePassword(password);
+    if (!valid) {
+      toast({ description: message ?? 'Invalid password', variant: 'destructive' });
       return;
     }
 

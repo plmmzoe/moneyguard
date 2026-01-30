@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { createClient } from '@/utils/supabase/server';
+import { createAuthApi } from 'shared/auth';
 
 interface FormData {
   email: string;
@@ -11,7 +12,8 @@ interface FormData {
 }
 export async function login(data: FormData) {
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(data);
+  const auth = createAuthApi(supabase);
+  const { error } = await auth.signInWithPassword(data);
 
   if (error) {
     return { error: true };
