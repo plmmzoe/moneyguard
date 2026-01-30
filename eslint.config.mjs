@@ -1,12 +1,7 @@
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
-import importPlugin from 'eslint-plugin-import';
-import reactPlugin from 'eslint-plugin-react';
-import nextVitals from 'eslint-config-next/core-web-vitals'
-import nextTs from 'eslint-config-next/typescript'
-import { defineConfig } from 'eslint/config'
-
-const eslintConfig = defineConfig([
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
+const eslintConfig = [
   ...nextVitals,
   ...nextTs,
   {
@@ -21,11 +16,6 @@ const eslintConfig = defineConfig([
         },
         project: './tsconfig.json',
       },
-    },
-    plugins: {
-      '@typescript-eslint': typescriptEslint,
-      import: importPlugin,
-      react: reactPlugin,
     },
     settings: {
       react: {
@@ -68,30 +58,57 @@ const eslintConfig = defineConfig([
           'ts-check': false,
         },
       ],
-
-      // Import/Export rules
-      'import/order': [
+    },
+  },
+  {
+    rules: {
+      // TypeScript specific rules
+      '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-          ],
-          'newlines-between': 'always',
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
         },
       ],
-      'import/no-unresolved': 'error',
-      'import/no-duplicates': 'error',
-      'import/no-unused-modules': 'off', // Can be slow, enable if needed
-      'import/no-cycle': ['error', { maxDepth: 3 }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-var-requires': 'error',
+      '@typescript-eslint/ban-ts-comment': [
+        'warn',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true,
+          'ts-nocheck': true,
+          'ts-check': false,
+        },
+      ],
+
+        // Import/Export rules
+        'import/order': [
+          'error',
+          {
+            groups: [
+              'builtin',
+              'external',
+              'internal',
+              'parent',
+              'sibling',
+              'index',
+            ],
+            'newlines-between': 'always',
+            alphabetize: {
+              order: 'asc',
+              caseInsensitive: true,
+            },
+          },
+        ],
+        'import/no-unresolved': 'error',
+        'import/no-duplicates': 'error',
+        'import/no-unused-modules': 'off', // Can be slow, enable if needed
+        'import/no-cycle': ['error', { maxDepth: 3 }],
 
       // React rules
       'react/react-in-jsx-scope': 'off', // Not needed in Next.js
@@ -162,18 +179,18 @@ const eslintConfig = defineConfig([
         },
       ],
 
-      // Best practices
-      'eqeqeq': ['error', 'always', { null: 'ignore' }],
-      'curly': ['error', 'all'],
-      'default-case': 'warn',
-      'default-case-last': 'error',
-      'dot-notation': 'error',
-      'no-eval': 'error',
-      'no-implied-eval': 'error',
-      'no-new-func': 'error',
-      'no-return-await': 'error',
-      'require-await': 'error',
-      'yoda': 'error',
+        // Best practices
+        'eqeqeq': ['error', 'always', { null: 'ignore' }],
+        'curly': ['error', 'all'],
+        'default-case': 'warn',
+        'default-case-last': 'error',
+        'dot-notation': 'error',
+        'no-eval': 'error',
+        'no-implied-eval': 'error',
+        'no-new-func': 'error',
+        'no-return-await': 'error',
+        'require-await': 'error',
+        'yoda': 'error',
 
       // Style and formatting (handled by ESLint instead of Prettier)
       'semi': ['error', 'always'],
@@ -220,6 +237,8 @@ const eslintConfig = defineConfig([
       'out/**',
       'build/**',
       'dist/**',
+      'dist-extension/**',
+      'extension/**',
       '*.config.{js,mjs}',
       'public/**',
       '.vercel/**',
@@ -227,6 +246,6 @@ const eslintConfig = defineConfig([
       'next-env.d.ts',
     ],
   },
-])
+];
 
 export default eslintConfig

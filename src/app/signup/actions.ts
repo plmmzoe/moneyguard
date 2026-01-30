@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 import { createClient } from '@/utils/supabase/server';
+import { createAuthApi } from 'shared/auth';
 
 interface FormData {
   email: string;
@@ -12,12 +13,13 @@ interface FormData {
 
 export async function signup(data: FormData) {
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp(data);
+  const auth = createAuthApi(supabase);
+  const { error } = await auth.signUp(data);
 
   if (error) {
     return { error: true };
   }
 
   revalidatePath('/', 'layout');
-  redirect('/');
+  redirect('/dashboard');
 }

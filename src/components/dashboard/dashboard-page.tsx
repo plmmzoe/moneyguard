@@ -1,5 +1,8 @@
 'use client';
 
+import * as Plot from '@observablehq/plot';
+import { SupabaseClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { getProfile, getTransactions } from '@/app/dashboard/actions';

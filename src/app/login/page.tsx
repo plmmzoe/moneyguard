@@ -1,5 +1,4 @@
 import '../../styles/login.css';
-import { GhLoginButton } from '@/components/authentication/gh-login-button';
 import { LoginForm } from '@/components/authentication/login-form';
 
 export default function LoginPage() {
@@ -12,19 +11,6 @@ export default function LoginPage() {
           }
         >
           <LoginForm />
-        </div>
-        <GhLoginButton label={'Log in with GitHub'} />
-        <div
-          className={
-            'mx-auto w-[343px] md:w-[488px] bg-background/80 backdrop-blur-[6px] px-6 md:px-16 pt-0 py-8 gap-6 flex flex-col items-center justify-center rounded-b-lg'
-          }
-        >
-          <div className={'text-center text-muted-foreground text-sm mt-4 font-medium'}>
-            Don’t have an account?{' '}
-            <a href={'/signup'} className={'text-white'}>
-              Sign up
-            </a>
-          </div>
         </div>
       </div>
     </div>
