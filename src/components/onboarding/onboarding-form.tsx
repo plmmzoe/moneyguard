@@ -181,7 +181,7 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
           {step === 'budget' && (
             <>
               <h2 className="text-lg font-semibold">Setup Your Budget</h2>
-              <p className="text-sm text-muted-foreground">Let's start by setting up your monthly budget and preferences.</p>
+              <p className="text-sm text-muted-foreground">Let&apos;s start by setting up your monthly budget and preferences.</p>
 
               {/* Username */}
               <div className="grid w-full gap-2">
