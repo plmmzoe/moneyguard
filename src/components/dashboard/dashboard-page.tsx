@@ -1,40 +1,17 @@
 'use client';
 
-import { SupabaseClient } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 
+import { getProfile, getTransactions } from '@/app/dashboard/actions';
 import { BudgetCard, IrrSpdCard, SavingsCard, TransactionCard } from '@/components/dashboard/cards/transaction-card';
 import { Footer } from '@/components/home/footer/footer';
 import Header from '@/components/home/header/header';
+import { useToast } from '@/components/ui/use-toast';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { TransactionDated } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/client';
 import '../../styles/home-page.css';
-
-async function getUserProfile(userid:string, supabase: SupabaseClient) : Promise<Tables<'profiles'> | undefined> {
-  const { data: profile, error } = await supabase.from('profiles').select('*').eq('user_id', userid).single();
-  if (!error && profile) {
-    return profile;
-  }
-  throw new Error('Unable to get user profiles');
-}
-
-async function getUserHistory(userid:string, supabase: SupabaseClient) : Promise<Tables<'transactions'>[] | undefined> {
-  const today = new Date();
-  const dayInMs = 86400000;
-  const past = new Date(today.getTime() - dayInMs * 7);
-  const { data: profile, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', userid)
-    .gte('created_at', past.toISOString())
-    .order('created_at', { ascending: true });
-  if (!error && profile) {
-    return profile;
-  }
-  throw new Error('Unable to get user transactions');
-}
 
 export function DashboardPage() {
   const [profile, setProfile] = useState<Tables<'profiles'>>({
@@ -48,19 +25,26 @@ export function DashboardPage() {
     user_id: '',
     username: null,
   });
+  const { toast } = useToast();
   const [transactions, setTransactions] = useState<TransactionDated[]>([]);
   const [totalSpending, setTotalSpending] = useState(0);
   const supabase = createClient();
   const { user } = useUserInfo(supabase);
   useEffect(() => {
     if (user) {
-      getUserProfile(user.id, supabase).then(profile => {
+      getProfile().then(profile => {
         if (profile && profile?.username) {
           setProfile(profile);
         }
-      }).catch(_ => {
+      }).catch(error => {
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'User profile fetch failed',
+          variant: 'destructive',
+        });
+        console.error('failed to get user profile');
       });
-      getUserHistory(user.id, supabase).then(history => {
+      getTransactions().then(history => {
         if (history) {
           let total = 0;
           const historyDated = history.map((h) => {
@@ -74,7 +58,12 @@ export function DashboardPage() {
           setTotalSpending(total);
           setTransactions(historyDated);
         }
-      }).catch(_ => {
+      }).catch(error => {
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'User history fetch failed',
+          variant: 'destructive',
+        });
         console.error('failed to get user transaction history');
       });
     }
