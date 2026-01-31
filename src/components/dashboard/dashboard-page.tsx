@@ -81,7 +81,6 @@ export function DashboardPage() {
             }
           </div>
         </div>
-        <Footer />
       </div>
     </>
   );

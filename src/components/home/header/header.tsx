@@ -1,5 +1,7 @@
+'use client';
+
 import { User } from '@supabase/supabase-js';
-import Image from 'next/image';
+import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 
 import { signOut } from '@/app/login/actions';
@@ -11,40 +13,56 @@ interface Props {
 
 export default function Header({ user }: Props) {
   return (
-    <nav>
-      <div className="mx-auto max-w-7xl relative px-[32px] py-[18px] flex items-center justify-between">
-        <div className="flex flex-1 items-center justify-start">
-          <Link className="flex items-center" href="/">
-            <Image className="w-auto block" src="/logo.svg" width={131} height={28} alt="MoneyGuard" />
+    <nav className="bg-white border-b border-gray-100">
+      <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <Link href="/" className="text-xl font-bold text-gray-900">
+            SpendGuard AI
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end">
-          <div className="flex items-center gap-2">
-            {user?.id ? (
-              <>
-                <Button variant="secondary" asChild>
-                  <Link href="/dashboard">Dashboard</Link>
+        <div className="flex items-center gap-4">
+          {user?.id ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/onboarding"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Profile
+              </Link>
+              <form action={signOut} className="inline">
+                <Button
+                  type="submit"
+                  variant="outline"
+                  size="icon"
+                  className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" asChild>
-                  <Link href="/onboarding">Profile</Link>
-                </Button>
-                <form action={signOut} className="inline">
-                  <Button type="submit" variant="outline">
-                    Sign out
-                  </Button>
-                </form>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link href="/login">Log in</Link>
-                </Button>
-                <Button variant="secondary" asChild>
-                  <Link href="/signup">Sign up</Link>
-                </Button>
-              </>
-            )}
-          </div>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
