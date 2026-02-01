@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+import { saveAnalysis } from './actions';
+
 export default function AnalyzePage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -42,6 +44,14 @@ export default function AnalyzePage() {
 
       const json = await response.json();
       setResult(json.analysis);
+
+      // Save the analysis to the database
+      await saveAnalysis({
+        itemName: data.item as string,
+        price: parseFloat(data.price as string) || 0,
+        description: data.description as string,
+        aiAnalysis: json.analysis,
+      });
     } catch (error) {
       console.error(error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');

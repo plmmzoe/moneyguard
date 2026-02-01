@@ -58,3 +58,28 @@ export async function getTransactions() {
   }
   return transactions;
 }
+
+export async function getAnalyses() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('analyses')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error('Error fetching analyses:', error);
+    return [];
+  }
+
+  return data;
+}
