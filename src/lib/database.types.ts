@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           created_at: string | null
           currency: string | null
+          hobbies: { name: string; rating: number }[] | null
           monthly_budget: number | null
           monthly_irregular_spending: number | null
           savings_goal_amount: number | null
@@ -60,6 +61,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           currency?: string | null
+          hobbies?: { name: string; rating: number }[] | null
           monthly_budget?: number | null
           monthly_irregular_spending?: number | null
           savings_goal_amount?: number | null
@@ -72,6 +74,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           currency?: string | null
+          hobbies?: { name: string; rating: number }[] | null
           monthly_budget?: number | null
           monthly_irregular_spending?: number | null
           savings_goal_amount?: number | null

@@ -1,7 +1,8 @@
 'use client';
 
 import { Loader2, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,9 +12,28 @@ import { Label } from '@/components/ui/label';
 import { saveAnalysis } from './actions';
 
 export default function AnalyzePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AnalyzePageContent />
+    </Suspense>
+  );
+}
+
+function AnalyzePageContent() {
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Form state
+  const [item, setItem] = useState(searchParams.get('item') || '');
+  const [price, setPrice] = useState(searchParams.get('price') || '');
+  const [description, setDescription] = useState(searchParams.get('description') || '');
+
+  useEffect(() => {
+    // If we have params, we could auto-submit or just let the user review
+    // For now, we just pre-fill
+  }, [searchParams]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,11 +106,26 @@ export default function AnalyzePage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="item">Item Name</Label>
-                <Input id="item" name="item" placeholder="e.g. Vintage Typewriter" required />
+                <Input
+                  id="item"
+                  name="item"
+                  placeholder="e.g. Vintage Typewriter"
+                  required
+                  value={item}
+                  onChange={(e) => setItem(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="price">Price</Label>
-                <Input id="price" name="price" type="text" placeholder="e.g. $150" required />
+                <Input
+                  id="price"
+                  name="price"
+                  type="text"
+                  placeholder="e.g. $150"
+                  required
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Why do you want it?</Label>
@@ -99,6 +134,8 @@ export default function AnalyzePage() {
                   name="description"
                   className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="It looks cool and I might write a novel..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
             </CardContent>

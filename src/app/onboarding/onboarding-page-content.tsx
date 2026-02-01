@@ -17,6 +17,7 @@ interface OnboardingPageProps {
     savingsGoalAmount: number | null | undefined;
     savingsGoalReward: string | null | undefined;
     savingsGoalTargetDate: string | null | undefined;
+    hobbies: { name: string; rating: number }[] | null | undefined;
   };
   isUpdate?: boolean;
 }
@@ -34,6 +35,7 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
     savingsGoalAmount: number;
     savingsGoalReward: string;
     savingsGoalTargetDate: string;
+    hobbies: { name: string; rating: number }[];
   }) => {
     setIsLoading(true);
     try {
