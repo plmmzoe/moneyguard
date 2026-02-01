@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 
 import { getProfile, getTransactions } from '@/app/dashboard/actions';
 import { BudgetCard, IrrSpdCard, SavingsCard, TransactionCard } from '@/components/dashboard/cards/transaction-card';
-import { Footer } from '@/components/home/footer/footer';
 import Header from '@/components/home/header/header';
 import { useToast } from '@/components/ui/use-toast';
 import { useUserInfo } from '@/hooks/useUserInfo';
@@ -57,25 +56,25 @@ export function DashboardPage() {
         console.error('failed to get user transaction history');
       });
     }
-  }, [supabase, user]);
+  }, [supabase, user, toast]);
   return (
     <>
       <div className={'h-full w-full'}>
-        <Header user={user}  />
+        <Header user={user} />
         <div className={'p-10 max-w-7xl m-auto'}>
-          <p className={'font-bold text-3xl'}>
+          <div className={'font-bold text-3xl'}>
             {(profile) ?
               <p>Welcome Back, {profile.username}</p>
               : <p>No profile detected</p>
             }
-          </p>
-          <TransactionCard transactions={transactions}/>
+          </div>
+          <TransactionCard transactions={transactions} />
           <div className={'grid grid-cols-3 '}>
             {profile ?
               <>
-                <BudgetCard totalSpending={totalSpending} profile={profile}/>
-                <IrrSpdCard profile={profile} spending={totalSpending}/>
-                <SavingsCard profile={profile} totalSpending={totalSpending}/>
+                <BudgetCard totalSpending={totalSpending} profile={profile} />
+                <IrrSpdCard profile={profile} spending={totalSpending} />
+                <SavingsCard profile={profile} totalSpending={totalSpending} />
               </>
               : <p>no profile detected</p>
             }
