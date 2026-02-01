@@ -19,7 +19,7 @@ interface TransactionDated extends Tables<'transactions'> {
   date: Date | null;
 }
 
-async function getUserProfile(userid:string, supabase: SupabaseClient) : Promise<Tables<'profiles'> | undefined> {
+async function getUserProfile(userid: string, supabase: SupabaseClient): Promise<Tables<'profiles'> | undefined> {
   const { data: profile, error } = await supabase.from('profiles').select('*').eq('user_id', userid).single();
   if (!error && profile) {
     return profile;
@@ -27,7 +27,7 @@ async function getUserProfile(userid:string, supabase: SupabaseClient) : Promise
   throw new Error('Unable to get user profiles');
 }
 
-async function getUserHistory(userid:string, supabase: SupabaseClient) : Promise<Tables<'transactions'>[] | undefined> {
+async function getUserHistory(userid: string, supabase: SupabaseClient): Promise<Tables<'transactions'>[] | undefined> {
   const today = new Date();
   const dayInMs = 86400000;
   const past = new Date(today.getTime() - dayInMs * 7);
@@ -186,10 +186,10 @@ export function DashboardPage() {
                   Savings Goal
                 </CardTitle>
               </CardHeader>
-              { profile.savings_goal_amount ?
+              {profile.savings_goal_amount ?
                 <CardContent>
                   <p className={'font-bold text-4xl'}>
-                    {profile.savings_goal_amount - totalSpending}$ /
+                    0$ /
                     {profile.savings_goal_amount}$
                   </p>
                 </CardContent>
@@ -201,7 +201,7 @@ export function DashboardPage() {
             </Card>
           </div>
         </div>
-      </div>
+      </div >
     </>
   );
 }

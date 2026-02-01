@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { login } from '@/app/login/actions';
@@ -36,6 +37,12 @@ export function LoginForm() {
       <Button formAction={() => handleLogin()} type={'submit'} variant={'secondary'} className={'w-full'}>
         Log in
       </Button>
+      <div className={'text-center text-sm'}>
+        Don&apos;t Have An Account?{' '}
+        <Link href={'/signup'} className={'underline'}>
+          Sign Up Here
+        </Link>
+      </div>
     </form>
   );
 }

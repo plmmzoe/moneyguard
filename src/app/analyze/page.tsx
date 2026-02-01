@@ -11,11 +11,13 @@ import { Label } from '@/components/ui/label';
 export default function AnalyzePage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setResult(null);
+    setError(null);
 
     const formData = new FormData(event.currentTarget);
     const data = {
@@ -34,14 +36,15 @@ export default function AnalyzePage() {
       });
 
       if (!response.ok) {
-        throw new Error('Analysis failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Analysis failed');
       }
 
       const json = await response.json();
       setResult(json.analysis);
     } catch (error) {
       console.error(error);
-      setResult('Validation failed. Please try again.');
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -54,10 +57,10 @@ export default function AnalyzePage() {
           <Sparkles className="h-8 w-8 text-primary" />
         </div>
         <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                    Impulse Buy Analyzer
+          Impulse Buy Analyzer
         </h1>
         <p className="text-muted-foreground max-w-[42rem] leading-normal sm:text-xl sm:leading-8">
-                    Before you buy, let AI do a reality check. Is it a dream purchase or a budget nightmare?
+          Before you buy, let AI do a reality check. Is it a dream purchase or a budget nightmare?
         </p>
       </div>
 
@@ -66,7 +69,7 @@ export default function AnalyzePage() {
           <CardHeader>
             <CardTitle>Item Details</CardTitle>
             <CardDescription>
-                            Tell us what you&apos;re thinking of buying.
+              Tell us what you&apos;re thinking of buying.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -94,7 +97,7 @@ export default function AnalyzePage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Analyzing...
+                    Analyzing...
                   </>
                 ) : (
                   'Analyze Purchase'
@@ -104,12 +107,25 @@ export default function AnalyzePage() {
           </form>
         </Card>
 
+        {error && (
+          <Card className="border-destructive/50 bg-destructive/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                Error
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-destructive-foreground">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
         {result && (
           <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 border-primary/50 bg-primary/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                                AI Verdict
+                AI Verdict
               </CardTitle>
             </CardHeader>
             <CardContent>
