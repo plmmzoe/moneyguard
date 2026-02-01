@@ -22,6 +22,7 @@ export type Database = {
           monthly_irregular_spending: number | null
           savings_goal_amount: number | null
           savings_goal_reward: string | null
+          savings_goal_target_date: string | null
           updated_at: string | null
           user_id: string
           username: string | null
@@ -33,6 +34,7 @@ export type Database = {
           monthly_irregular_spending?: number | null
           savings_goal_amount?: number | null
           savings_goal_reward?: string | null
+          savings_goal_target_date?: string | null
           updated_at?: string | null
           user_id: string
           username?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           monthly_irregular_spending?: number | null
           savings_goal_amount?: number | null
           savings_goal_reward?: string | null
+          savings_goal_target_date?: string | null
           updated_at?: string | null
           user_id?: string
           username?: string | null

@@ -13,10 +13,10 @@ interface OnboardingPageProps {
     username: string;
     monthlyBudget: number;
     currency: string;
-    monthlyIrregularSpending: number | null;
-    savingsGoalAmount: number | null;
-    savingsGoalReward: string | null;
-    savingsGoalTargetDate: string | null;
+    monthlyIrregularSpending: number | null | undefined;
+    savingsGoalAmount: number | null | undefined;
+    savingsGoalReward: string | null | undefined;
+    savingsGoalTargetDate: string | null | undefined;
   };
   isUpdate?: boolean;
 }

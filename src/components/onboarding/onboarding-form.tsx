@@ -16,13 +16,13 @@ import {
 
 interface OnboardingFormProps {
   initialData?: {
-    username?: string;
-    monthlyBudget?: number;
-    currency?: string;
-    monthlyIrregularSpending?: number;
-    savingsGoalAmount?: number;
-    savingsGoalReward?: string;
-    savingsGoalTargetDate?: string;
+    username?: string | null;
+    monthlyBudget?: number | null;
+    currency?: string | null;
+    monthlyIrregularSpending?: number | null;
+    savingsGoalAmount?: number | null;
+    savingsGoalReward?: string | null;
+    savingsGoalTargetDate?: string | null;
   };
   onSubmit: (data: {
     username: string;
