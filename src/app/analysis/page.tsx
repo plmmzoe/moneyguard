@@ -1,0 +1,198 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { useUserInfo } from '@/hooks/useUserInfo';
+import { createClient as createBrowserSupabase } from '@/utils/supabase/client';
+
+interface TransactionData {
+  id?: string;
+  date: string;
+  merchant?: string;
+  payee?: string;
+  amount?: number;
+  price?: number;
+}
+
+interface SummaryData {
+  total: number;
+  count: number;
+  avg: number;
+}
+
+interface MerchantData {
+  merchant: string;
+  total: number;
+  count: number;
+}
+
+interface LocalAnalysis {
+  summary: SummaryData;
+  topMerchants: MerchantData[];
+  impulseCandidates: TransactionData[];
+}
+
+interface AnalysisResponse {
+  source?: string;
+  local?: LocalAnalysis;
+  analysis?: Record<string, unknown>;
+  transactions?: TransactionData[];
+  error?: string;
+  text?: string;
+}
+
+export default function TransactionsAnalysisPage() {
+  const supabase = createBrowserSupabase();
+  const { user } = useUserInfo(supabase);
+
+  const [period, setPeriod] = useState<string>('month');
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<AnalysisResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAnalysis = useCallback(async () => {
+    if (!user) {
+      setError('Please sign in to view your analysis.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setData(null);
+
+    try {
+      const res = await fetch(`/api/analysis?period=${encodeURIComponent(period)}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch analysis');
+      }
+      const json: AnalysisResponse = await res.json();
+      setData(json);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, period]);
+
+  useEffect(() => {
+    if (user) {
+      fetchAnalysis();
+    }
+  }, [user, fetchAnalysis]);
+
+  return (
+    <div className="container mx-auto py-10 px-4 max-w-4xl">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Spending Analysis</h1>
+        <p className="text-muted-foreground">Overview of your spending and possible impulse purchases.</p>
+      </div>
+
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Analysis Range</CardTitle>
+            <CardDescription>Select how far back to analyze.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center gap-4">
+            <div>
+              <Label>Period</Label>
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="mt-2 rounded-md border px-3 py-2"
+              >
+                <option value="day">Past day</option>
+                <option value="week">Past week</option>
+                <option value="month">Past month</option>
+                <option value="year">Past year</option>
+              </select>
+            </div>
+            <div className="ml-auto">
+              <Button onClick={fetchAnalysis} disabled={loading}>
+                {loading ? 'Analyzing...' : 'Run Analysis'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <Card>
+            <CardContent>
+              <div className="text-destructive">{error}</div>
+            </CardContent>
+          </Card>
+        )}
+
+        {data && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Results</CardTitle>
+              <CardDescription>Source: {data.source ?? 'local'}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {data.error && <div className="text-destructive">{data.error}</div>}
+
+              {data.analysis && (
+                <pre className="whitespace-pre-wrap">{JSON.stringify(data.analysis, null, 2)}</pre>
+              )}
+
+              {data.local && (
+                <div className="space-y-4">
+                  <div>
+                    <strong>Total:</strong> ${Math.round((data.local.summary?.total ?? 0) * 100) / 100}
+                  </div>
+                  <div>
+                    <strong>Transactions:</strong> {data.local.summary?.count ?? 0}
+                  </div>
+                  <div>
+                    <strong>Average:</strong> ${Math.round((data.local.summary?.avg ?? 0) * 100) / 100}
+                  </div>
+
+                  <div>
+                    <strong>Top Merchants</strong>
+                    <ul>
+                      {(data.local.topMerchants ?? []).map((m: MerchantData) => (
+                        <li key={m.merchant}>
+                          {m.merchant} — ${Math.round(m.total * 100) / 100} ({m.count})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <strong>Impulse Candidates (recent, small purchases)</strong>
+                    <ul>
+                      {(data.local.impulseCandidates ?? []).map((t: TransactionData, i: number) => (
+                        <li key={t.id ?? i}>
+                          {new Date(t.date).toLocaleDateString()} — {t.merchant ?? t.payee ?? 'Unknown'} — ${t.amount ?? t.price}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {data.transactions && data.transactions.length > 0 && (
+                <div className="mt-4">
+                  <strong>Recent transactions (sample):</strong>
+                  <ul className="mt-2">
+                    {data.transactions.slice(0, 10).map((t: TransactionData, i: number) => (
+                      <li key={t.id ?? i} className="text-sm">
+                        {new Date(t.date).toLocaleDateString()} — {t.merchant ?? t.payee ?? 'Unknown'} — ${t.amount ?? t.price}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter />
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
