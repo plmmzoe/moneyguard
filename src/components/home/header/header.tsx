@@ -35,6 +35,12 @@ export default function Header({ user }: Props) {
               >
                 Profile
               </Link>
+              <Link
+                href="/analyze"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Analyze
+              </Link>
               <form action={signOut} className="inline">
                 <Button
                   type="submit"

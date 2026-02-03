@@ -1,151 +1,495 @@
 'use client';
 
-import { Loader2, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
+import { Tables } from '@/lib/database.types';
+import { createClient } from '@/utils/supabase/client';
 
-import { saveAnalysis } from './actions';
+interface AnalysisResultData {
+  overallVerdict?: string;
+  impulseScore?: number;
+  keyReasons?: { type: string; explanation: string }[];
+  finalAdvice?: string;
+}
 
 export default function AnalyzePage() {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const isSubmitting = useRef(false);
+  const [profile, setProfile] = useState<Tables<'profiles'> | null>(null);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setResult(null);
-    setError(null);
+  const [formData, setFormData] = useState({
+    // Section 1: Purchase Basics
+    itemName: '',
+    price: '',
+    currency: 'CAD',
+    whereToBuy: '',
+    urgency: '',
 
-    const formData = new FormData(event.currentTarget);
-    const data = {
-      item: formData.get('item'),
-      price: formData.get('price'),
-      description: formData.get('description'),
+    // Section 2: Utility & Usage
+    problemItSolves: '',
+    currentAlternative: '',
+    expectedUsageFrequency: '',
+    lastTimeYouNeededThis: '',
+    storageOrMaintenanceConcern: false,
+
+    // Section 3: Emotional & Impulse Signals
+    emotionalTrigger: '',
+    triggerDescription: '',
+    sleepOnItTest: '',
+    similarItemsOwned: 0,
+    pastRegretOnSimilar: '',
+
+    // Section 4: Financial Context (Fetched from DB)
+    // monthlyDisposableBudget: handled by profile.monthly_budget
+    // wouldAffectOtherGoals: handled by profile.savings_goal_*
+    refundEase: '',
+  });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const supabase = createClient();
+      if (!supabase) {return;}
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        if (data) {setProfile(data);}
+      }
     };
+    fetchProfile();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const target = e.target as HTMLInputElement;
+      setFormData(prev => ({ ...prev, [name]: target.checked }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRadioChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const canSubmit = formData.itemName && formData.price;
+
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResultData | null>(null);
+
+  // Clear analysis result when form data changes to prevent stale data
+  useEffect(() => {
+    if (analysisResult) {
+      setAnalysisResult(null);
+    }
+  }, [formData, analysisResult]);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!canSubmit || isSubmitting.current) {return;}
+
+    isSubmitting.current = true;
+    setLoading(true);
 
     try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const submissionPayload = {
+        item: formData.itemName,
+        price: formData.price,
+        description: formData.problemItSolves || formData.triggerDescription || 'No description provided',
+        financialContext: {
+          monthlyBudget: profile?.monthly_budget || 0,
+          currency: profile?.currency || 'USD',
+          savingsGoal: {
+            name: profile?.savings_goal_reward,
+            amount: profile?.savings_goal_amount,
+          },
         },
-        body: JSON.stringify(data),
+      };
+
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submissionPayload),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Analysis failed');
+      if (!res.ok) {
+        throw new Error('Analysis failed');
       }
 
-      const json = await response.json();
-      setResult(json.analysis);
-
-      // Save the analysis to the database
-      await saveAnalysis({
-        itemName: data.item as string,
-        price: parseFloat(data.price as string) || 0,
-        description: data.description as string,
-        aiAnalysis: json.analysis,
-      });
+      const data = await res.json() as AnalysisResultData;
+      setAnalysisResult(data);
     } catch (error) {
-      console.error(error);
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      console.error('Analysis error:', error);
+      toast({ description: 'Failed to analyze. Please try again.', variant: 'destructive' });
     } finally {
       setLoading(false);
+      isSubmitting.current = false;
     }
   }
 
   return (
-    <div className="container mx-auto py-10 px-4 max-w-2xl">
-      <div className="flex flex-col items-center mb-8 space-y-4 text-center">
-        <div className="p-3 bg-primary/10 rounded-full">
-          <Sparkles className="h-8 w-8 text-primary" />
+    <div className="container mx-auto py-10 px-4 max-w-3xl">
+      <div className="flex flex-col items-center mb-10 text-center space-y-2">
+        <div className="p-3 bg-primary/10 rounded-full mb-2">
+          <Sparkles className="h-6 w-6 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-          Impulse Buy Analyzer
-        </h1>
-        <p className="text-muted-foreground max-w-[42rem] leading-normal sm:text-xl sm:leading-8">
-          Before you buy, let AI do a reality check. Is it a dream purchase or a budget nightmare?
+        <h1 className="text-3xl font-bold tracking-tight">Purchase Clarity Check</h1>
+        <p className="text-muted-foreground max-w-lg">
+          Take a moment to reflect. This tool helps you look past the impulse and see the real value.
         </p>
       </div>
 
-      <div className="grid gap-6">
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Item Details</CardTitle>
-            <CardDescription>
-              Tell us what you&apos;re thinking of buying.
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+      <div className="gap-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
+
+          {/* SECTION 1: Purchase Basics */}
+          <Card className="border-none shadow-sm bg-card/50">
+            <CardHeader>
+              <CardTitle>The Basics</CardTitle>
+              <CardDescription>What are you looking to buy?</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="item">Item Name</Label>
-                <Input id="item" name="item" placeholder="e.g. Vintage Typewriter" required />
+                <Label htmlFor="itemName">Item Name <span className="text-red-500">*</span></Label>
+                <Input id="itemName" name="itemName" value={formData.itemName} onChange={handleChange} placeholder="e.g. Noise Cancelling Headers" required />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="price">Price</Label>
-                <Input id="price" name="price" type="text" placeholder="e.g. $150" required />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price <span className="text-red-500">*</span></Label>
+                  <div className="flex gap-2">
+                    <Select onValueChange={(val) => handleSelectChange('currency', val)} value={formData.currency}>
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CAD">CAD</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input id="price" name="price" type="number" min="0" step="0.01" value={formData.price} onChange={handleChange} placeholder="0.00" className="flex-1" required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whereToBuy">Where to Buy?</Label>
+                  <Input id="whereToBuy" name="whereToBuy" value={formData.whereToBuy} onChange={handleChange} placeholder="Amazon, Local Store, etc." />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Why do you want it?</Label>
-                <textarea
-                  id="description"
-                  name="description"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="It looks cool and I might write a novel..."
+
+              <div className="space-y-3">
+                <Label>How urgent is this?</Label>
+                <RadioGroup
+                  name="urgency"
+                  value={formData.urgency}
+                  onChange={handleRadioChange}
+                  options={[
+                    { value: 'today', label: 'I need it today' },
+                    { value: 'this week', label: 'This week' },
+                    { value: 'someday', label: 'Someday / No rush' },
+                  ]}
                 />
               </div>
             </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  'Analyze Purchase'
-                )}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
+          </Card>
 
-        {error && (
-          <Card className="border-destructive/50 bg-destructive/10">
+          {/* SECTION 2: Utility & Usage */}
+          <Card className="border-none shadow-sm bg-card/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                Error
-              </CardTitle>
+              <CardTitle>Utility & Usage</CardTitle>
+              <CardDescription>How will this fit into your life?</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-destructive-foreground">{error}</p>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="problemItSolves">What specific problem does this solve?</Label>
+                <Input id="problemItSolves" name="problemItSolves" value={formData.problemItSolves} onChange={handleChange} placeholder="e.g. My current ones are broken..." />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="currentAlternative">What are you using right now instead?</Label>
+                <Input id="currentAlternative" name="currentAlternative" value={formData.currentAlternative} onChange={handleChange} placeholder="Type 'none' if nothing" />
+              </div>
+
+              <div className="space-y-3">
+                <Label>How often will you honestly use it?</Label>
+                <RadioGroup
+                  name="expectedUsageFrequency"
+                  value={formData.expectedUsageFrequency}
+                  onChange={handleRadioChange}
+                  options={[
+                    { value: 'daily', label: 'Daily - Part of my routine' },
+                    { value: 'weekly', label: 'Weekly' },
+                    { value: 'monthly', label: 'Monthly' },
+                    { value: 'rarely', label: 'Rarely / Special Occasions' },
+                  ]}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Label>When was the last time you actively needed this?</Label>
+                <RadioGroup
+                  name="lastTimeYouNeededThis"
+                  value={formData.lastTimeYouNeededThis}
+                  onChange={handleRadioChange}
+                  options={[
+                    { value: 'today', label: 'Today' },
+                    { value: 'last week', label: 'Last Week' },
+                    { value: 'months ago', label: 'Months ago' },
+                    { value: 'never', label: 'Never, just thought of it' },
+                  ]}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="storageOrMaintenanceConcern"
+                  name="storageOrMaintenanceConcern"
+                  checked={formData.storageOrMaintenanceConcern}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <Label htmlFor="storageOrMaintenanceConcern" className="font-normal cursor-pointer">
+                  This will require extra storage space or maintenance
+                </Label>
+              </div>
+
             </CardContent>
           </Card>
-        )}
 
-        {result && (
-          <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 border-primary/50 bg-primary/5">
+          {/* SECTION 3: Emotional & Impulse Signals */}
+          <Card className="border-none shadow-sm bg-card/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                AI Verdict
-              </CardTitle>
+              <CardTitle>Emotional Check</CardTitle>
+              <CardDescription>Understanding the &apos;Why&apos; behind the buy.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                {result}
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="emotionalTrigger">How are you feeling right now?</Label>
+                <Select onValueChange={(val) => handleSelectChange('emotionalTrigger', val)} value={formData.emotionalTrigger}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select mood" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bored">Bored / Browsing</SelectItem>
+                    <SelectItem value="stressed">Stressed / Anxious</SelectItem>
+                    <SelectItem value="rewarded">Celebrating / Reward</SelectItem>
+                    <SelectItem value="influenced">Influenced (Saw on social media)</SelectItem>
+                    <SelectItem value="rational">Calm / Rational</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="triggerDescription">Description (Optional)</Label>
+                <Input id="triggerDescription" name="triggerDescription" value={formData.triggerDescription} onChange={handleChange} placeholder="e.g. Saw a sale email, had a bad day..." />
+              </div>
+
+              <div className="space-y-3">
+                <Label>Sleep on it: How long have you been thinking about this specific item?</Label>
+                <RadioGroup
+                  name="sleepOnItTest"
+                  value={formData.sleepOnItTest}
+                  onChange={handleRadioChange}
+                  options={[
+                    { value: 'not yet', label: 'Just saw it now' },
+                    { value: '<24h', label: 'Less than 24 hours' },
+                    { value: '>48h', label: 'More than 48 hours' },
+                    { value: 'weeks', label: 'Weeks or Months' },
+                  ]}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="similarItemsOwned">Similar items owned</Label>
+                  <Input id="similarItemsOwned" name="similarItemsOwned" type="number" min="0" value={formData.similarItemsOwned} onChange={handleChange} />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Have you regretted buying similar items in the past?</Label>
+                <RadioGroup
+                  name="pastRegretOnSimilar"
+                  value={formData.pastRegretOnSimilar}
+                  onChange={handleRadioChange}
+                  options={[
+                    { value: 'yes', label: 'Yes' },
+                    { value: 'no', label: 'No' },
+                    { value: 'not sure', label: 'Not sure' },
+                  ]}
+                />
+              </div>
+
+            </CardContent>
+          </Card>
+
+          {/* SECTION 4: Financial Context */}
+          <Card className="border-none shadow-sm bg-card/50">
+            <CardHeader>
+              <CardTitle>Financial Reality</CardTitle>
+              <CardDescription>A quick budget sanity check.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Display profile data instead of asking */}
+              <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Monthly Budget:</span>
+                  <span className="text-lg font-bold">
+                    {profile ? `${profile.currency || '$'} ${profile.monthly_budget || 0}` : 'Loading...'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Active Savings Goal:</span>
+                  <span className="text-sm">
+                    {profile?.savings_goal_reward
+                      ? `${profile.savings_goal_reward} ($${profile.savings_goal_amount})`
+                      : 'No active active goal set'}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  * This purchase will be analyzed against your set budget and goals.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Label>How easy is it to return/refund?</Label>
+                <RadioGroup
+                  name="refundEase"
+                  value={formData.refundEase}
+                  onChange={handleRadioChange}
+                  options={[
+                    { value: 'easy', label: 'Easy (Free returns)' },
+                    { value: 'moderate', label: 'Moderate (Shipping costs/Time)' },
+                    { value: 'hard', label: 'Hard / Final Sale' },
+                  ]}
+                />
               </div>
             </CardContent>
           </Card>
-        )}
+
+          <div className="flex justify-end">
+            <Button type="submit" disabled={!canSubmit || loading || !!analysisResult} size="lg" className="w-full sm:w-auto">
+              {analysisResult ? (
+                <>Analysis Complete</>
+              ) : loading ? (
+                <>Analyzing...</>
+              ) : (
+                <>Get Analysis <Sparkles className="ml-2 h-4 w-4" /></>
+              )}
+            </Button>
+          </div>
+
+        </form>
       </div>
+
+      {analysisResult && (
+        <div className="mt-8 space-y-6">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Analysis Result
+              </CardTitle>
+              <CardDescription>Based on your input</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold text-lg">Verdict</h3>
+                  <p className="uppercase font-bold text-primary">{analysisResult.overallVerdict}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Impulse Score</h3>
+                  <div className="w-full bg-secondary h-4 rounded-full overflow-hidden">
+                    <div
+                      className="bg-primary h-full transition-all"
+                      style={{ width: `${analysisResult.impulseScore}%` }}
+                    />
+                  </div>
+                  <p className="text-right text-sm text-muted-foreground">{analysisResult.impulseScore}/100</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Key Reasons</h3>
+                <ul className="list-disc pl-5 space-y-1">
+                  {analysisResult.keyReasons?.map((reason) => (
+                    <li key={`${reason.type}-${reason.explanation}`}>
+                      <span className="font-medium capitalize">{reason.type}:</span> {reason.explanation}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-4 bg-background rounded-lg border">
+                <h3 className="font-semibold mb-1">Final Advice</h3>
+                <p className="italic">{analysisResult.finalAdvice}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Helper Components for clean UI without extra deps
+
+function RadioGroup({ name, value, onChange, options }: {
+  name: string;
+  value: string;
+  onChange: (name: string, value: string) => void;
+  options: { value: string; label: string }[]
+}) {
+  return (
+    <div className="flex flex-col space-y-2">
+      {options.map((option) => (
+        <label
+          key={option.value}
+          className={`
+                        flex items-center p-3 rounded-lg border cursor-pointer transition-all
+                        ${value === option.value
+          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+          : 'border-border hover:bg-accent/50'}
+                    `}
+        >
+          <div className={`
+                        flex items-center justify-center w-4 h-4 rounded-full border mr-3
+                        ${value === option.value ? 'border-primary' : 'border-muted-foreground'}
+                    `}>
+            {value === option.value && <div className="w-2 h-2 rounded-full bg-primary" />}
+          </div>
+          <input
+            type="radio"
+            name={name}
+            value={option.value}
+            checked={value === option.value}
+            onChange={(e) => onChange(name, e.target.value)}
+            className="hidden"
+          />
+          <span className={`text-sm ${value === option.value ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+            {option.label}
+          </span>
+        </label>
+      ))}
     </div>
   );
 }

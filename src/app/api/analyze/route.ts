@@ -23,28 +23,69 @@ export async function POST(request: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: { responseMimeType: 'application/json' },
+    });
 
     const prompt = `
-      You are a financial advisor helping a user decide if they should buy an item.
-      Analyze the following potential purchase for impulsive spending:
-      
+      You are an AI purchase decision analyst.
+
+      You will receive a JSON object describing a user's intended purchase.
+
+      Your task is to analyze whether this purchase is impulsive, unnecessary, or misaligned with the user's actual needs.
+
+      Rules:
+      - Base your reasoning strictly on the provided data.
+      - Be neutral, supportive, and analytical.
+      - Do not shame or judge the user.
+      - Do not recommend buying unless strong justification exists.
+
+      User Data:
       Item: ${item}
       Price: ${price}
       Description/Reason for buying: ${description || 'No description provided'}
       
-      Provide a concise analysis. 
-      1. Is this likely an impulsive buy? (Yes/No/Maybe)
-      2. Pros of buying.
-      3. Cons of buying.
-      4. A witty recommendation.
+      Return your response in the following JSON format:
+
+      {
+        "overallVerdict": "likely_impulsive | borderline | considered",
+        "impulseScore": 0-100,
+        "regretRisk": "low | medium | high",
+        "keyReasons": [
+          {
+            "type": "emotion | usage | redundancy | financial | timing",
+            "explanation": "..."
+          }
+        ],
+        "usageRealityCheck": {
+          "predictedFrequency": "...",
+          "confidenceLevel": "high | medium | low",
+          "why": "..."
+        },
+        "opportunityCost": {
+          "whatItDisplaces": "...",
+          "whyItMatters": "..."
+        },
+        "coolOffSuggestion": {
+          "recommendedDelay": "24h | 72h | 7d | none",
+          "reflectionPrompt": "..."
+        },
+        "alternatives": [
+          {
+            "type": "cheaper | delay | use_existing | rent | skip",
+            "suggestion": "..."
+          }
+        ],
+        "finalAdvice": "..."
+      }
     `;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
-    return NextResponse.json({ analysis: text });
+    return NextResponse.json(JSON.parse(text));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const is429 =
