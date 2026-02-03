@@ -125,7 +125,7 @@ export async function GET(request: Request) {
           tools: [],
         };
 
-        const prompt = `Analyze the following user's transactions between ${start} and ${end}. Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis. Return JSON with keys: summary, impulseCandidates, recommendations. Transactions: ${JSON.stringify(
+        const prompt = `Analyze the following user's transactions between ${start} and ${end}. Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis. Return JSON with keys: summary, impulseCandidates, recommendations. Return your response in a single key value pair in your json response such as { response: "Your entire written response here of multiple paragraphs, include any newline special characters to separate paragraphs" }. Transactions: ${JSON.stringify(
           transactions.slice(0, 200),
         )}`;
 
@@ -149,13 +149,13 @@ export async function GET(request: Request) {
           }
         }
 
-        // Try to parse JSON from the streamed output, otherwise fall back to local
+        // Try to parse JSON from the streamed output
         try {
           const parsed = JSON.parse(accumulated);
-          return NextResponse.json({ source: 'gemini', analysis: parsed });
+          return NextResponse.json({ source: 'gemini', response: parsed.response });
         } catch {
-          const local = simpleLocalAnalysis(transactions);
-          return NextResponse.json({ source: 'gemini-raw', text: accumulated, local });
+          console.error('Failed to parse Gemini response as JSON');
+          return NextResponse.json({ source: 'gemini-raw', response: accumulated });
         }
       } catch (err) {
         console.error('Gemini call failed:', err);
