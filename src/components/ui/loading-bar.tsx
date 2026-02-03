@@ -9,14 +9,14 @@ const LoadingBar = ({ percent }:{percent:number}) => {
   }, [percent]);
   return (
     <Progress.Root
-      className="relative h-[25px] w-full overflow-hidden rounded-full bg-blackA6 border-solid border-2 border-gray-800"
+      className="relative h-[25px] w-full overflow-hidden rounded-full bg-blackA6 border-solid border-5 border-white bg-white"
       style={{
         transform: 'translateZ(0)',
       }}
       value={progress}
     >
       <Progress.Indicator
-        className="ease-[cubic-bezier(0.65, 0, 0.35, 1)] size-full bg-white transition-transform duration-[660ms]"
+        className="ease-[cubic-bezier(0.65, 0, 0.35, 1)] size-full bg-blue-950 transition-transform duration-[660ms]"
         style={{ transform: `translateX(-${100 - progress}%)` }}
       />
     </Progress.Root>
