@@ -93,9 +93,14 @@ export function DashboardPage() {
         <div className="p-10 max-w-7xl m-auto space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-semibold">Welcome back, {profile.username ?? 'there'}</h1>
-            <Button asChild>
-              <Link href="/analyze">Create New Analysis</Link>
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button asChild>
+                <Link href="/analysis">Analyze Transaction History</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/analyze">Create New Analysis</Link>
+              </Button>
+            </div>
           </div>
           {(transactions.length === 0) ?
 
