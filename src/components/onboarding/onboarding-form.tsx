@@ -16,13 +16,14 @@ import {
 
 interface OnboardingFormProps {
   initialData?: {
-    username?: string;
-    monthlyBudget?: number;
-    currency?: string;
-    monthlyIrregularSpending?: number;
-    savingsGoalAmount?: number;
-    savingsGoalReward?: string;
-    savingsGoalTargetDate?: string;
+    username?: string | null;
+    monthlyBudget?: number | null;
+    currency?: string | null;
+    monthlyIrregularSpending?: number | null;
+    savingsGoalAmount?: number | null;
+    savingsGoalReward?: string | null;
+    savingsGoalTargetDate?: string | null;
+    hobbies?: { name: string; rating: number }[] | null;
   };
   onSubmit: (data: {
     username: string;
@@ -32,11 +33,12 @@ interface OnboardingFormProps {
     savingsGoalAmount: number;
     savingsGoalReward: string;
     savingsGoalTargetDate: string;
+    hobbies: { name: string; rating: number }[];
   }) => Promise<void>;
   isLoading?: boolean;
 }
 
-type Step = 'budget' | 'spending' | 'rewards';
+type Step = 'budget' | 'spending' | 'rewards' | 'hobbies';
 
 const CURRENCY_OPTIONS = [
   'USD',
@@ -61,7 +63,12 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
     savingsGoalAmount: initialData?.savingsGoalAmount?.toString() || '',
     savingsGoalReward: initialData?.savingsGoalReward || '',
     savingsGoalTargetDate: initialData?.savingsGoalTargetDate?.split('T')[0] || '',
+    hobbies: initialData?.hobbies || [] as { name: string; rating: number }[],
   });
+
+  // Hobbies local state
+  const [hobbyInput, setHobbyInput] = useState('');
+  const [hobbyRating, setHobbyRating] = useState(5);
 
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
 
@@ -104,6 +111,8 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
         setStep('spending');
       } else if (step === 'spending') {
         setStep('rewards');
+      } else if (step === 'rewards') {
+        setStep('hobbies');
       }
     }
   };
@@ -113,6 +122,8 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
       setStep('budget');
     } else if (step === 'rewards') {
       setStep('spending');
+    } else if (step === 'hobbies') {
+      setStep('rewards');
     }
   };
 
@@ -144,6 +155,7 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
           savingsGoalAmount: parseFloat(formData.savingsGoalAmount),
           savingsGoalReward: formData.savingsGoalReward,
           savingsGoalTargetDate: formData.savingsGoalTargetDate,
+          hobbies: formData.hobbies,
         });
       } catch (error) {
         setErrors({
@@ -168,11 +180,15 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
             <span className={`font-medium ${step === 'rewards' ? 'text-primary' : 'text-muted-foreground'}`}>
               Rewards
             </span>
+            <span className={`font-medium ${step === 'hobbies' ? 'text-primary' : 'text-muted-foreground'}`}>
+              Interests
+            </span>
           </div>
           <div className="flex gap-2">
-            <div className={`flex-1 h-1 rounded ${step === 'budget' || step === 'spending' || step === 'rewards' ? 'bg-primary' : 'bg-muted'}`} />
-            <div className={`flex-1 h-1 rounded ${step === 'spending' || step === 'rewards' ? 'bg-primary' : 'bg-muted'}`} />
-            <div className={`flex-1 h-1 rounded ${step === 'rewards' ? 'bg-primary' : 'bg-muted'}`} />
+            <div className={`flex-1 h-1 rounded ${step === 'budget' || step === 'spending' || step === 'rewards' || step === 'hobbies' ? 'bg-primary' : 'bg-muted'}`} />
+            <div className={`flex-1 h-1 rounded ${step === 'spending' || step === 'rewards' || step === 'hobbies' ? 'bg-primary' : 'bg-muted'}`} />
+            <div className={`flex-1 h-1 rounded ${step === 'rewards' || step === 'hobbies' ? 'bg-primary' : 'bg-muted'}`} />
+            <div className={`flex-1 h-1 rounded ${step === 'hobbies' ? 'bg-primary' : 'bg-muted'}`} />
           </div>
         </div>
 
@@ -307,6 +323,81 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
             </>
           )}
 
+          {step === 'hobbies' && (
+            <>
+              <h2 className="text-lg font-semibold">Hobbies & Interests</h2>
+              <p className="text-sm text-muted-foreground">Add your hobbies and rate how much you are invested in them (1-10).</p>
+
+              <div className="space-y-4">
+                <div className="flex gap-2 items-end">
+                  <div className="grid flex-1 gap-2">
+                    <Label htmlFor="hobbyName">Hobby / Interest</Label>
+                    <Input
+                      id="hobbyName"
+                      placeholder="e.g. Photography, Cycling"
+                      value={hobbyInput}
+                      onChange={(e) => setHobbyInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid w-20 gap-2">
+                    <Label htmlFor="hobbyRating">Rating</Label>
+                    <Input
+                      id="hobbyRating"
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={hobbyRating}
+                      onChange={(e) => setHobbyRating(parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (hobbyInput.trim() && hobbyRating >= 1 && hobbyRating <= 10) {
+                        setFormData(prev => ({
+                          ...prev,
+                          hobbies: [...prev.hobbies, { name: hobbyInput.trim(), rating: hobbyRating }],
+                        }));
+                        setHobbyInput('');
+                        setHobbyRating(5);
+                      }
+                    }}
+                    variant="secondary"
+                  >
+                    Add
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  {formData.hobbies.length === 0 && (
+                    <p className="text-sm text-muted-foreground italic">No hobbies added yet.</p>
+                  )}
+                  {formData.hobbies.map((hobby, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 border rounded-md">
+                      <div>
+                        <span className="font-medium">{hobby.name}</span>
+                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{hobby.rating}/10</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            hobbies: prev.hobbies.filter((_, i) => i !== index),
+                          }));
+                        }}
+                      >
+                        X
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
           {errors.submit && <p className="text-sm text-red-500">{errors.submit}</p>}
         </div>
 
@@ -320,7 +411,7 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
             Back
           </Button>
 
-          {step !== 'rewards' ? (
+          {step !== 'hobbies' ? (
             <Button onClick={handleNext} disabled={isLoading}>
               Next
             </Button>

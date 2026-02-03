@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 import { createClient as createSupabaseClient } from '@/utils/supabase/server';
@@ -51,7 +51,7 @@ function periodToRange(period: string | null) {
   return { start: start.toISOString(), end: end.toISOString() };
 }
 
-function simpleLocalAnalysis(transactions: Transaction[]): Promise<AnalysisResult> {
+function simpleLocalAnalysis(transactions: Transaction[]): AnalysisResult {
   const total = transactions.reduce((s, t) => s + (Number(t.amount ?? t.price ?? 0) || 0), 0);
   const count = transactions.length;
   const avg = count ? total / count : 0;
@@ -115,39 +115,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No transactions found for the specified period.' }, { status: 404 });
     }
 
-    // If GEMINI key present, send a prompt for higher-level analysis using streaming.
+    // If GEMINI key present, send a prompt for higher-level analysis.
     if (GEMINI_KEY) {
       try {
-        const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
-        const model = 'gemini-3-flash-preview';
-        const config = {
-          thinkingConfig: { thinkingLevel: 'HIGH' as const },
-          tools: [],
-        };
+        const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
         const prompt = `Analyze the following user's transactions between ${start} and ${end}. Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis. Return JSON with keys: summary, impulseCandidates, recommendations. Return your response in a single key value pair in your json response such as { response: "Your entire written response here of multiple paragraphs, include any newline special characters to separate paragraphs" }. Transactions: ${JSON.stringify(
           transactions.slice(0, 200),
         )}`;
-
-        const contents = [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
-          },
-        ];
-
-        // Stream generation so we can handle longer responses and partial output.
-        const responseStream = await ai.models.generateContentStream({ model, config, contents });
-        let accumulated = '';
-        for await (const chunk of responseStream) {
-          if (chunk?.text) {
-            accumulated += chunk.text;
-          }
-        }
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const accumulated = response.text();
 
         // Try to parse JSON from the streamed output
         try {
