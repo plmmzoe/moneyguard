@@ -12,6 +12,7 @@ export async function createOrUpdateProfile(data: {
   savingsGoalAmount: number;
   savingsGoalReward: string;
   savingsGoalTargetDate: string;
+  hobbies?: { name: string; rating: number }[];
 }) {
   const supabase = await createClient();
   const {
@@ -108,6 +109,7 @@ export async function getProfile() {
     savingsGoalAmount: profile.savings_goal_amount,
     savingsGoalReward: profile.savings_goal_reward,
     savingsGoalTargetDate: profile.savings_goal_target_date,
+    hobbies: profile.hobbies as { name: string; rating: number }[] | null,
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
   };
