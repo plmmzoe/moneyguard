@@ -1,6 +1,9 @@
 'use server';
 
+import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
+
+export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transaction_id'> & Partial<Pick<Tables<'transactions'>, 'user_id'>>;
 
 export async function getProfile() {
   const supabase = await createClient();
@@ -79,6 +82,50 @@ export async function getAnalyses() {
   if (error) {
     console.error('Error fetching analyses:', error);
     return [];
+  }
+
+  return data;
+}
+
+export async function postTransaction(transactionData:TransactionData) {
+  const supabase = await createClient();
+  const transaction = transactionData;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+  transaction.user_id = user.id;
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert([transaction]);
+
+  if (error) {
+    console.error('Failed to post user transaction:', error);
+    throw new Error(`Error posting transaction: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function deleteTransactions(transactionIds:number[]) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+  const { data, error } = await supabase
+    .from('transactions')
+    .delete()
+    .in('transaction_id', transactionIds);
+  if (error) {
+    console.error('Failed to delete user transaction:', error);
+    throw new Error(`Error deleting transaction: ${error.message}`);
   }
 
   return data;

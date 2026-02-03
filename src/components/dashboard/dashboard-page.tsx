@@ -1,95 +1,56 @@
 'use client';
 
-import Link from 'next/link';
+import { Tabs } from 'radix-ui';
 import { useEffect, useState } from 'react';
 
-import { getAnalyses, getProfile, getTransactions } from '@/app/dashboard/actions';
-import { BudgetCard, IrrSpdCard, SavingsCard, TransactionCard } from '@/components/dashboard/cards/transaction-card';
+import { getAnalyses } from '@/app/dashboard/actions';
+import { Profile } from '@/components/dashboard/profile';
 import Header from '@/components/home/header/header';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
 import { useUserInfo } from '@/hooks/useUserInfo';
-import { TransactionDated } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
-import { createClient } from '@/utils/supabase/client';
 import '../../styles/home-page.css';
+import { createClient } from '@/utils/supabase/client';
 
 export function DashboardPage() {
-  const [profile, setProfile] = useState<Tables<'profiles'>>();
-  const { toast } = useToast();
-  const [transactions, setTransactions] = useState<TransactionDated[]>([]);
-  const [totalSpending, setTotalSpending] = useState(0);
   const supabase = createClient();
-  const { user } = useUserInfo(supabase);
-  useEffect(() => {
-    if (user) {
-      getProfile().then(profile => {
-        if (profile && profile?.username) {
-          setProfile(profile);
-        }
-      }).catch(error => {
-        toast({
-          title: 'Error',
-          description: error instanceof Error ? error.message : 'User profile fetch failed',
-          variant: 'destructive',
-        });
-        console.error('failed to get user profile');
-      });
-      getTransactions().then(history => {
-        if (history) {
-          let total = 0;
-          const historyDated = history.map((h) => {
-            const hDated = h as TransactionDated;
-            hDated.date = new Date(h.created_at);
-            if (h.amount) {
-              total += h.amount;
-            }
-            return hDated;
-          });
-          setTotalSpending(total);
-          setTransactions(historyDated);
-        }
-      }).catch(error => {
-        toast({
-          title: 'Error',
-          description: error instanceof Error ? error.message : 'User history fetch failed',
-          variant: 'destructive',
-        });
-        console.error('failed to get user transaction history');
-      });
-    }
-  }, [supabase, user, toast]);
   return (
     <>
-      <div className={'h-full w-full'}>
-        <Header user={user} />
-        <div className={'p-10 max-w-7xl m-auto'}>
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <h1 className="text-3xl font-bold">
-              {(profile) ?
-                `Welcome Back, ${profile.username}`
-                : 'No profile detected'
-              }
-            </h1>
-            <Button asChild>
-              <Link href="/analyze">Create New Analysis</Link>
-            </Button>
-          </div>
-          <TransactionCard transactions={transactions} />
-          <div className={'grid grid-cols-3 '}>
-            {profile ?
-              <>
-                <BudgetCard totalSpending={totalSpending} profile={profile} />
-                <IrrSpdCard profile={profile} spending={totalSpending} />
-                <SavingsCard profile={profile} totalSpending={totalSpending} />
-              </>
-              : <p>no profile detected</p>
-            }
-          </div>
-
-          <RecentAnalyses />
-        </div>
-      </div >
+      <div className={'w-full h-full'}>
+        <Header user={useUserInfo(supabase).user}/>
+        <Tabs.Root
+          className="flex w-full flex-col"
+          defaultValue="profile"
+        >
+          <Tabs.List
+            className="flex shrink-0 border-b border-mauve6 w-3/4 m-auto"
+          >
+            <Tabs.Trigger
+              className="flex h-[45px] flex-1 cursor-default select-none items-center justify-center  px-5 text-[15px] leading-none text-mauve11 outline-none first:rounded-tl-md last:rounded-tr-md hover:text-violet11 data-[state=active]:text-violet11 data-[state=active]:shadow-[inset_0_-1px_0_0,0_1px_0_0] data-[state=active]:shadow-current data-[state=active]:focus:relative "
+              value="profile"
+            >
+              Profile
+            </Tabs.Trigger>
+            <Tabs.Trigger
+              className="flex h-[45px] flex-1 cursor-default select-none items-center justify-center  px-5 text-[15px] leading-none text-mauve11 outline-none first:rounded-tl-md last:rounded-tr-md hover:text-violet11 data-[state=active]:text-violet11 data-[state=active]:shadow-[inset_0_-1px_0_0,0_1px_0_0] data-[state=active]:shadow-current data-[state=active]:focus:relative "
+              value="rec_analysis"
+            >
+              Recent Analysis
+            </Tabs.Trigger>
+          </Tabs.List>
+          <Tabs.Content
+            className="grow rounded-b-md  p-5 outline-none"
+            value="profile"
+          >
+            <Profile supabase={supabase} />
+          </Tabs.Content>
+          <Tabs.Content
+            className="grow rounded-b-md  p-5 outline-none"
+            value="rec_analysis"
+          >
+            <RecentAnalyses/>
+          </Tabs.Content>
+        </Tabs.Root>
+      </div>
     </>
   );
 }
