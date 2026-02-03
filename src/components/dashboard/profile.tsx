@@ -97,8 +97,8 @@ export function Profile({ supabase }: {supabase:SupabaseClient|null}) {
         console.error('failed to get user profile');
       });
       updateTransactions();
-    }
-  }, [supabase, user, toast, updateTransactions]);
+    }// eslint-disable-next-line
+  }, [user]);
   return (
     <>
       <div className={'h-full w-full'}>

@@ -98,8 +98,8 @@ const TransactionElem = (
       onDeselect(transaction);
 
       setBgColor('#020817');
-    }
-  }, [checked, onDeselect, onSelect, transaction]);
+    }// eslint-disable-next-line
+  }, [checked]);
   return (
     <div>
       <Card className={'grid grid-cols-3 m-1 border-0 border-b-1 rounded-b-none rounded-none p-3'} key={transaction.transaction_id} style={{ backgroundColor: bgColor }} onClick={(_) => setChecked(!checked)}>
