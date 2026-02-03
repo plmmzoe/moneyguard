@@ -115,8 +115,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No transactions found for the specified period.' }, { status: 404 });
     }
 
-    console.log(`Data: ${JSON.stringify(transactions.slice(0, 2))}... total ${transactions.length} transactions`);
-
     // If GEMINI key present, send a prompt for higher-level analysis using streaming.
     if (GEMINI_KEY) {
       try {
@@ -150,12 +148,10 @@ export async function GET(request: Request) {
             accumulated += chunk.text;
           }
         }
-        console.log('Gemini response: ', accumulated);
 
         // Try to parse JSON from the streamed output, otherwise fall back to local
         try {
           const parsed = JSON.parse(accumulated);
-          console.log('Parsed Gemini analysis: ', parsed);
           return NextResponse.json({ source: 'gemini', analysis: parsed });
         } catch {
           const local = simpleLocalAnalysis(transactions);
