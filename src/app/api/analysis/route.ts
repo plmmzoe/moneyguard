@@ -99,7 +99,7 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabase
       .from('transactions')
-      .select('*')
+      .select('transaction_description, amount, created_at')
       .eq('user_id', user.id)
       .gte('created_at', start)
       .lte('created_at', end)
@@ -115,6 +115,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No transactions found for the specified period.' }, { status: 404 });
     }
 
+    console.log(`Data: ${JSON.stringify(transactions.slice(0, 2))}... total ${transactions.length} transactions`);
+
     // If GEMINI key present, send a prompt for higher-level analysis using streaming.
     if (GEMINI_KEY) {
       try {
@@ -125,7 +127,7 @@ export async function GET(request: Request) {
           tools: [],
         };
 
-        const prompt = `Analyze the following user's transactions between ${start} and ${end}. Identify spending trends, likely impulse purchases, and three actionable recommendations. Return JSON with keys: summary, impulseCandidates, recommendations. Transactions: ${JSON.stringify(
+        const prompt = `Analyze the following user's transactions between ${start} and ${end}. Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis. Return JSON with keys: summary, impulseCandidates, recommendations. Transactions: ${JSON.stringify(
           transactions.slice(0, 200),
         )}`;
 
@@ -148,10 +150,12 @@ export async function GET(request: Request) {
             accumulated += chunk.text;
           }
         }
+        console.log('Gemini response: ', accumulated);
 
         // Try to parse JSON from the streamed output, otherwise fall back to local
         try {
           const parsed = JSON.parse(accumulated);
+          console.log('Parsed Gemini analysis: ', parsed);
           return NextResponse.json({ source: 'gemini', analysis: parsed });
         } catch {
           const local = simpleLocalAnalysis(transactions);
