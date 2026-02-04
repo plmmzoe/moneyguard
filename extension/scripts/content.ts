@@ -1,27 +1,8 @@
+import { detectPurchaseIntent } from './detect';
 
-// Heuristic keywords for detecting purchase intent
-const PURCHASE_KEYWORDS = ['checkout', 'place order', 'buy now', 'complete purchase', 'payment'];
 const CURRENCY_REGEX = /[\$€£¥]\s*\d+([.,]\d{2})?/;
 
-let hasPrompted = false;
-
-function detectPurchaseIntent() {
-    if (hasPrompted) return;
-
-    const textContent = document.body.innerText.toLowerCase();
-    const hasKeyword = PURCHASE_KEYWORDS.some(keyword => textContent.includes(keyword));
-    const hasPrice = CURRENCY_REGEX.test(document.body.innerText);
-
-    // Simple heuristic: Keyword + Price or just explicit checkout URL
-    const isCheckoutUrl = window.location.href.includes('checkout') || window.location.href.includes('cart');
-
-    if ((hasKeyword && hasPrice) || isCheckoutUrl) {
-        showPermissionUI();
-        hasPrompted = true;
-    }
-}
-
-function showPermissionUI() {
+export function showPermissionUI() {
     const container = document.createElement('div');
     container.id = 'moneyguard-permission-container';
     container.style.position = 'fixed';
@@ -103,3 +84,8 @@ const observer = new MutationObserver(() => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// Delayed check in case of single-page apps
+setTimeout(() => {
+    detectPurchaseIntent();
+}, 5000);
