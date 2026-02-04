@@ -28,6 +28,7 @@ export default defineConfig({
       input: {
         popup: path.resolve(__dirname, 'popup.html'),
         background: path.resolve(__dirname, 'scripts/background.ts'),
+        content: path.resolve(__dirname, 'scripts/content.ts'),
       },
       output: {
         entryFileNames: (chunk) => (chunk.name === 'background' ? 'background.js' : '[name].js'),
