@@ -78,13 +78,13 @@ export function HomePage() {
               <>
                 <Link
                   href="/dashboard"
-                  className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto text-center"
+                  className="px-8 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors w-full sm:w-auto text-center"
                 >
                   Dashboard
                 </Link>
                 <Link
                   href="/analyze"
-                  className="px-8 py-3 bg-white text-blue-600 border border-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-colors w-full sm:w-auto text-center"
+                  className="px-8 py-3 bg-white text-primary border border-primary font-medium rounded-lg hover:bg-primary/5 transition-colors w-full sm:w-auto text-center"
                 >
                   New Analysis
                 </Link>
@@ -93,13 +93,13 @@ export function HomePage() {
               <>
                 <Link
                   href="/login"
-                  className="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto text-center"
+                  className="px-8 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors w-full sm:w-auto text-center"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-8 py-3 bg-white text-blue-600 border border-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-colors w-full sm:w-auto text-center"
+                  className="px-8 py-3 bg-white text-primary border border-primary font-medium rounded-lg hover:bg-primary/5 transition-colors w-full sm:w-auto text-center"
                 >
                   Sign up
                 </Link>

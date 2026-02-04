@@ -1,22 +1,3 @@
-.login-background-base {
-  width: 100%;
-  position: absolute;
-  z-index: -1;
-}
-
-.grid-bg {
-  background: url('/assets/background/grid-bg.svg') no-repeat;
-}
-
-.grain-background {
-  mix-blend-mode: overlay;
-  background: url('/assets/background/grain-bg.svg') repeat;
-}
-
-.login-gradient-background {
-  background: url('/assets/background/login-gradient.svg') no-repeat top;
-}
-
 .login-card-border,
 .login-card-hard-blur,
 .login-card-vertical-hard-blur,

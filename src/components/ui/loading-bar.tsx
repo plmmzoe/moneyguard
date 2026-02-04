@@ -16,7 +16,7 @@ const LoadingBar = ({ percent }:{percent:number}) => {
       value={progress}
     >
       <Progress.Indicator
-        className="ease-[cubic-bezier(0.65, 0, 0.35, 1)] size-full bg-blue-950 transition-transform duration-[660ms]"
+        className="ease-[cubic-bezier(0.65, 0, 0.35, 1)] size-full bg-primary transition-transform duration-[660ms]"
         style={{ transform: `translateX(-${100 - progress}%)` }}
       />
     </Progress.Root>
