@@ -110,10 +110,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const transactions = data ?? [];
-    if (transactions.length === 0) {
+    const rawTransactions =
+      (data as { transaction_description: string | null; amount: number | null; created_at: string }[]) ?? [];
+
+    if (rawTransactions.length === 0) {
       return NextResponse.json({ error: 'No transactions found for the specified period.' }, { status: 404 });
     }
+
+    const transactions: Transaction[] = rawTransactions.map((t) => ({
+      date: t.created_at,
+      merchant: t.transaction_description ?? undefined,
+      amount: t.amount ?? undefined,
+    }));
 
     // If GEMINI key present, send a prompt for higher-level analysis.
     if (GEMINI_KEY) {
