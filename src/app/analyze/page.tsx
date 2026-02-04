@@ -148,21 +148,31 @@ export default function AnalyzePage() {
 
   return (
     <AppLayout>
-      <div className="rounded-xl bg-card border border-border p-6 max-w-3xl mx-auto">
+      <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
         <div className="flex flex-col items-center mb-10 text-center space-y-2">
           <div className="p-3 bg-primary/10 rounded-full mb-2">
             <Sparkles className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Purchase Clarity Check</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Quick Check</h1>
           <p className="text-muted-foreground max-w-lg">
-          Take a moment to reflect. This tool helps you look past the impulse and see the real value.
+            Reflect on a purchase before you buy. Answer a short survey about the item, your budget, and how you feel—then get a clear recommendation on whether it’s worth it for you.
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="survey">Survey</TabsTrigger>
-            <TabsTrigger value="result">Analysis Result</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 border border-border">
+            <TabsTrigger
+              value="survey"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+            >
+              Survey
+            </TabsTrigger>
+            <TabsTrigger
+              value="result"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+            >
+              Analysis Result
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="survey" className="space-y-6">

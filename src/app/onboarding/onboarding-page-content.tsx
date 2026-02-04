@@ -62,7 +62,7 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
   };
 
   return (
-    <div className="rounded-xl bg-card border border-border p-6 max-w-2xl">
+    <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
       <div className="w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">

@@ -88,10 +88,12 @@ export default function TransactionsAnalysisPage() {
 
   return (
     <AppLayout>
-      <div className="rounded-xl bg-card border border-border p-6 max-w-4xl mx-auto">
+      <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Spending Analysis</h1>
-          <p className="text-muted-foreground">Overview of your spending and possible impulse purchases.</p>
+          <h1 className="text-3xl font-bold">Insight</h1>
+          <p className="text-muted-foreground">
+            View your transaction history over a chosen period. See totals, top merchants, and which recent small purchases might be impulse buys—so you can spot patterns and adjust spending.
+          </p>
         </div>
 
         <div className="grid gap-6">

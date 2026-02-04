@@ -14,14 +14,14 @@ export function RecentAnalyses() {
 
   if (analyses.length === 0) {
     return (
-      <div className="rounded-xl bg-card border border-border p-6 text-center text-muted-foreground">
+      <div className="rounded-xl bg-card border border-border p-6 w-full text-center text-muted-foreground">
         <p>No analyses yet. Run a Quick Check to see your history here.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl bg-card border border-border p-6">
+    <div className="rounded-xl bg-card border border-border p-6 w-full">
       <h1 className="text-2xl font-bold mb-6">Recent Impulse Analysis</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {analyses.map((analysis) => (

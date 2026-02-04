@@ -10,7 +10,7 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="rounded-xl bg-card border border-border p-6 max-w-xl">
+      <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Account</h1>
         {user ? (
           <dl className="space-y-4">
