@@ -1,3 +1,5 @@
+import { AppLayout } from '@/components/app-layout';
+
 import { getProfile } from './actions';
 import { OnboardingPageContent } from './onboarding-page-content';
 
@@ -10,21 +12,25 @@ export default async function OnboardingPage() {
   const profile = await getProfile();
 
   // If profile exists, user is updating, otherwise first-time onboarding
-  const initialProfile = profile ? {
-    username: profile.username,
-    monthlyBudget: profile.monthlyBudget,
-    currency: profile.currency,
-    monthlyIrregularSpending: profile.monthlyIrregularSpending,
-    savingsGoalAmount: profile.savingsGoalAmount,
-    savingsGoalReward: profile.savingsGoalReward,
-    savingsGoalTargetDate: profile.savingsGoalTargetDate,
-    hobbies: profile.hobbies,
-  } : undefined;
+  const initialProfile = profile
+    ? {
+      username: profile.username,
+      monthlyBudget: profile.monthlyBudget,
+      currency: profile.currency,
+      monthlyIrregularSpending: profile.monthlyIrregularSpending,
+      savingsGoalAmount: profile.savingsGoalAmount,
+      savingsGoalReward: profile.savingsGoalReward,
+      savingsGoalTargetDate: profile.savingsGoalTargetDate,
+      hobbies: profile.hobbies,
+    }
+    : undefined;
 
   return (
-    <OnboardingPageContent
-      initialProfile={initialProfile}
-      isUpdate={!!profile}
-    />
+    <AppLayout>
+      <OnboardingPageContent
+        initialProfile={initialProfile}
+        isUpdate={!!profile}
+      />
+    </AppLayout>
   );
 }

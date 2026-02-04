@@ -6,7 +6,7 @@
 
 :root {
   /* Light theme based on MoneyGuard palette */
-  --background: #ffffff;
+  --background: #f3f6f7; /* light grey app background */
   --foreground: #465869; /* main dark text */
 
   --card: #ffffff;

@@ -1,7 +1,7 @@
 'use client';
 
-import { User } from '@supabase/supabase-js';
-import { LogOut } from 'lucide-react';
+import { User as SupabaseUser } from '@supabase/supabase-js';
+import { LogOut, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -9,7 +9,7 @@ import { signOut } from '@/app/login/actions';
 import { Button } from '@/components/ui/button';
 
 interface Props {
-  user: User | null;
+  user: SupabaseUser | null;
 }
 
 export default function Header({ user }: Props) {
@@ -33,22 +33,11 @@ export default function Header({ user }: Props) {
           {user?.id ? (
             <>
               <Link
-                href="/dashboard"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                href="/profile"
+                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                aria-label="Account"
               >
-                Dashboard
-              </Link>
-              <Link
-                href="/onboarding"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Profile
-              </Link>
-              <Link
-                href="/analyze"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Analyze
+                <User className="h-5 w-5" />
               </Link>
               <form action={signOut} className="inline">
                 <Button
