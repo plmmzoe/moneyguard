@@ -110,9 +110,14 @@ export function Profile({ supabase }: {supabase:SupabaseClient|null}) {
                 : 'No profile detected'
               }
             </h1>
-            <Button asChild>
-              <Link href="/analyze">Create New Analysis</Link>
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button asChild>
+                <Link href="/analysis">Analyze Transaction History</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/analyze">Create New Analysis</Link>
+              </Button>
+            </div>
           </div>
           <TransactionCard
             transactions={transactions}

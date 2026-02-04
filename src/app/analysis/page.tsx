@@ -37,6 +37,7 @@ interface LocalAnalysis {
 
 interface AnalysisResponse {
   source?: string;
+  response?: string;
   local?: LocalAnalysis;
   analysis?: Record<string, unknown>;
   transactions?: TransactionData[];
@@ -135,6 +136,10 @@ export default function TransactionsAnalysisPage() {
             </CardHeader>
             <CardContent>
               {data.error && <div className="text-destructive">{data.error}</div>}
+
+              {data.response && (
+                <div className="whitespace-pre-wrap leading-relaxed text-base">{data.response}</div>
+              )}
 
               {data.analysis && (
                 <pre className="whitespace-pre-wrap">{JSON.stringify(data.analysis, null, 2)}</pre>
