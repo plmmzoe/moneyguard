@@ -176,7 +176,7 @@ const IrrSpdCard = ({ profile, spending }: { profile: Tables<'profiles'>, spendi
   );
 };
 
-const SavingsCard = ({ profile, totalSpending }: { profile: Tables<'profiles'>, totalSpending: number }) => {
+const SavingsCard = ({ profile, saving }: { profile: Tables<'profiles'>, saving: number }) => {
   return (
     <Card>
       <CardHeader>
@@ -187,14 +187,13 @@ const SavingsCard = ({ profile, totalSpending }: { profile: Tables<'profiles'>, 
       {profile.savings_goal_amount ?
         <CardContent>
           <p className={'font-bold text-4xl'}>
-            0$ /
+            {saving}$ /
             {profile.savings_goal_amount}$
           </p>
           <div className={'m-auto w-full pt-6'}>
             {(profile.savings_goal_amount &&
-              totalSpending / profile.savings_goal_amount < 1) ?
-              <LoadingBar percent={(Math.max(totalSpending, 0)
-                / profile.savings_goal_amount) * 100} />
+              saving / profile.savings_goal_amount < 1) ?
+              <LoadingBar percent={(saving / profile.savings_goal_amount) * 100} />
               : <LoadingBar percent={100} />
             }
           </div>

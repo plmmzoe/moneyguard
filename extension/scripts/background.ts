@@ -2,16 +2,60 @@
  * Service worker for MoneyGuard extension.
  */
 
-import {SupabaseUser,Client,addTransactions,updateSavings, getProfile, getUser} from '../modules/supabase-module.ts';
+import {addTransactions,updateSavings, getProfile, getUser} from '../modules/supabase-module.ts';
 import { Item, MsgRequest, requestTypes } from '../shared/types.ts';
-import { SupabaseClient } from '@supabase/supabase-js';
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('MoneyGuard Extension Installed');
 });
 
+const handleGetUser = async (sendResponse:(response:any) => void) => {
+  await getUser().then(r=>{
+    console.log('got user');
+    console.log(r)
+    sendResponse({user: r.user,success:true})
+  }).catch(err=>{
+    console.error("Failed to get user "+err);
+    sendResponse({success:false})
+  })
+}
+
+const handleGetProfile = async (user:string,sendResponse:(response:any) => void) => {
+  getProfile(user).then(r=>{
+    console.log('got profile');
+    console.log(r)
+    sendResponse({profile: r,success:true})
+  }).catch(err=>{
+    console.error("Failed to get profile "+err.toString());
+    sendResponse({success:false})
+  })
+}
+
+const handleUpdateSavings = async (user:string,amount:number,sendResponse:(response:any) => void) => {
+  updateSavings(user,amount).then(r=>{
+    console.log('updated savings');
+    console.log(r)
+    sendResponse({user: r,success:true})
+  }).catch(err=>{
+    console.error("Failed to update savings"+err);
+    sendResponse({success:false})
+  })
+}
+
+const handleAddTransactions = async (user:string,items:Item[],sendResponse:(response:any) => void) => {
+  addTransactions(user,items).then(r=>{
+    console.log('added transactions');
+    console.log(r)
+    sendResponse({user: r,success:true})
+  }).catch(err=>{
+    console.error("Failed to add transactions "+err);
+    sendResponse({success:false})
+  })
+}
+
 chrome.runtime.onMessage.addListener(
   function(request:MsgRequest, sender, sendResponse) {
+    console.log("got message");
     console.log(request);
     console.log(sender.tab ?
       "From a content script:" + sender.tab.url :
@@ -37,62 +81,24 @@ chrome.runtime.onMessage.addListener(
       });
     }else if (request.type === requestTypes.addTransaction) {
       const data:Item[] = request.items
-      const user:SupabaseUser = request.user
-      const client:Client = request.client
-      addTransactions(user,client,data).then(_ => {
-        sendResponse({
-          success: true,
-        });
-      }).catch(_=>{
-        sendResponse({
-          success: false,
-        });
-      })
+      const user:string = request.user
+      handleAddTransactions(user,data,sendResponse)
     }else if (request.type === requestTypes.updateSaving) {
       const amount:number = request.amount
-      const user:SupabaseUser = request.user
-      const client:Client = request.client
-      updateSavings(user,client,amount).then(_ => {
-        sendResponse({
-          success: true,
-        });
-      }).catch(_=>{
-        sendResponse({
-          success: false,
-        });
-      })
+      const user:string = request.user
+      handleUpdateSavings(user,amount,sendResponse)
     }else if (request.type === requestTypes.getUser) {
-      getUser().then(user => {
-        if (user.user) {
-          sendResponse({
-            success: true,
-            user: user
-          });
-        }else {
-          sendResponse({
-            success: false,
-          });
-        }
-      }).catch(_=>{
-        sendResponse({
-          success: false,
-        });
-      })
+      handleGetUser(sendResponse);
     }else if (request.type === requestTypes.getProfile) {
-      const user:SupabaseUser = request.user
-      const client:SupabaseClient = request.client
-      getProfile(user,client)
-        .then(profile => {
-          sendResponse({
-            success: true,
-            profile:profile
-          });
-        })
-        .catch(_=>{
-        sendResponse({
-          success: false,
-        });
+      const user:string = request.user
+      handleGetProfile(user,sendResponse)
+    }else if (request.type === requestTypes.prevTab) {
+      chrome.tabs.goBack().then(_=>{
+        console.log('return tab success');
+      }).catch(err=>{
+        console.error(err);
       })
     }
+    return true;
   }
 );

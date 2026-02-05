@@ -11,7 +11,9 @@
     "type": "module"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "tabs",
+    "activeTab"
   ],
   "host_permissions": [
     "https://*.supabase.co/*",

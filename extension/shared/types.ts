@@ -14,15 +14,11 @@ export type MsgRequest = {
   [key:string]:any,
 }
 
-export type MsgResp = {
-  success: boolean,
-  [key:string]:any,
-}
-
 export const requestTypes = {
   openAnalysis:"OPEN_ANALYSIS",
   addTransaction:"ADD_TRANSACTION",
   updateSaving:"UPDATE_SAVINGS",
   getProfile:"GET_PROFILE",
   getUser:"GET_USER",
+  prevTab:"PREV_TAB",
 }

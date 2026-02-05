@@ -126,7 +126,7 @@ export function Profile({ supabase }: {supabase:SupabaseClient|null}) {
               <>
                 <BudgetCard totalSpending={totalSpending} profile={profile} />
                 <IrrSpdCard profile={profile} spending={totalSpending} />
-                <SavingsCard profile={profile} totalSpending={totalSpending} />
+                <SavingsCard profile={profile} saving={profile.total_saved ?? 0} />
               </>
               : <p>no profile detected</p>
             }

@@ -1,10 +1,15 @@
 import { Item, LlmResponse } from '../shared/types';
-import { SupabaseClient, User } from '@supabase/supabase-js';
 
-export function analysisUI(user:User | null, client:SupabaseClient, resp: LlmResponse, onAccept:(user:User,client:SupabaseClient,items: Item[])=>void, onDecline:(user:User,client:SupabaseClient,items: Item[])=>void){
+export function analysisUI(user:string, resp: LlmResponse,profile:any, onAccept:(user:string,items: Item[])=>void, onDecline:(user:string,items: Item[])=>void){
   if (!user){
     throw new Error('No user found!');
   }
+  let cost = 0;
+  for (const item of resp.items) {
+    cost += item.price;
+  }
+  const budget = profile.monthly_budget;
+  const totalSaving = profile.total_saved;
   const container = document.createElement('div');
   container.id = 'analysis';
   container.style.position = 'fixed';
@@ -26,7 +31,8 @@ export function analysisUI(user:User | null, client:SupabaseClient, resp: LlmRes
   const style = document.createElement('style');
   style.textContent = `
   .title { font-weight: 600; font-size: 16px; color: #0f172a; margin-bottom: 4px; }
-  .text { font-size: 14px; color: #64748b; margin-bottom: 12px; }
+  .text { font-size: 20px; margin-bottom: 12px; }
+  .desc-text { font-size: 14px; color: #64748b; margin-bottom: 12px; }
   .buttons { display: flex; gap: 8px; }
   button {
     flex: 1;
@@ -45,9 +51,12 @@ export function analysisUI(user:User | null, client:SupabaseClient, resp: LlmRes
 
   const content = document.createElement('div');
   content.innerHTML = `
-  <div class="text">${resp.analysis}</div>
+
+  <div class="text"> Percentage of monthly budget: ${Math.floor(cost/budget*100)}%</div>
+  <div class="desc-text">${resp.analysis}</div>
+  <div class="desc-text">Total Amount Saved using MoneyTracker: ${totalSaving} \$</div>
   <div class="buttons">
-    <button class="btn-secondary" id="analyze-btn">Proceed</button>
+    <button class="btn-secondary" id="analyze-btn">Ignore budget</button>
     <button class="btn-primary" id="ignore-btn">Save money</button>
   </div>
 `;
@@ -56,13 +65,13 @@ export function analysisUI(user:User | null, client:SupabaseClient, resp: LlmRes
   shadow.appendChild(content);
 
   shadow.getElementById('ignore-btn')?.addEventListener('click', () => {
-    onDecline(user,client,resp.items);
     container.remove();
+    onDecline(user,resp.items);
   });
 
   shadow.getElementById('analyze-btn')?.addEventListener('click', () => {
-    onAccept(user,client,resp.items);
     container.remove();
+    onAccept(user,resp.items);
   });
 
   return container;
