@@ -56,6 +56,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.33",
     "@eslint/eslintrc": "^3.3.3",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/chrome": "^0.0.268",
@@ -80,7 +81,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
-    "vite": "^6.0.3"
+    "vite": "^6.4.1"
   },
   "pnpm": {
     "overrides": {

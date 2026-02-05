@@ -1,13 +1,39 @@
 import { detectPurchaseIntent } from './detect';
 import { showPermissionUI } from '../UIs/permissionUI.ts';
 import {analysisUI} from '../UIs/analysisUI.ts';
-import {LlmResponse,Item} from '../shared/types.ts';
 import { analyzePageText } from './gemini.ts';
 import { loadingUI } from '../UIs/loadingUI.ts';
-import { createExtensionSupabaseClient } from './supabase-extension.ts';
-import { createAuthApi } from 'shared/auth';
-import { SupabaseClient, User } from '@supabase/supabase-js';
-import { TransactionData } from '../../src/lib/dashboard.type.ts';
+
+type Item = {
+  name: string,
+  price:number,
+  quantity:number,
+}
+
+type LlmResponse = {
+  items: Item[],
+  analysis: string,
+}
+
+type MsgRequest = {
+  type: string,
+  [key:string]:any,
+}
+
+type MsgResp = {
+  success: boolean,
+  [key:string]:any,
+}
+
+const requestTypes = {
+  openAnalysis:"OPEN_ANALYSIS",
+  addTransaction:"ADD_TRANSACTION",
+  updateSaving:"UPDATE_SAVINGS",
+  getProfile:"GET_PROFILE",
+  getUser:"GET_USER",
+}
+
+type UserObj={user:any,client:any}
 
 function parseItem(text: string) : LlmResponse| undefined {
   try{
@@ -17,112 +43,140 @@ function parseItem(text: string) : LlmResponse| undefined {
   }
 }
 
-function purchase(user:User,client:SupabaseClient,items: Item[]) : void {
-  addTransactions(user,client,items).then(_=>{
-    console.log("transaction added")
-  }).catch(_=>{
-    console.error("Transaction update failed");
+function purchase(success:()=>void,failure:()=>void,user:any,client:any,items: Item[]) : void {
+  const msg:MsgRequest = {
+    type: requestTypes.addTransaction,
+    items:items,
+    user:user,
+    client:client,
+  }
+  chrome.runtime.sendMessage(msg,function(resp){
+    if (resp.success){
+      console.log("Successfully purchased transaction");
+      success()
+    }else{
+      console.error("Failed to purchase transaction");
+      failure()
+    }
   });
 }
 
-function save(user:User,client:SupabaseClient,items: Item[]) : void {
+function save(success:()=>void,failure:()=>void,user:any,client:any,items: Item[]) : void {
   let savings = 0;
   for (const item of items) {
     savings += item.price * item.quantity;
   }
-  updateSavings(user,client,savings).then(()=>{
-    console.log("savings updated")
-  }).catch(_=>{
-    console.error("saving update failed")
-  })
-}
-
-async function getUser(){
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-  if (!url || !anonKey) {
-    throw new Error('Extension not configured. Build with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+  const msg:MsgRequest = {
+    type: requestTypes.addTransaction,
+    amount:savings,
+    user:user,
+    client:client,
   }
-  const client = await createExtensionSupabaseClient(url,anonKey);
-  const auth = createAuthApi(client);
-  const sessionUser = await auth.getUser();
-  return {user:sessionUser, client:client};
-}
-
-async function getProfile(sessionUser:User|null, client:SupabaseClient)  {
-  let userContext = '';
-  if (sessionUser) {
-    const { data: profile } = await client
-      .from('profiles')
-      .select()
-      .eq('user_id', sessionUser.id)
-      .single();
-
-    if (profile) {
-      userContext = JSON.stringify(profile);
-    }
-  }
-  return userContext;
-}
-
-async function updateSavings(sessionUser:User, client:SupabaseClient, amount:number){
-  // @ts-ignore
-  const {data,error} = await client
-    .rpc('increment', { x: amount, row_id: sessionUser.id });
-  if (error){
-    throw new Error(`Error posting transaction: ${error.message}`);
-  }
-}
-
-async function addTransactions(sessionUser:User, client:SupabaseClient, items: Item[]) {
-  const current = new Date();
-  const transactionItems = items.map((item:Item) : TransactionData => {
-    return {
-      amount: item.quantity * item.price,
-      created_at: current.toISOString(),
-      transaction_description: item.name,
-      user_id: sessionUser.id
+  chrome.runtime.sendMessage(msg,function(resp){
+    if (resp.success){
+      console.log("Successfully updated savings");
+      success()
+    }else{
+      console.error("Failed to update savings");
+      failure()
     }
   })
-  // @ts-ignore
-  const {data,error} = await client
-    .from('transactions')
-    .insert(transactionItems)
+}
 
-  if (error){
-    throw new Error(`Error posting transaction: ${error.message}`);
+function getUser(success:(x:any)=>void,failure:()=>void) : void {
+  const msg:MsgRequest = {
+    type: requestTypes.getUser
   }
+  chrome.runtime.sendMessage(msg,function(resp:MsgResp){
+    console.log(resp)
+    if (resp.success){
+      console.log("Successfully got user");
+      success(resp.user)
+    }else{
+      console.error("Failed to get user");
+      failure()
+    }
+  })
+}
+
+function getProfile(userObj:UserObj,success:(x:any)=>void,failure:()=>void) : void {
+  const msg:MsgRequest = {
+    type: requestTypes.getProfile,
+    user:userObj.user,
+    client:userObj.client
+  }
+  chrome.runtime.sendMessage(msg,function(resp){
+    if (resp.success){
+      console.log("Successfully got user");
+      success(resp.user)
+    }else{
+      console.error("Failed to get user");
+      failure()
+    }
+  })
+}
+
+function proceedWithProfile(userObj:UserObj,profile:string,textContent:string){
+  const permissionUI = showPermissionUI(()=>{
+    const loadingScreen = loadingUI();
+    document.body.appendChild(loadingScreen);
+    analyzePageText(textContent,profile).then(r => {
+      console.log(r)
+      const txt = '';
+      const items = parseItem(txt);
+      if (items){
+        const boundPurchase = purchase.bind(null,
+          function(){
+          console.log("Purchase logged");
+          },
+          function(){
+          console.error("purchase logging failed")
+          })
+        const boundSave = save.bind(null,
+          function(){
+            console.log("saving logged");
+          },
+          function(){
+            console.error("saving logging failed")
+          })
+        loadingScreen.remove();
+        document.body.appendChild(analysisUI(userObj.user,userObj.client,items,boundPurchase,boundSave));
+      } else {
+        console.log(txt)
+        console.error("Gemini Response Corruption")
+      }
+    }).catch(_ => {
+      console.error("error populating analysis")
+    });
+  });
+  document.body.appendChild(permissionUI);
+}
+
+function proceedWithUser(userObj:UserObj){
+  const textContent = document.body.innerText.toLowerCase();
+  getProfile(userObj,
+    function(resp:MsgResp) {
+      if (resp.success){
+        proceedWithProfile(userObj,resp.profile,textContent)
+      }else{
+        console.error("Error getting profile]");
+      }
+    },function(){
+      console.error("Error getting profile");
+    })
 }
 
 function analyze(){
-  getUser().then(userObj => {
-    const textContent = document.body.innerText.toLowerCase();
-    getProfile(userObj.user,userObj.client).then((profile)=>{
-      const permissionUI = showPermissionUI(()=>{
-        const loadingScreen = loadingUI();
-        document.body.appendChild(loadingScreen);
-        analyzePageText(textContent,profile).then(r => {
-          console.log(r)
-          const txt = '';
-          const items = parseItem(txt);
-          if (items){
-            loadingScreen.remove();
-            document.body.appendChild(analysisUI(userObj.user,userObj.client,items,purchase,save));
-          } else {
-            console.log(txt)
-            console.error("Gemini Response Corruption")
-          }
-        }).catch(_ => {
-          console.error("error populating analysis")
-        });
-      });
-      document.body.appendChild(permissionUI);
-    }).catch(_ => {
-      console.error("error getting profile")
-    });
-  }).catch(_=>{
-    console.error("Error getting user");
-  })
+  getUser(
+    function(resp:MsgResp) {
+      if (resp.success){
+        proceedWithUser(resp.user);
+      }else{
+        console.error("Error getting user");
+      }
+    },function(){
+      console.error("Error getting user");
+    })
 }
 
 // Run detection on load and mutations
