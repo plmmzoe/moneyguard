@@ -6,6 +6,7 @@ const repoRoot = path.resolve(__dirname, '..');
 const env = loadEnv('production', repoRoot, '');
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL ?? env.VITE_SUPABASE_URL ?? '';
 const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? env.VITE_SUPABASE_ANON_KEY ?? '';
+const geminiKey = env.GEMINI_API_KEY ?? env.VITE_GEMINI_API_KEY ?? '';
 
 const outDir = path.resolve(__dirname, '..', 'dist-extension');
 
@@ -20,6 +21,7 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseUrl),
     'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(supabaseAnonKey),
+    'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiKey),
   },
   build: {
     outDir,

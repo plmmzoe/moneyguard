@@ -1,9 +1,7 @@
 'use server';
 
-import { Tables } from '@/lib/database.types';
+import { TransactionData } from '@/lib/dashboard.type';
 import { createClient } from '@/utils/supabase/server';
-
-export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transaction_id'> & Partial<Pick<Tables<'transactions'>, 'user_id'>>;
 
 export async function getProfile() {
   const supabase = await createClient();

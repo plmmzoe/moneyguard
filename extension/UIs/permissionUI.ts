@@ -1,0 +1,80 @@
+const CURRENCY_REGEX = /[\$€£¥]\s*\d+([.,]\d{2})?/;
+export function showPermissionUI(onAccept:()=>void) {
+  const container = document.createElement('div');
+  container.id = 'moneyguard-permission-container';
+  container.style.position = 'fixed';
+  container.style.top = '50%';
+  container.style.left = '50%';
+  container.style.zIndex = '999999';
+  container.style.backgroundColor = 'white';
+  container.style.borderRadius = '8px';
+  container.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  container.style.padding = '16px';
+  container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+  container.style.width = '30%';
+  container.style.height = '30%';
+  container.style.transform = 'translate(-50%, -50%)';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '12px';
+  container.style.border = '1px solid #e2e8f0';
+
+  // Shadow DOM to isolate styles
+  const shadow = container.attachShadow({ mode: 'open' });
+
+  const style = document.createElement('style');
+  style.textContent = `
+  .title { font-weight: 600; font-size: 16px; color: #0f172a; margin-bottom: 4px; }
+  .text { font-size: 14px; color: #64748b; margin-bottom: 12px; }
+  .buttons { display: flex; gap: 8px; }
+  button {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+  }
+  .btn-primary { background: #2563eb; color: white; }
+  .btn-secondary { background: #f1f5f9; color: #475569; }
+  button:hover { opacity: 0.9; }
+`;
+
+  const content = document.createElement('div');
+  content.innerHTML = `
+  <div class="title">MoneyGuard Detected a Purchase</div>
+  <div class="text">Do you want AI to analyze this purchase before you buy?</div>
+  <div class="buttons">
+    <button class="btn-secondary" id="ignore-btn">Ignore</button>
+    <button class="btn-primary" id="analyze-btn">Analyze</button>
+  </div>
+`;
+
+  shadow.appendChild(style);
+  shadow.appendChild(content);
+
+  shadow.getElementById('ignore-btn')?.addEventListener('click', () => {
+    container.remove();
+  });
+
+  shadow.getElementById('analyze-btn')?.addEventListener('click', () => {
+    onAccept()
+    container.remove();
+  });
+  return container;
+
+}
+
+export function openPopup(){
+  const item = document.title;
+  // Try to find price
+  const priceMatch = document.body.innerText.match(CURRENCY_REGEX);
+  const price = priceMatch ? priceMatch[0] : '';
+
+  chrome.runtime.sendMessage({
+    type: 'OPEN_ANALYSIS',
+    data: { item, price, url: window.location.href }
+  });
+}

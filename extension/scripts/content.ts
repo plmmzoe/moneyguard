@@ -1,91 +1,140 @@
 import { detectPurchaseIntent } from './detect';
+import { showPermissionUI } from '../UIs/permissionUI.ts';
+import {analysisUI} from '../UIs/analysisUI.ts';
+import {LlmResponse,Item} from '../shared/types.ts';
+import { analyzePageText } from './gemini.ts';
+import { loadingUI } from '../UIs/loadingUI.ts';
+import { createExtensionSupabaseClient } from './supabase-extension.ts';
+import { createAuthApi } from 'shared/auth';
+import { SupabaseClient, User } from '@supabase/supabase-js';
+import { TransactionData } from '../../src/lib/dashboard.type.ts';
 
-const CURRENCY_REGEX = /[\$€£¥]\s*\d+([.,]\d{2})?/;
+function parseItem(text: string) : LlmResponse| undefined {
+  try{
+    return JSON.parse(text);
+  }catch(error){
+    console.error(error);
+  }
+}
 
-export function showPermissionUI() {
-    const container = document.createElement('div');
-    container.id = 'moneyguard-permission-container';
-    container.style.position = 'fixed';
-    container.style.top = '20px';
-    container.style.right = '20px';
-    container.style.zIndex = '999999';
-    container.style.backgroundColor = 'white';
-    container.style.borderRadius = '8px';
-    container.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    container.style.padding = '16px';
-    container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-    container.style.width = '300px';
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.gap = '12px';
-    container.style.border = '1px solid #e2e8f0';
+function purchase(user:User,client:SupabaseClient,items: Item[]) : void {
+  addTransactions(user,client,items).then(_=>{
+    console.log("transaction added")
+  }).catch(_=>{
+    console.error("Transaction update failed");
+  });
+}
 
-    // Shadow DOM to isolate styles
-    const shadow = container.attachShadow({ mode: 'open' });
+function save(user:User,client:SupabaseClient,items: Item[]) : void {
+  let savings = 0;
+  for (const item of items) {
+    savings += item.price * item.quantity;
+  }
+  updateSavings(user,client,savings).then(()=>{
+    console.log("savings updated")
+  }).catch(_=>{
+    console.error("saving update failed")
+  })
+}
 
-    const style = document.createElement('style');
-    style.textContent = `
-    .title { font-weight: 600; font-size: 16px; color: #0f172a; margin-bottom: 4px; }
-    .text { font-size: 14px; color: #64748b; margin-bottom: 12px; }
-    .buttons { display: flex; gap: 8px; }
-    button {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.2s;
+async function getUser(){
+  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!url || !anonKey) {
+    throw new Error('Extension not configured. Build with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+  }
+  const client = await createExtensionSupabaseClient(url,anonKey);
+  const auth = createAuthApi(client);
+  const sessionUser = await auth.getUser();
+  return {user:sessionUser, client:client};
+}
+
+async function getProfile(sessionUser:User|null, client:SupabaseClient)  {
+  let userContext = '';
+  if (sessionUser) {
+    const { data: profile } = await client
+      .from('profiles')
+      .select()
+      .eq('user_id', sessionUser.id)
+      .single();
+
+    if (profile) {
+      userContext = JSON.stringify(profile);
     }
-    .btn-primary { background: #2563eb; color: white; }
-    .btn-secondary { background: #f1f5f9; color: #475569; }
-    button:hover { opacity: 0.9; }
-  `;
+  }
+  return userContext;
+}
 
-    const content = document.createElement('div');
-    content.innerHTML = `
-    <div class="title">MoneyGuard Detected a Purchase</div>
-    <div class="text">Do you want AI to analyze this purchase before you buy?</div>
-    <div class="buttons">
-      <button class="btn-secondary" id="ignore-btn">Ignore</button>
-      <button class="btn-primary" id="analyze-btn">Analyze</button>
-    </div>
-  `;
+async function updateSavings(sessionUser:User, client:SupabaseClient, amount:number){
+  // @ts-ignore
+  const {data,error} = await client
+    .rpc('increment', { x: amount, row_id: sessionUser.id });
+  if (error){
+    throw new Error(`Error posting transaction: ${error.message}`);
+  }
+}
 
-    shadow.appendChild(style);
-    shadow.appendChild(content);
+async function addTransactions(sessionUser:User, client:SupabaseClient, items: Item[]) {
+  const current = new Date();
+  const transactionItems = items.map((item:Item) : TransactionData => {
+    return {
+      amount: item.quantity * item.price,
+      created_at: current.toISOString(),
+      transaction_description: item.name,
+      user_id: sessionUser.id
+    }
+  })
+  // @ts-ignore
+  const {data,error} = await client
+    .from('transactions')
+    .insert(transactionItems)
 
-    shadow.getElementById('ignore-btn')?.addEventListener('click', () => {
-        container.remove();
-    });
+  if (error){
+    throw new Error(`Error posting transaction: ${error.message}`);
+  }
+}
 
-    shadow.getElementById('analyze-btn')?.addEventListener('click', () => {
-        const item = document.title;
-        // Try to find price
-        const priceMatch = document.body.innerText.match(CURRENCY_REGEX);
-        const price = priceMatch ? priceMatch[0] : '';
-
-        chrome.runtime.sendMessage({
-            type: 'OPEN_ANALYSIS',
-            data: { item, price, url: window.location.href }
+function analyze(){
+  getUser().then(userObj => {
+    const textContent = document.body.innerText.toLowerCase();
+    getProfile(userObj.user,userObj.client).then((profile)=>{
+      const permissionUI = showPermissionUI(()=>{
+        const loadingScreen = loadingUI();
+        document.body.appendChild(loadingScreen);
+        analyzePageText(textContent,profile).then(r => {
+          console.log(r)
+          const txt = '';
+          const items = parseItem(txt);
+          if (items){
+            loadingScreen.remove();
+            document.body.appendChild(analysisUI(userObj.user,userObj.client,items,purchase,save));
+          } else {
+            console.log(txt)
+            console.error("Gemini Response Corruption")
+          }
+        }).catch(_ => {
+          console.error("error populating analysis")
         });
-        container.remove();
+      });
+      document.body.appendChild(permissionUI);
+    }).catch(_ => {
+      console.error("error getting profile")
     });
-
-    document.body.appendChild(container);
+  }).catch(_=>{
+    console.error("Error getting user");
+  })
 }
 
 // Run detection on load and mutations
-detectPurchaseIntent();
+detectPurchaseIntent(analyze);
 
 const observer = new MutationObserver(() => {
-    detectPurchaseIntent();
+    detectPurchaseIntent(analyze);
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
 
 // Delayed check in case of single-page apps
 setTimeout(() => {
-    detectPurchaseIntent();
+    detectPurchaseIntent(analyze);
 }, 5000);

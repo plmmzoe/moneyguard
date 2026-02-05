@@ -1,10 +1,9 @@
-import { showPermissionUI } from "./content";
 
 // Heuristic keywords for detecting purchase intent
 const PURCHASE_KEYWORDS = ['checkout', 'buy', 'purchase', 'payment', 'order', 'pay', 'cart', 'bag', 'basket'];
 
 let hasPrompted = false;
-export function detectPurchaseIntent() {
+export function detectPurchaseIntent(trigger: () => void) {
     if (hasPrompted) return;
 
     // Simple heuristic: Check explicit keywords in URL path. do not pick up the domain name
@@ -14,7 +13,7 @@ export function detectPurchaseIntent() {
 
 
     if (isCheckoutUrl) {
-        showPermissionUI();
+        trigger();
         hasPrompted = true;
     }
 }
