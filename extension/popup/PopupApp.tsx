@@ -17,7 +17,9 @@ export function PopupApp() {
 
   useEffect(() => {
     let mounted = true;
+    // @ts-ignore
     const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    // @ts-ignore
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
     (async () => {
       try {
@@ -32,7 +34,9 @@ export function PopupApp() {
         const sessionUser = await auth.getUser();
         if (mounted) setUser(sessionUser ?? null);
         auth.onAuthStateChange((_event, session) => {
-          if (mounted) setUser(session?.user ?? null);
+          if (mounted) { // @ts-ignore
+            setUser(session?.user ?? null);
+          }
         });
       } catch (e) {
         if (mounted) setError(e instanceof Error ? e.message : 'Failed to init');

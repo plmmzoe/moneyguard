@@ -3,6 +3,7 @@ export async function analyzePageText(text: string,userContext:string) {
   return await llmAnalyze(text,userContext);
 }
 async function llmAnalyze(text: string, userContext:string) {
+  // @ts-ignore
   const apikey= import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
   if (!apikey) {
     throw new Error('No api key provided.');

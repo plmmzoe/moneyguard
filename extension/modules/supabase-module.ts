@@ -5,7 +5,9 @@ import { TransactionData } from '../../src/lib/dashboard.type.ts';
 const STORAGE_KEY = 'supabase_session';
 
 async function initClient() {
+  // @ts-ignore
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  // @ts-ignore
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
   if (!url || !anonKey) {
     throw new Error('Extension not configured. Build with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');

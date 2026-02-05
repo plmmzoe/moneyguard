@@ -3,6 +3,7 @@ import { showPermissionUI } from '../UIs/permissionUI.ts';
 import {analysisUI} from '../UIs/analysisUI.ts';
 import { analyzePageText } from './gemini.ts';
 import { loadingUI } from '../UIs/loadingUI.ts';
+import { toastUI } from '../UIs/toastUI.ts';
 
 type Item = {
   name: string,
@@ -42,6 +43,11 @@ function parseItem(text: string) : LlmResponse| undefined {
   }
 }
 
+function warningToast(msg:string){
+  const toast = toastUI(msg);
+  document.body.appendChild(toast);
+}
+
 function analyze(){
   console.log("firing")
   getUser(
@@ -63,6 +69,7 @@ function getUser(success:(x:any)=>void,failure:()=>void) : void {
       console.log(resp)
       success(resp)
     }else{
+      warningToast("please login and refresh to use MoneyTracker")
       console.error("Failed to get user");
       failure()
     }
@@ -92,6 +99,7 @@ function getProfile(userID:string,success:(x:any)=>void,failure:()=>void) : void
       console.log(resp)
       success(resp.profile)
     }else{
+      warningToast("MoneyTracker profile error")
       console.error("Failed to get profile");
       failure()
     }
@@ -114,6 +122,7 @@ function proceedWithProfile(userID:string,profile:any,textContent:string){
             console.log("Purchase logged");
           },
           function(){
+            warningToast("MoneyTracker logging error")
             console.error("purchase logging failed")
           })
         const boundSave = save.bind(null,
@@ -122,16 +131,19 @@ function proceedWithProfile(userID:string,profile:any,textContent:string){
             chrome.runtime.sendMessage({type:requestTypes.prevTab})
           },
           function(){
+            warningToast("MoneyTracker logging error")
             console.error("saving logging failed")
           })
         loadingScreen.remove();
         document.body.appendChild(analysisUI(userID,items,profile,boundPurchase,boundSave));
       } else {
         console.log(txt)
+        warningToast("Gemini response error")
         console.error("Gemini Response Corruption")
       }
     }).catch(_ => {
       loadingScreen.remove()
+      warningToast("Gemini busy, please refresh and try again")
       console.error("error populating analysis")
     });
   });
