@@ -160,7 +160,7 @@ export default function AnalyzePage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 border border-border">
+          <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/70 border border-border rounded-lg">
             <TabsTrigger
               value="survey"
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"

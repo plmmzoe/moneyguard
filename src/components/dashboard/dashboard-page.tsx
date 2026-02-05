@@ -9,7 +9,7 @@ export function DashboardPage() {
   useUserInfo(supabase);
 
   return (
-    <div className="rounded-xl bg-card border border-border p-4 w-full max-w-4xl">
+    <div className="rounded-xl bg-card border border-border p-4 w-full max-w-4xl mx-auto">
       <Profile supabase={supabase} />
     </div>
   );

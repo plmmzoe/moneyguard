@@ -1,192 +1,21 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 
-import { TransactionData, deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
-import { AppLayout } from '@/components/app-layout';
-import { RecentAnalyses } from '@/components/dashboard/recent-analyses';
+import { TransactionData, postTransaction } from '@/app/dashboard/actions';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Tables } from '@/lib/database.types';
 
-function parseTransactionMeta(description: string | null) {
-  const fallback = description ?? 'Impulse purchase';
-  if (!description) {
-    return { product: fallback, verdict: '', status: '' };
-  }
-
-  const segments = description.split('|').map((s) => s.trim());
-  let product = fallback;
-  let verdict = '';
-  let status = '';
-
-  for (const seg of segments) {
-    const lower = seg.toLowerCase();
-    if (lower.startsWith('product:')) {
-      product = seg.slice('product:'.length).trim();
-    } else if (lower.startsWith('ai verdict:')) {
-      verdict = seg.split(':')[1]?.trim() ?? '';
-    } else if (lower.startsWith('verdict:')) {
-      verdict = seg.split(':')[1]?.trim() ?? '';
-    } else if (lower.startsWith('status:')) {
-      status = seg.split(':')[1]?.trim() ?? '';
-    }
-  }
-
-  // Capitalize each word in the product name
-  product = product.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
-
-  return { product, verdict, status };
+interface Props {
+  onClose: () => void;
+  onSaved: () => void;
 }
 
-export default function HistoryPage() {
-  const [open, setOpen] = useState(false);
-  const [transactions, setTransactions] = useState<Tables<'transactions'>[]>([]);
-  const { toast } = useToast();
-
-  const refreshTransactions = useCallback(() => {
-    getTransactions()
-      .then((t) => {
-        if (t) {
-          setTransactions(t);
-        }
-      })
-      .catch(() => {
-        toast({ description: 'Failed to load transactions.', variant: 'destructive' });
-      });
-  }, [toast]);
-
-  useEffect(() => {
-    refreshTransactions();
-  }, [refreshTransactions]);
-
-  async function handleDeleteRow(id: number) {
-    try {
-      await deleteTransactions([id]);
-      setTransactions((prev) => prev.filter((t) => t.transaction_id !== id));
-      toast({ description: 'Transaction deleted.' });
-    } catch {
-      toast({ description: 'Failed to delete transaction.', variant: 'destructive' });
-    }
-  }
-
-  return (
-    <AppLayout>
-      <div className="w-full max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold">History</h1>
-          <Button size="sm" className="shrink-0" onClick={() => setOpen(true)}>
-            Log impulse purchase
-          </Button>
-        </div>
-        <RecentAnalyses />
-        {transactions.length > 0 && (
-          <Card className="mt-4 bg-card border border-border">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead className="bg-muted/60 border-b border-border">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
-                      Product
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
-                      Date
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
-                      Amount
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
-                      AI Verdict
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide text-right">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {transactions.map((t) => {
-                    const { product, verdict, status } = parseTransactionMeta(t.transaction_description);
-                    const statusLower = status.toLowerCase();
-                    const statusClasses =
-                      statusLower === 'bought'
-                        ? 'bg-primary/10 text-primary'
-                        : statusLower === 'skipped'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : status
-                            ? 'bg-muted text-muted-foreground'
-                            : '';
-
-                    return (
-                      <tr key={t.transaction_id} className="hover:bg-muted/40 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm font-medium text-foreground line-clamp-2">{product}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                          {t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-semibold text-foreground whitespace-nowrap">
-                          {typeof t.amount === 'number' ? `$${t.amount.toFixed(2)}` : '-'}
-                        </td>
-                        <td className="px-4 py-3">
-                          {verdict ? (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-muted text-foreground">
-                              {verdict}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          {status ? (
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${statusClasses}`}
-                            >
-                              <span className="size-1.5 rounded-full bg-current" />
-                              {status}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-xs text-destructive hover:bg-destructive/5 hover:text-destructive"
-                            onClick={() => handleDeleteRow(t.transaction_id)}
-                          >
-                            Delete
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
-      </div>
-      {open && (
-        <LogImpulseOverlay
-          onClose={() => setOpen(false)}
-          onSaved={refreshTransactions}
-        />
-      )}
-    </AppLayout>
-  );
-}
-
-function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+export function ImpulseLogOverlay({ onClose, onSaved }: Props) {
   const { toast } = useToast();
   const [productName, setProductName] = useState('');
   const [amount, setAmount] = useState<number | ''>('');

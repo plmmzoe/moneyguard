@@ -30,7 +30,8 @@
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(210 40% 98%);
 
-  --border: #668192;
+  /* Softer, lighter border for cards and inputs */
+  --border: #d4dde2;
   --input: #e3edf0;
   --ring: #79aaaf;
   --radius: 16px;
