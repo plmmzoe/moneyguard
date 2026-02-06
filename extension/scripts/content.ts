@@ -1,105 +1,204 @@
+import { detectPurchaseIntent } from './detect';
+import { showPermissionUI } from '../UIs/permissionUI.ts';
+import {analysisUI} from '../UIs/analysisUI.ts';
+import { analyzePageText } from './gemini.ts';
+import { loadingUI } from '../UIs/loadingUI.ts';
+import { toastUI } from '../UIs/toastUI.ts';
 
-// Heuristic keywords for detecting purchase intent
-const PURCHASE_KEYWORDS = ['checkout', 'place order', 'buy now', 'complete purchase', 'payment'];
-const CURRENCY_REGEX = /[\$€£¥]\s*\d+([.,]\d{2})?/;
-
-let hasPrompted = false;
-
-function detectPurchaseIntent() {
-    if (hasPrompted) return;
-
-    const textContent = document.body.innerText.toLowerCase();
-    const hasKeyword = PURCHASE_KEYWORDS.some(keyword => textContent.includes(keyword));
-    const hasPrice = CURRENCY_REGEX.test(document.body.innerText);
-
-    // Simple heuristic: Keyword + Price or just explicit checkout URL
-    const isCheckoutUrl = window.location.href.includes('checkout') || window.location.href.includes('cart');
-
-    if ((hasKeyword && hasPrice) || isCheckoutUrl) {
-        showPermissionUI();
-        hasPrompted = true;
-    }
+type Item = {
+  name: string,
+  price:number,
+  quantity:number,
 }
 
-function showPermissionUI() {
-    const container = document.createElement('div');
-    container.id = 'moneyguard-permission-container';
-    container.style.position = 'fixed';
-    container.style.top = '20px';
-    container.style.right = '20px';
-    container.style.zIndex = '999999';
-    container.style.backgroundColor = 'white';
-    container.style.borderRadius = '8px';
-    container.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    container.style.padding = '16px';
-    container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-    container.style.width = '300px';
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.gap = '12px';
-    container.style.border = '1px solid #e2e8f0';
-
-    // Shadow DOM to isolate styles
-    const shadow = container.attachShadow({ mode: 'open' });
-
-    const style = document.createElement('style');
-    style.textContent = `
-    .title { font-weight: 600; font-size: 16px; color: #0f172a; margin-bottom: 4px; }
-    .text { font-size: 14px; color: #64748b; margin-bottom: 12px; }
-    .buttons { display: flex; gap: 8px; }
-    button {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.2s;
-    }
-    .btn-primary { background: #2563eb; color: white; }
-    .btn-secondary { background: #f1f5f9; color: #475569; }
-    button:hover { opacity: 0.9; }
-  `;
-
-    const content = document.createElement('div');
-    content.innerHTML = `
-    <div class="title">MoneyGuard Detected a Purchase</div>
-    <div class="text">Do you want AI to analyze this purchase before you buy?</div>
-    <div class="buttons">
-      <button class="btn-secondary" id="ignore-btn">Ignore</button>
-      <button class="btn-primary" id="analyze-btn">Analyze</button>
-    </div>
-  `;
-
-    shadow.appendChild(style);
-    shadow.appendChild(content);
-
-    shadow.getElementById('ignore-btn')?.addEventListener('click', () => {
-        container.remove();
-    });
-
-    shadow.getElementById('analyze-btn')?.addEventListener('click', () => {
-        const item = document.title;
-        // Try to find price
-        const priceMatch = document.body.innerText.match(CURRENCY_REGEX);
-        const price = priceMatch ? priceMatch[0] : '';
-
-        chrome.runtime.sendMessage({
-            type: 'OPEN_ANALYSIS',
-            data: { item, price, url: window.location.href }
-        });
-        container.remove();
-    });
-
-    document.body.appendChild(container);
+type LlmResponse = {
+  items: Item[],
+  analysis: string,
 }
+
+type MsgRequest = {
+  type: string,
+  [key:string]:any,
+}
+
+type MsgResp = {
+  success: boolean,
+  [key:string]:any,
+}
+
+const requestTypes = {
+  openAnalysis:"OPEN_ANALYSIS",
+  addTransaction:"ADD_TRANSACTION",
+  updateSaving:"UPDATE_SAVINGS",
+  getProfile:"GET_PROFILE",
+  getUser:"GET_USER",
+  prevTab:"PREV_TAB",
+}
+
+function parseItem(text: string) : LlmResponse| undefined {
+  try{
+    return JSON.parse(text);
+  }catch(error){
+    console.error(error);
+  }
+}
+
+function warningToast(msg:string){
+  const toast = toastUI(msg);
+  document.body.appendChild(toast);
+}
+
+function analyze(){
+  console.log("firing")
+  getUser(
+    function(resp:MsgResp) {
+      proceedWithUser(resp.user);
+    },function(){
+      console.error("Error getting user");
+    })
+}
+
+function getUser(success:(x:any)=>void,failure:()=>void) : void {
+  const msg:MsgRequest = {
+    type: requestTypes.getUser
+  }
+  chrome.runtime.sendMessage(msg,function(resp:MsgResp){
+    console.log(resp)
+    if (resp.success){
+      console.log("Successfully got user");
+      console.log(resp)
+      success(resp)
+    }else{
+      warningToast("please login and refresh to use MoneyTracker")
+      console.error("Failed to get user");
+      failure()
+    }
+  })
+}
+
+function proceedWithUser(userID:string){
+  const textContent = document.body.innerText.toLowerCase();
+  getProfile(userID,
+    function(profile:any) {
+      console.log("profile")
+      console.log(profile)
+      proceedWithProfile(userID,profile,textContent)
+    },
+    function(){
+      console.error("Error getting profile");
+    })
+}
+function getProfile(userID:string,success:(x:any)=>void,failure:()=>void) : void {
+  const msg:MsgRequest = {
+    type: requestTypes.getProfile,
+    user:userID
+  }
+  chrome.runtime.sendMessage(msg,function(resp){
+    if (resp.success){
+      console.log("Successfully got profile");
+      console.log(resp)
+      success(resp.profile)
+    }else{
+      warningToast("MoneyTracker profile error")
+      console.error("Failed to get profile");
+      failure()
+    }
+  })
+}
+
+function proceedWithProfile(userID:string,profile:any,textContent:string){
+  console.log("user data retrieved")
+  const permissionUI = showPermissionUI(()=>{
+    const loadingScreen = loadingUI();
+    const userContext = JSON.stringify(profile)
+    document.body.appendChild(loadingScreen);
+    analyzePageText(textContent,userContext).then(r => {
+      console.log(r)
+      const txt = r.candidates[0].content.parts[0].text;
+      const items = parseItem(txt);
+      if (items){
+        const boundPurchase = purchase.bind(null,
+          function(){
+            console.log("Purchase logged");
+          },
+          function(){
+            warningToast("MoneyTracker logging error")
+            console.error("purchase logging failed")
+          })
+        const boundSave = save.bind(null,
+          function(){
+            console.log("saving logged");
+            chrome.runtime.sendMessage({type:requestTypes.prevTab})
+          },
+          function(){
+            warningToast("MoneyTracker logging error")
+            console.error("saving logging failed")
+          })
+        loadingScreen.remove();
+        document.body.appendChild(analysisUI(userID,items,profile,boundPurchase,boundSave));
+      } else {
+        console.log(txt)
+        warningToast("Gemini response error")
+        console.error("Gemini Response Corruption")
+      }
+    }).catch(_ => {
+      loadingScreen.remove()
+      warningToast("Gemini busy, please refresh and try again")
+      console.error("error populating analysis")
+    });
+  });
+  document.body.appendChild(permissionUI);
+}
+
+function purchase(success:()=>void,failure:()=>void,user:any,items: Item[]) : void {
+  const msg:MsgRequest = {
+    type: requestTypes.addTransaction,
+    items:items,
+    user:user,
+  }
+  chrome.runtime.sendMessage(msg,function(resp){
+    if (resp.success){
+      console.log("Successfully purchased transaction");
+      success()
+    }else{
+      console.error("Failed to purchase transaction");
+      failure()
+    }
+  });
+}
+
+function save(success:()=>void,failure:()=>void,user:any,items: Item[]) : void {
+  let savings = 0;
+  for (const item of items) {
+    savings += item.price * item.quantity;
+  }
+  const msg:MsgRequest = {
+    type: requestTypes.updateSaving,
+    amount:savings,
+    user:user,
+  }
+  chrome.runtime.sendMessage(msg,function(resp){
+    if (resp.success){
+      console.log("Successfully updated savings");
+      success()
+    }else{
+      console.error("Failed to update savings");
+      failure()
+    }
+  })
+}
+
 
 // Run detection on load and mutations
-detectPurchaseIntent();
+detectPurchaseIntent(analyze);
 
 const observer = new MutationObserver(() => {
-    detectPurchaseIntent();
+    detectPurchaseIntent(analyze);
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// Delayed check in case of single-page apps
+setTimeout(() => {
+    detectPurchaseIntent(analyze);
+}, 5000);

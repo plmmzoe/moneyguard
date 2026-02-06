@@ -18,3 +18,9 @@ export interface SubscriptionDetailResponse {
   data?: Subscription;
   error?: string;
 }
+
+export interface Item {
+  name: string,
+  price:number,
+  quantity:number,
+}
