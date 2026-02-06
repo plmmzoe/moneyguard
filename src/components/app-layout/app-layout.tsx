@@ -4,7 +4,7 @@ import Header from '@/components/home/header/header';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { createClient } from '@/utils/supabase/client';
 
-import { AppSidebar } from './app-sidebar';
+import { AppMobileNav, AppSidebar } from './app-sidebar';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -13,6 +13,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-muted">
       <Header user={user} />
+      <AppMobileNav />
       <div className="flex max-w-7xl mx-auto px-6 py-8 gap-6">
         <AppSidebar />
         <main className="flex-1 min-w-0">{children}</main>

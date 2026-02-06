@@ -14,9 +14,8 @@ import { TransactionDated } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 
 const TransactionCard = (
-  { transactions, toggle, onSelect, onDeselect, onDelete }:
+  { transactions, onSelect, onDeselect, onDelete }:
   { transactions: TransactionDated[],
-    toggle: (x:void) =>void,
     onSelect: (x:TransactionDated) => void,
     onDeselect: (x:TransactionDated) => void,
     onDelete: (x:void) => void
@@ -70,9 +69,7 @@ const TransactionCard = (
             })}
           </div>
           <div className={'grid grid-cols-4'}>
-            <Button className={'w-full mt-3 col-span-3'} onClick={(_) => toggle()}>
-              <p>Add New Transaction</p>
-            </Button>
+            <div className="col-span-3" />
             <Button className={'w-full mt-3 bg-red-600 ml-2'} onClick={(_) => onDelete()}>
               <p>Delete</p>
             </Button>

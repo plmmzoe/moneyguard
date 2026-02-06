@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
@@ -79,12 +79,6 @@ export default function TransactionsAnalysisPage() {
       setLoading(false);
     }
   }, [user, period]);
-
-  useEffect(() => {
-    if (user) {
-      fetchAnalysis();
-    }
-  }, [user, fetchAnalysis]);
 
   return (
     <AppLayout>

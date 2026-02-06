@@ -111,7 +111,6 @@ export function Profile({ supabase }: {supabase:SupabaseClient|null}) {
           </div>
           <TransactionCard
             transactions={transactions}
-            toggle={toggle}
             onSelect={onSelect}
             onDeselect={onDeselect}
             onDelete={onDelete}

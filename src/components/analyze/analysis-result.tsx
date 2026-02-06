@@ -60,7 +60,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       case 'likely_impulsive':
         return {
           bg: 'bg-red-50',
-          border: 'border-red-200',
+          border: 'border-border',
           text: 'text-red-700',
           icon: <AlertOctagon className="h-12 w-12 text-red-500 mb-2" />,
           label: 'Pause Recommended',
@@ -68,7 +68,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       case 'borderline':
         return {
           bg: 'bg-yellow-50',
-          border: 'border-yellow-200',
+          border: 'border-border',
           text: 'text-yellow-700',
           icon: <AlertTriangle className="h-12 w-12 text-yellow-500 mb-2" />,
           label: 'Proceed with Caution',
@@ -76,7 +76,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       case 'considered':
         return {
           bg: 'bg-green-50',
-          border: 'border-green-200',
+          border: 'border-border',
           text: 'text-green-700',
           icon: <CheckCircle className="h-12 w-12 text-green-500 mb-2" />,
           label: 'Green Light',
@@ -84,7 +84,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       default:
         return {
           bg: 'bg-primary/5',
-          border: 'border-primary/20',
+          border: 'border-border',
           text: 'text-primary',
           icon: <Sparkles className="h-12 w-12 text-primary mb-2" />,
           label: 'Analysis Complete',
@@ -189,7 +189,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
 
       {/* SECTION C: REALITY CHECK */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="bg-slate-50 border-slate-200 dark:bg-slate-900/50 dark:border-slate-800">
+        <Card className="bg-card/50 border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4" />
@@ -212,7 +212,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-50 border-slate-200 dark:bg-slate-900/50 dark:border-slate-800">
+        <Card className="bg-card/50 border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Scale className="h-4 w-4" />

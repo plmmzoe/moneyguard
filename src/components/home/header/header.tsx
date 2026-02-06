@@ -14,7 +14,7 @@ interface Props {
 
 export default function Header({ user }: Props) {
   return (
-    <nav className="bg-white border-b border-gray-100">
+    <nav className="bg-card border-b border-border">
       <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
@@ -34,7 +34,7 @@ export default function Header({ user }: Props) {
             <>
               <Link
                 href="/profile"
-                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                className="p-2 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                 aria-label="Account"
               >
                 <User className="h-5 w-5" />
@@ -44,7 +44,7 @@ export default function Header({ user }: Props) {
                   type="submit"
                   variant="outline"
                   size="icon"
-                  className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  className="bg-card border-border text-muted-foreground hover:bg-primary/10 hover:text-primary"
                   aria-label="Sign out"
                 >
                   <LogOut className="h-4 w-4" />
@@ -55,7 +55,7 @@ export default function Header({ user }: Props) {
             <>
               <Link
                 href="/login"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Log in
               </Link>
