@@ -22,18 +22,18 @@ export interface AnalysisResultData {
     impulseScore: number;
     regretRisk: 'low' | 'medium' | 'high';
     keyReasons: { type: string; explanation: string }[];
-    usageRealityCheck: {
-        predictedFrequency: string;
-        confidenceLevel: 'high' | 'medium' | 'low';
-        why: string;
+    usageRealityCheck?: {
+        predictedFrequency?: string;
+        confidenceLevel?: 'high' | 'medium' | 'low';
+        why?: string;
     };
-    opportunityCost: {
-        whatItDisplaces: string;
-        whyItMatters: string;
+    opportunityCost?: {
+        whatItDisplaces?: string;
+        whyItMatters?: string;
     };
-    coolOffSuggestion: {
-        recommendedDelay: string;
-        reflectionPrompt: string;
+    coolOffSuggestion?: {
+        recommendedDelay?: string;
+        reflectionPrompt?: string;
     };
     alternatives: { type: string; suggestion: string }[];
     finalAdvice: string;
@@ -48,9 +48,19 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
     overallVerdict,
     impulseScore,
     keyReasons,
-    usageRealityCheck,
-    opportunityCost,
-    coolOffSuggestion,
+    usageRealityCheck = {
+      predictedFrequency: 'N/A',
+      confidenceLevel: 'low' as const,
+      why: 'Not enough data',
+    },
+    opportunityCost = {
+      whatItDisplaces: 'Unknown',
+      whyItMatters: 'Not enough data',
+    },
+    coolOffSuggestion = {
+      recommendedDelay: 'none',
+      reflectionPrompt: 'No suggestion available',
+    },
     alternatives,
     finalAdvice,
   } = result;
@@ -199,15 +209,15 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
           <CardContent className="space-y-4">
             <div>
               <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1">Predicted Frequency</div>
-              <div className="text-lg font-semibold">{usageRealityCheck.predictedFrequency}</div>
+              <div className="text-lg font-semibold">{usageRealityCheck?.predictedFrequency || 'N/A'}</div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${usageRealityCheck.confidenceLevel === 'high' ? 'bg-green-100 text-green-800' :
-                usageRealityCheck.confidenceLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${usageRealityCheck?.confidenceLevel === 'high' ? 'bg-green-100 text-green-800' :
+                usageRealityCheck?.confidenceLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
               }`}>
-                {usageRealityCheck.confidenceLevel} Confidence
+                {usageRealityCheck?.confidenceLevel || 'Low'} Confidence
               </span>
-              <span className="text-sm text-muted-foreground">- {usageRealityCheck.why}</span>
+              <span className="text-sm text-muted-foreground">- {usageRealityCheck?.why || 'No explanation provided'}</span>
             </div>
           </CardContent>
         </Card>
@@ -224,8 +234,8 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
             <div className="p-3 bg-background rounded border font-medium flex items-start gap-3">
               <Wallet className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="text-foreground">{opportunityCost.whatItDisplaces}</p>
-                <p className="text-xs text-muted-foreground mt-1">{opportunityCost.whyItMatters}</p>
+                <p className="text-foreground">{opportunityCost?.whatItDisplaces || 'Unknown'}</p>
+                <p className="text-xs text-muted-foreground mt-1">{opportunityCost?.whyItMatters || 'No details'}</p>
               </div>
             </div>
           </CardContent>
@@ -235,7 +245,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
       {/* SECTION D: ACTION PLAN */}
       <div className="space-y-6">
         {/* Cool-off Challenge */}
-        {coolOffSuggestion.recommendedDelay !== 'none' && (
+        {coolOffSuggestion?.recommendedDelay && coolOffSuggestion.recommendedDelay !== 'none' && (
           <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
             <div className="space-y-2">
               <h3 className="text-xl font-bold flex items-center justify-center md:justify-start gap-2">
@@ -243,11 +253,11 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
                                 The &quot;Cool-Off&quot; Challenge
               </h3>
               <p className="text-muted-foreground max-w-xl">
-                {coolOffSuggestion.reflectionPrompt}
+                {coolOffSuggestion?.reflectionPrompt || 'Take some time to reflect.'}
               </p>
             </div>
             <div className="bg-background px-6 py-3 rounded-lg border shadow-sm font-bold text-lg whitespace-nowrap">
-                            Wait {coolOffSuggestion.recommendedDelay}
+                            Wait {coolOffSuggestion?.recommendedDelay}
             </div>
           </div>
         )}

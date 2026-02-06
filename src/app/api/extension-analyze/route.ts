@@ -2,6 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 import { createClient } from '@/utils/supabase/server';
+import { generateExtensionAnalysisPrompt } from 'shared/prompts';
+
 // Note: GEMINI_API_KEY must be set. Do not hardcode in client-side code.
 const apiKey = process.env.GEMINI_API_KEY;
 const MODEL = 'gemini-3-flash-preview';
@@ -47,20 +49,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const prompt = `
-      Important, do not include any extra text, formatting or whitespace or linebreaks other than the formats provided : 
-      Generate a response in a json format of 
-      {items:list of item from part 2, analysis:brief <50 word analysis of items from part 2 about the financial impact of this purchase on the user}
-      Part 1:
-      Below is the json format of a user's profile details:
-      ${userContext}
-      Part 2:
-      Lastly, given the body text of an online shopping page, parse out the items in the shopping cart along with their prices.
-      Format the items in an array of json formatted like the following {name:item-name,price:item-price-number,quantity:item-quantity}.
-      if there are no valid items, return only [].
-      Below is the shopping page text:
-      ${pageTxt}
-    `;
+    const prompt = generateExtensionAnalysisPrompt(userContext, pageTxt);
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

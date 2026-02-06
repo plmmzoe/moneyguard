@@ -66,7 +66,13 @@ export default function TransactionsAnalysisPage() {
     setData(null);
 
     try {
-      const res = await fetch(`/api/analysis?period=${encodeURIComponent(period)}`);
+      const res = await fetch('/api/analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ period }),
+      });
       if (!res.ok) {
         throw new Error('Failed to fetch analysis');
       }

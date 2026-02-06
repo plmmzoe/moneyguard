@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 import { createClient as createSupabaseClient } from '@/utils/supabase/server';
+import { generateInsightAnalysisPrompt } from 'shared/prompts';
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -81,12 +82,18 @@ function simpleLocalAnalysis(transactions: Transaction[]): AnalysisResult {
   };
 }
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseClient();
 
-    const url = new URL(request.url);
-    const period = url.searchParams.get('period');
+    let period = 'month';
+    try {
+      const body = await request.json();
+      if (body.period) {period = body.period;}
+    } catch {
+      // ignore JSON parse error, default to month
+    }
+
     const { start, end } = periodToRange(period);
 
     const {
@@ -129,9 +136,11 @@ export async function GET(request: Request) {
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
         const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-        const prompt = `Analyze the following user's transactions between ${start} and ${end}. Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis. Return JSON with keys: summary, impulseCandidates, recommendations. Return your response in a single key value pair in your json response such as { response: "Your entire written response here of multiple paragraphs, include any newline special characters to separate paragraphs" }. Transactions: ${JSON.stringify(
-          transactions.slice(0, 200),
-        )}`;
+        const prompt = generateInsightAnalysisPrompt(
+          start,
+          end,
+          JSON.stringify(transactions.slice(0, 200)),
+        );
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const accumulated = response.text();
