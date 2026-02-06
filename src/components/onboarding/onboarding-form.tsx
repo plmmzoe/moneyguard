@@ -35,6 +35,7 @@ interface OnboardingFormProps {
     savingsGoalTargetDate: string;
     hobbies: { name: string; rating: number }[];
   }) => Promise<void>;
+  onSkip?: () => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -53,7 +54,7 @@ const CURRENCY_OPTIONS = [
   'MXN',
 ];
 
-export function OnboardingForm({ initialData, onSubmit, isLoading = false }: OnboardingFormProps) {
+export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = false }: OnboardingFormProps) {
   const [step, setStep] = useState<Step>('budget');
   const [formData, setFormData] = useState({
     username: initialData?.username || '',
@@ -373,7 +374,7 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
                     <p className="text-sm text-muted-foreground italic">No hobbies added yet.</p>
                   )}
                   {formData.hobbies.map((hobby, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 border rounded-md">
+                    <div key={`${hobby.name}-${index}`} className="flex justify-between items-center p-2 border rounded-md">
                       <div>
                         <span className="font-medium">{hobby.name}</span>
                         <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{hobby.rating}/10</span>
@@ -403,13 +404,24 @@ export function OnboardingForm({ initialData, onSubmit, isLoading = false }: Onb
 
         {/* Navigation Buttons */}
         <div className="flex gap-3 justify-between">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={step === 'budget' || isLoading}
-          >
-            Back
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={step === 'budget' || isLoading}
+            >
+              Back
+            </Button>
+            {onSkip && (
+              <Button
+                variant="ghost"
+                onClick={onSkip}
+                disabled={isLoading}
+              >
+                Skip
+              </Button>
+            )}
+          </div>
 
           {step !== 'hobbies' ? (
             <Button onClick={handleNext} disabled={isLoading}>

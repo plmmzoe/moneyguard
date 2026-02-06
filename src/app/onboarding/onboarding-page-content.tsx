@@ -27,6 +27,12 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
   const router = useRouter();
   const { toast } = useToast();
 
+  const handleSkip = () => {
+    // Skip onboarding and redirect to dashboard
+    router.push('/dashboard');
+    router.refresh();
+  };
+
   const handleSubmit = async (data: {
     username: string;
     monthlyBudget: number;
@@ -78,6 +84,7 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
         <OnboardingForm
           initialData={initialProfile}
           onSubmit={handleSubmit}
+          onSkip={handleSkip}
           isLoading={isLoading}
         />
       </div>
