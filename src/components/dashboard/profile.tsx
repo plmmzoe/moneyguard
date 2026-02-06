@@ -1,13 +1,11 @@
 'use client';
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { deleteTransactions, getProfile, getTransactions } from '@/app/dashboard/actions';
 import { BudgetCard, IrrSpdCard, SavingsCard, TransactionCard } from '@/components/dashboard/cards/transaction-card';
 import UploadCard from '@/components/dashboard/cards/upload-card';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { TransactionDated } from '@/lib/dashboard.type';
@@ -102,7 +100,7 @@ export function Profile({ supabase }: {supabase:SupabaseClient|null}) {
   return (
     <>
       <div className={'h-full w-full'}>
-        <div className={'p-10 max-w-7xl m-auto'}>
+        <div className={'p-10 max-w-4xl m-auto w-full'}>
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <h1 className="text-3xl font-bold">
               {(profile) ?
@@ -110,13 +108,9 @@ export function Profile({ supabase }: {supabase:SupabaseClient|null}) {
                 : 'No profile detected'
               }
             </h1>
-            <Button asChild>
-              <Link href="/analyze">Create New Analysis</Link>
-            </Button>
           </div>
           <TransactionCard
             transactions={transactions}
-            toggle={toggle}
             onSelect={onSelect}
             onDeselect={onDeselect}
             onDelete={onDelete}

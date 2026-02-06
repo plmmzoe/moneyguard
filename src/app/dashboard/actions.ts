@@ -1,7 +1,9 @@
 'use server';
 
-import { TransactionData } from '@/lib/dashboard.type';
+import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
+
+export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transaction_id'> & Partial<Pick<Tables<'transactions'>, 'user_id'>>;
 
 export async function getProfile() {
   const supabase = await createClient();
@@ -127,4 +129,51 @@ export async function deleteTransactions(transactionIds:number[]) {
   }
 
   return data;
+}
+
+/** Sum of transaction amounts where user chose "skipped" (decided not to buy). Derived from history/transactions. */
+export async function getSavedTowardsGoal(): Promise<number> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return 0;
+  }
+
+  const { data: transactions, error } = await supabase
+    .from('transactions')
+    .select('amount, transaction_description')
+    .eq('user_id', user.id);
+
+  if (error || !transactions) {
+    return 0;
+  }
+
+  const skipped = transactions.filter(
+    (t) => t.transaction_description?.toLowerCase().includes('status: skipped'),
+  );
+  return skipped.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+}
+
+export async function updateMindset(mindset: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ spending_mindset: mindset })
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Error updating mindset:', error);
+    throw new Error('Failed to update mindset');
+  }
 }

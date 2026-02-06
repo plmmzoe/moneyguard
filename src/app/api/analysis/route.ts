@@ -99,7 +99,7 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabase
       .from('transactions')
-      .select('*')
+      .select('transaction_description, amount, created_at')
       .eq('user_id', user.id)
       .gte('created_at', start)
       .lte('created_at', end)
@@ -110,10 +110,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const transactions = data ?? [];
-    if (transactions.length === 0) {
+    const rawTransactions =
+      (data as { transaction_description: string | null; amount: number | null; created_at: string }[]) ?? [];
+
+    if (rawTransactions.length === 0) {
       return NextResponse.json({ error: 'No transactions found for the specified period.' }, { status: 404 });
     }
+
+    const transactions: Transaction[] = rawTransactions.map((t) => ({
+      date: t.created_at,
+      merchant: t.transaction_description ?? undefined,
+      amount: t.amount ?? undefined,
+    }));
 
     // If GEMINI key present, send a prompt for higher-level analysis.
     if (GEMINI_KEY) {
@@ -121,20 +129,20 @@ export async function GET(request: Request) {
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
         const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-        const prompt = `Analyze the following user's transactions between ${start} and ${end}. Identify spending trends, likely impulse purchases, and three actionable recommendations. Return JSON with keys: summary, impulseCandidates, recommendations. Transactions: ${JSON.stringify(
+        const prompt = `Analyze the following user's transactions between ${start} and ${end}. Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis. Return JSON with keys: summary, impulseCandidates, recommendations. Return your response in a single key value pair in your json response such as { response: "Your entire written response here of multiple paragraphs, include any newline special characters to separate paragraphs" }. Transactions: ${JSON.stringify(
           transactions.slice(0, 200),
         )}`;
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const accumulated = response.text();
 
-        // Try to parse JSON from the streamed output, otherwise fall back to local
+        // Try to parse JSON from the streamed output
         try {
           const parsed = JSON.parse(accumulated);
-          return NextResponse.json({ source: 'gemini', analysis: parsed });
+          return NextResponse.json({ source: 'gemini', response: parsed.response });
         } catch {
-          const local = simpleLocalAnalysis(transactions);
-          return NextResponse.json({ source: 'gemini-raw', text: accumulated, local });
+          console.error('Failed to parse Gemini response as JSON');
+          return NextResponse.json({ source: 'gemini-raw', response: accumulated });
         }
       } catch (err) {
         console.error('Gemini call failed:', err);
