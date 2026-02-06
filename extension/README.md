@@ -2,6 +2,20 @@
 
 Chrome Extension (Manifest V3) that reuses the web app’s auth: same Sign up / Log in flow and shared auth state via Supabase and `chrome.storage.local`.
 
+## Extension function by page / surface
+
+| Surface | Where it appears | Function |
+|--------|-------------------|----------|
+| **Popup** | Clicking the extension icon in the toolbar | **Account**: Log in, Sign up, view signed-in email, Log out. Uses shared Supabase auth; session is stored in `chrome.storage.local` so the extension and web app stay in sync. |
+| **Content script** | Injected on every page (`<all_urls>`) | Listens for **purchase-intent** (URL path contains e.g. `checkout`, `buy`, `purchase`, `payment`, `order`, `pay`, `cart`, `bag`, `basket`). When detected, shows the **Permission UI** overlay. |
+| **Permission UI** (overlay) | Injected into the page by the content script when purchase intent is detected | Asks: “MoneyGuard detected a purchase. Do you want AI to analyze this purchase before you buy?” **Ignore** closes the overlay; **Analyze** starts the analysis flow (loads user + profile, then **Loading UI** → Gemini analysis → **Analysis UI**). |
+| **Loading UI** (overlay) | Shown while the page is being analyzed | Message: “Loading – Take some time right now to reconsider your purchase.” Shown until Gemini returns cart items + analysis. |
+| **Analysis UI** (overlay) | Shown after Gemini returns | Shows: percentage of monthly budget used by the cart total, short AI analysis text, and “Total Amount Saved using MoneyTracker.” Buttons: **Ignore budget** (log as purchased → adds transactions in Supabase, closes overlay); **Save money** (update “savings” via RPC, close overlay, then **PREV_TAB** to go back). |
+| **Toast UI** | Injected on the page for errors / notices | Short-lived message (e.g. “please login and refresh to use MoneyTracker”, “Gemini busy, please refresh and try again”, profile or logging errors). Auto-removed after a few seconds. |
+| **Background (service worker)** | Runs in the extension’s background context | Handles messages from the content script: **GET_USER** (current Supabase user), **GET_PROFILE** (profile by user id), **ADD_TRANSACTION** (insert transactions), **UPDATE_SAVINGS** (RPC `increment`), **PREV_TAB** (navigate tab back). Can also handle **OPEN_ANALYSIS** to open the web app’s `/analyze` in a popup window (item/price passed as query params). |
+
+End-to-end flow on a checkout-like page: **Detect** (content) → **Permission UI** → user taps Analyze → **Loading UI** → background provides user + profile → **Gemini** parses cart and analyzes → **Analysis UI** → user chooses “Ignore budget” (log purchase) or “Save money” (update savings + go back).
+
 ## File tree
 
 ```
@@ -86,9 +100,13 @@ The loadable extension lives in **`dist-extension/`**.
 
 Auth logic is shared via `shared/auth`; the web app uses the same `createAuthApi(supabase)` (with server Supabase client), and the extension uses it with a browser Supabase client that persists session to `chrome.storage.local`.
 
-## Optional: extension icons
+## Logo and icons
 
-To set a custom icon, add under `extension/`:
+The popup uses `extension/icons/logo.svg` (a copy of `public/logo.svg`) in the header. Keep it in sync with the main app logo when the design changes.
+
+### Optional: toolbar icon (PNG)
+
+To set a custom icon in the browser toolbar, add under `extension/`:
 
 - `icons/icon16.png` (16×16)
 - `icons/icon48.png` (48×48)

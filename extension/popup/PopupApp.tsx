@@ -4,6 +4,7 @@ import { createAuthApi } from 'shared/auth';
 import type { User } from '@supabase/supabase-js';
 import { createExtensionSupabaseClient } from '../scripts/supabase-extension';
 
+import src from '../icons/logo.svg?url';
 import './popup.css';
 
 export function PopupApp() {
@@ -107,6 +108,7 @@ export function PopupApp() {
     return (
       <div className="popup-container">
         <div className="popup-header">
+          <img src={src} alt="" className="popup-logo" />
           <span className="popup-title">MoneyGuard</span>
         </div>
         <div className="popup-user">
@@ -126,6 +128,7 @@ export function PopupApp() {
           <button type="button" className="popup-back" onClick={() => setView('buttons')} aria-label="Back">
             ←
           </button>
+          <img src={logoSrc} alt="" className="popup-logo popup-logo-small" />
           <span className="popup-title">Log in</span>
         </div>
         <form onSubmit={handleLogin} className="popup-form">
@@ -169,6 +172,7 @@ export function PopupApp() {
           <button type="button" className="popup-back" onClick={() => setView('buttons')} aria-label="Back">
             ←
           </button>
+          <img src={src} alt="" className="popup-logo popup-logo-small" />
           <span className="popup-title">Sign up</span>
         </div>
         <form onSubmit={handleSignup} className="popup-form">
@@ -208,6 +212,7 @@ export function PopupApp() {
   return (
     <div className="popup-container">
       <div className="popup-header">
+        <img src={src} alt="" className="popup-logo" />
         <span className="popup-title">MoneyGuard</span>
       </div>
       <div className="popup-actions">
