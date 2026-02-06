@@ -4,7 +4,7 @@ import { createAuthApi } from 'shared/auth';
 import type { User } from '@supabase/supabase-js';
 import { createExtensionSupabaseClient } from '../scripts/supabase-extension';
 
-import src from '../icons/logo.svg?url';
+import logoSrc from '../icons/icon.png?url';
 import './popup.css';
 
 export function PopupApp() {
@@ -15,6 +15,9 @@ export function PopupApp() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [authApi, setAuthApi] = useState<ReturnType<typeof createAuthApi> | null>(null);
+
+  const appUrl =
+    import.meta.env.MODE === 'development' ? 'http://localhost:3000' : 'https://themoneyguard.space';
 
   useEffect(() => {
     let mounted = true;
@@ -107,15 +110,64 @@ export function PopupApp() {
   if (user && view === 'buttons') {
     return (
       <div className="popup-container">
-        <div className="popup-header">
-          <img src={src} alt="" className="popup-logo" />
-          <span className="popup-title">MoneyGuard</span>
-        </div>
-        <div className="popup-user">
-          <p className="popup-email">{user.email ?? 'Signed in'}</p>
-          <button type="button" className="popup-btn popup-btn-secondary" onClick={handleLogout}>
-            Log out
-          </button>
+        <div className="popup-card popup-card-signed-in">
+          {/* Header */}
+          <div className="popup-header-signed-in">
+            <div className="popup-header-left">
+              <div className="popup-avatar" />
+              <div className="popup-user-meta">
+                <p className="popup-user-email">{user.email ?? 'Signed in'}</p>
+                <button
+                  type="button"
+                  className="popup-logout-chip popup-logout-chip-inline"
+                  onClick={handleLogout}
+                >
+                  <span className="popup-logout-text">⎋ Sign out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="popup-divider" />
+
+          {/* Main hero area */}
+          <div className="popup-main">
+            <div className="popup-main-hero">
+              <div className="popup-main-icon">
+                <span>🧘‍♀️</span>
+              </div>
+              <h1 className="popup-main-title">Pause &amp; Reflect</h1>
+              <p className="popup-main-subtitle">
+                Impulse purchases happen fast. Take a moment to breathe before you buy.
+              </p>
+            </div>
+
+            <div className="popup-main-actions">
+              <button
+                type="button"
+                className="popup-btn popup-btn-primary popup-btn-primary-login popup-main-primary"
+                onClick={() => window.open(appUrl, '_blank', 'noreferrer')}
+              >
+                <span className="popup-main-primary-icon">▶</span>
+                <span>Start a Quick Check</span>
+              </button>
+              <p className="popup-main-caption">Reflect on a purchase in 30s</p>
+            </div>
+          </div>
+
+          {/* Footer actions */}
+          <div className="popup-footer">
+            <button
+              type="button"
+              className="popup-dashboard-btn"
+              onClick={() => window.open(appUrl, '_blank', 'noreferrer')}
+            >
+              <div className="popup-dashboard-left">
+                <span className="popup-dashboard-text">Go to Dashboard</span>
+              </div>
+              <span className="popup-dashboard-open">⧉</span>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -157,9 +209,12 @@ export function PopupApp() {
             required
           />
           {error && <p className="popup-error">{error}</p>}
-          <button type="submit" className="popup-btn popup-btn-primary">
+          <button type="submit" className="popup-btn popup-btn-primary popup-btn-primary-login">
             Log in
           </button>
+          <a href={appUrl} target="_blank" rel="noreferrer" className="popup-link">
+            Visit website
+          </a>
         </form>
       </div>
     );
@@ -172,7 +227,7 @@ export function PopupApp() {
           <button type="button" className="popup-back" onClick={() => setView('buttons')} aria-label="Back">
             ←
           </button>
-          <img src={src} alt="" className="popup-logo popup-logo-small" />
+          <img src={logoSrc} alt="" className="popup-logo popup-logo-small" />
           <span className="popup-title">Sign up</span>
         </div>
         <form onSubmit={handleSignup} className="popup-form">
@@ -204,6 +259,9 @@ export function PopupApp() {
           <button type="submit" className="popup-btn popup-btn-primary">
             Sign up
           </button>
+          <a href={appUrl} target="_blank" rel="noreferrer" className="popup-link">
+            Visit website
+          </a>
         </form>
       </div>
     );
@@ -211,17 +269,34 @@ export function PopupApp() {
 
   return (
     <div className="popup-container">
-      <div className="popup-header">
-        <img src={src} alt="" className="popup-logo" />
-        <span className="popup-title">MoneyGuard</span>
-      </div>
-      <div className="popup-actions">
-        <button type="button" className="popup-btn popup-btn-primary" onClick={() => setView('login')}>
-          Log in
-        </button>
-        <button type="button" className="popup-btn popup-btn-secondary" onClick={() => setView('signup')}>
-          Sign up
-        </button>
+      <div className="popup-card">
+        <div className="popup-hero">
+          <div className="popup-logo-wrapper">
+            <div className="popup-logo-glow" />
+            <div className="popup-logo-card">
+              <img src={logoSrc} alt="" className="popup-logo" />
+            </div>
+          </div>
+          <div className="popup-hero-text">
+            <h1 className="popup-hero-title">MoneyGuard</h1>
+            <p className="popup-hero-subtitle">Pause. Reflect. Save.</p>
+          </div>
+        </div>
+        <div className="popup-actions">
+          <button
+            type="button"
+            className="popup-btn popup-btn-primary popup-btn-primary-login"
+            onClick={() => setView('login')}
+          >
+            Log in
+          </button>
+          <button type="button" className="popup-btn popup-btn-secondary" onClick={() => setView('signup')}>
+            Sign up
+          </button>
+          <a href={appUrl} target="_blank" rel="noreferrer" className="popup-link">
+            Visit website
+          </a>
+        </div>
       </div>
     </div>
   );
