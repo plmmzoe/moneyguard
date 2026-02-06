@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 import type { AnalysisResultData } from '@/components/analyze/analysis-result';
-import { AnalysisResult } from '@/components/analyze/analysis-result';
+import { AnalysisResult, normalizeAnalysisResponse } from '@/components/analyze/analysis-result';
 import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,27 +28,17 @@ export default function AnalyzePage() {
     itemName: '',
     price: '',
     currency: 'CAD',
-    whereToBuy: '',
     urgency: '',
 
-    // Section 2: Utility & Usage
-    problemItSolves: '',
-    currentAlternative: '',
+    // Section 2: Utility & Context
+    reasonOrContext: '', // merged: what problem it solves / what you use now
     expectedUsageFrequency: '',
     lastTimeYouNeededThis: '',
-    storageOrMaintenanceConcern: false,
-
-    // Section 3: Emotional & Impulse Signals
-    emotionalTrigger: '',
-    triggerDescription: '',
-    sleepOnItTest: '',
     similarItemsOwned: 0,
-    pastRegretOnSimilar: '',
 
-    // Section 4: Financial Context (Fetched from DB)
-    // monthlyDisposableBudget: handled by profile.monthly_budget
-    // wouldAffectOtherGoals: handled by profile.savings_goal_*
-    refundEase: '',
+    // Section 3: Emotional Check
+    emotionalTrigger: '',
+    sleepOnItTest: '',
   });
 
   useEffect(() => {
@@ -69,13 +59,8 @@ export default function AnalyzePage() {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      const target = e.target as HTMLInputElement;
-      setFormData(prev => ({ ...prev, [name]: target.checked }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -92,13 +77,9 @@ export default function AnalyzePage() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   // Clear analysis result when form data changes to prevent stale data
-  // Clear analysis result when form data changes to prevent stale data
   useEffect(() => {
     setAnalysisResult(null);
   }, [formData]);
-  // Note: removed auto-scroll effect as we now switch tabs
-
-  // Auto-scroll to result
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -110,15 +91,16 @@ export default function AnalyzePage() {
     try {
       const submissionPayload = {
         item: formData.itemName,
-        price: formData.price,
-        description: formData.problemItSolves || formData.triggerDescription || 'No description provided',
-        financialContext: {
-          monthlyBudget: profile?.monthly_budget || 0,
-          currency: profile?.currency || 'USD',
-          savingsGoal: {
-            name: profile?.savings_goal_reward,
-            amount: profile?.savings_goal_amount,
-          },
+        price: `${formData.currency} ${formData.price}`,
+        description: formData.reasonOrContext || undefined,
+        surveySignals: {
+          urgency: formData.urgency || undefined,
+          usageFrequency: formData.expectedUsageFrequency || undefined,
+          lastNeeded: formData.lastTimeYouNeededThis || undefined,
+          emotionalState: formData.emotionalTrigger || undefined,
+          thinkingDuration: formData.sleepOnItTest || undefined,
+          similarItemsOwned: formData.similarItemsOwned || undefined,
+          reasonOrContext: formData.reasonOrContext || undefined,
         },
       };
 
@@ -134,7 +116,7 @@ export default function AnalyzePage() {
         throw new Error(data?.error ?? 'Analysis failed');
       }
 
-      setAnalysisResult(data as AnalysisResultData);
+      setAnalysisResult(normalizeAnalysisResponse(data));
       setActiveTab('result');
     } catch (error) {
       console.error('Analysis error:', error);
@@ -155,7 +137,7 @@ export default function AnalyzePage() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Quick Check</h1>
           <p className="text-muted-foreground max-w-lg">
-            Reflect on a purchase before you buy. Answer a short survey about the item, your budget, and how you feel—then get a clear recommendation on whether it’s worth it for you.
+            Thinking about buying something? Answer a few quick questions and get an AI-powered recommendation on whether it&apos;s worth it.
           </p>
         </div>
 
@@ -187,30 +169,24 @@ export default function AnalyzePage() {
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="itemName">Item Name <span className="text-red-500">*</span></Label>
-                      <Input id="itemName" name="itemName" value={formData.itemName} onChange={handleChange} placeholder="e.g. Noise Cancelling Headers" required />
+                      <Input id="itemName" name="itemName" value={formData.itemName} onChange={handleChange} placeholder="e.g. Noise Cancelling Headphones" required />
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="price">Price <span className="text-red-500">*</span></Label>
-                        <div className="flex gap-2">
-                          <Select onValueChange={(val) => handleSelectChange('currency', val)} value={formData.currency}>
-                            <SelectTrigger className="w-[80px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="CAD">CAD</SelectItem>
-                              <SelectItem value="USD">USD</SelectItem>
-                              <SelectItem value="EUR">EUR</SelectItem>
-                              <SelectItem value="GBP">GBP</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Input id="price" name="price" type="number" min="0" step="0.01" value={formData.price} onChange={handleChange} placeholder="0.00" className="flex-1" required />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="whereToBuy">Where to Buy?</Label>
-                        <Input id="whereToBuy" name="whereToBuy" value={formData.whereToBuy} onChange={handleChange} placeholder="Amazon, Local Store, etc." />
+                    <div className="space-y-2">
+                      <Label htmlFor="price">Price <span className="text-red-500">*</span></Label>
+                      <div className="flex gap-2">
+                        <Select onValueChange={(val) => handleSelectChange('currency', val)} value={formData.currency}>
+                          <SelectTrigger className="w-[80px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="CAD">CAD</SelectItem>
+                            <SelectItem value="USD">USD</SelectItem>
+                            <SelectItem value="EUR">EUR</SelectItem>
+                            <SelectItem value="GBP">GBP</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input id="price" name="price" type="number" min="0" step="0.01" value={formData.price} onChange={handleChange} placeholder="0.00" className="flex-1" required />
                       </div>
                     </div>
 
@@ -230,21 +206,16 @@ export default function AnalyzePage() {
                   </CardContent>
                 </Card>
 
-                {/* SECTION 2: Utility & Usage */}
+                {/* SECTION 2: Utility & Context */}
                 <Card className="border-none shadow-sm bg-card/50">
                   <CardHeader>
-                    <CardTitle>Utility & Usage</CardTitle>
+                    <CardTitle>Utility &amp; Context</CardTitle>
                     <CardDescription>How will this fit into your life?</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="problemItSolves">What specific problem does this solve?</Label>
-                      <Input id="problemItSolves" name="problemItSolves" value={formData.problemItSolves} onChange={handleChange} placeholder="e.g. My current ones are broken..." />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="currentAlternative">What are you using right now instead?</Label>
-                      <Input id="currentAlternative" name="currentAlternative" value={formData.currentAlternative} onChange={handleChange} placeholder="Type 'none' if nothing" />
+                      <Label htmlFor="reasonOrContext">Why do you want this? What are you using now instead?</Label>
+                      <Input id="reasonOrContext" name="reasonOrContext" value={formData.reasonOrContext} onChange={handleChange} placeholder="e.g. My current ones broke, using old earbuds for now..." />
                     </div>
 
                     <div className="space-y-3">
@@ -277,28 +248,18 @@ export default function AnalyzePage() {
                       />
                     </div>
 
-                    <div className="flex items-center space-x-2 pt-2">
-                      <input
-                        type="checkbox"
-                        id="storageOrMaintenanceConcern"
-                        name="storageOrMaintenanceConcern"
-                        checked={formData.storageOrMaintenanceConcern}
-                        onChange={handleChange}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <Label htmlFor="storageOrMaintenanceConcern" className="font-normal cursor-pointer">
-                      This will require extra storage space or maintenance
-                      </Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="similarItemsOwned">How many similar items do you already own?</Label>
+                      <Input id="similarItemsOwned" name="similarItemsOwned" type="number" min="0" value={formData.similarItemsOwned} onChange={handleChange} className="max-w-[120px]" />
                     </div>
-
                   </CardContent>
                 </Card>
 
-                {/* SECTION 3: Emotional & Impulse Signals */}
+                {/* SECTION 3: Emotional Check */}
                 <Card className="border-none shadow-sm bg-card/50">
                   <CardHeader>
                     <CardTitle>Emotional Check</CardTitle>
-                    <CardDescription>Understanding the &apos;Why&apos; behind the buy.</CardDescription>
+                    <CardDescription>Understanding the &apos;why&apos; behind the buy.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-2">
@@ -318,13 +279,8 @@ export default function AnalyzePage() {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="triggerDescription">Description (Optional)</Label>
-                      <Input id="triggerDescription" name="triggerDescription" value={formData.triggerDescription} onChange={handleChange} placeholder="e.g. Saw a sale email, had a bad day..." />
-                    </div>
-
                     <div className="space-y-3">
-                      <Label>Sleep on it: How long have you been thinking about this specific item?</Label>
+                      <Label>How long have you been thinking about this?</Label>
                       <RadioGroup
                         name="sleepOnItTest"
                         value={formData.sleepOnItTest}
@@ -337,74 +293,31 @@ export default function AnalyzePage() {
                         ]}
                       />
                     </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="similarItemsOwned">Similar items owned</Label>
-                        <Input id="similarItemsOwned" name="similarItemsOwned" type="number" min="0" value={formData.similarItemsOwned} onChange={handleChange} />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label>Have you regretted buying similar items in the past?</Label>
-                      <RadioGroup
-                        name="pastRegretOnSimilar"
-                        value={formData.pastRegretOnSimilar}
-                        onChange={handleRadioChange}
-                        options={[
-                          { value: 'yes', label: 'Yes' },
-                          { value: 'no', label: 'No' },
-                          { value: 'not sure', label: 'Not sure' },
-                        ]}
-                      />
-                    </div>
-
                   </CardContent>
                 </Card>
 
-                {/* SECTION 4: Financial Context */}
-                <Card className="border-none shadow-sm bg-card/50">
-                  <CardHeader>
-                    <CardTitle>Financial Reality</CardTitle>
-                    <CardDescription>A quick budget sanity check.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Display profile data instead of asking */}
-                    <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Monthly Budget:</span>
-                        <span className="text-lg font-bold">
-                          {profile ? `${profile.currency || '$'} ${profile.monthly_budget || 0}` : 'Loading...'}
+                {/* Profile context (read-only) */}
+                {profile && (
+                  <div className="p-4 bg-muted/50 rounded-lg flex flex-wrap gap-x-8 gap-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Budget:</span>
+                      <span className="font-semibold">
+                        {profile.currency || '$'} {profile.monthly_budget || 0}/mo
+                      </span>
+                    </div>
+                    {profile.savings_goal_reward && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Saving for:</span>
+                        <span className="font-semibold">
+                          {profile.savings_goal_reward} (${profile.savings_goal_amount})
                         </span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Active Savings Goal:</span>
-                        <span className="text-sm">
-                          {profile?.savings_goal_reward
-                            ? `${profile.savings_goal_reward} ($${profile.savings_goal_amount})`
-                            : 'No active active goal set'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                      * This purchase will be analyzed against your set budget and goals.
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label>How easy is it to return/refund?</Label>
-                      <RadioGroup
-                        name="refundEase"
-                        value={formData.refundEase}
-                        onChange={handleRadioChange}
-                        options={[
-                          { value: 'easy', label: 'Easy (Free returns)' },
-                          { value: 'moderate', label: 'Moderate (Shipping costs/Time)' },
-                          { value: 'hard', label: 'Hard / Final Sale' },
-                        ]}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                    )}
+                    <p className="w-full text-xs text-muted-foreground mt-1">
+                      Your profile data is automatically included in the analysis.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex justify-end">
                   <Button type="submit" disabled={!canSubmit || loading || !!analysisResult} size="lg" className="w-full sm:w-auto">

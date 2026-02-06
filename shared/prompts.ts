@@ -1,86 +1,198 @@
+// ────────────────────────────────────────────────────────────────
+// Shared types — used by web app, extension, and API routes
+// ────────────────────────────────────────────────────────────────
 
-export const generatePurchaseAnalysisPrompt = (
-  userContext: string,
-  item: string,
-  price: string | number,
-  description?: string,
-) => `
-      You are an AI purchase decision analyst.
-      ${userContext}
-      You will receive a JSON object describing a user's intended purchase.
+/** A single detected or user-entered item. */
+export interface AnalysisItem {
+  name: string;
+  price: number;
+  quantity: number;
+  currency?: string;
+}
 
-      Your task is to analyze whether this purchase is impulsive, unnecessary, or misaligned with the user's actual needs.
+/** Survey answers from the web Quick-Check flow (all optional). */
+export interface SurveyAnswers {
+  urgency?: string;
+  usageFrequency?: string;
+  lastNeeded?: string;
+  emotionalState?: string;
+  thinkingDuration?: string;
+  similarItemsOwned?: number;
+  reasonOrContext?: string;
+}
 
-      Rules:
-      - Base your reasoning strictly on the provided data.
-      - Be neutral, supportive, and analytical.
-      - Do not shame or judge the user.
-      - Do not recommend buying unless strong justification exists.
+/** Subset of the user profile relevant to purchase analysis. */
+export interface UserProfile {
+  monthlyBudget?: number;
+  currency?: string;
+  savingsGoal?: { name?: string; amount?: number };
+  hobbies?: string;
+}
 
-      User Data:
-      Item: ${item}
-      Price: ${price}
-      Description/Reason for buying: ${description || 'No description provided'}
-      
-      Return your response in the following JSON format:
+/** Input accepted by the unified prompt generator. */
+export interface UnifiedAnalysisInput {
+  /** Item name (web survey) — may be empty for extension flow. */
+  item?: string;
+  /** Price string, e.g. "CAD 49.99" (web survey). */
+  price?: string | number;
+  /** Free-text description / reason for buying. */
+  description?: string;
+  /** Items parsed from a shopping page (extension flow). */
+  detectedItems?: AnalysisItem[];
+  /** Raw page text the extension scraped (extension flow). */
+  pageContext?: string;
+  /** User profile data pulled from the DB. */
+  userProfile?: UserProfile;
+  /** Structured survey answers (web flow). */
+  surveyAnswers?: SurveyAnswers;
+}
 
-      {
-        "overallVerdict": "likely_impulsive | borderline | considered",
-        "impulseScore": 0-100,
-        "regretRisk": "low | medium | high",
-        "keyReasons": [
-          {
-            "type": "emotion | usage | redundancy | financial | timing",
-            "explanation": "..."
-          }
-        ],
-        "usageRealityCheck": {
-          "predictedFrequency": "...",
-          "confidenceLevel": "high | medium | low",
-          "why": "..."
-        },
-        "opportunityCost": {
-          "whatItDisplaces": "...",
-          "whyItMatters": "..."
-        },
-        "coolOffSuggestion": {
-          "recommendedDelay": "24h | 72h | 7d | none",
-          "reflectionPrompt": "..."
-        },
-        "alternatives": [
-          {
-            "type": "cheaper | delay | use_existing | rent | skip",
-            "suggestion": "..."
-          }
-        ],
-        "finalAdvice": "..."
-      }
-    `;
+// ────────────────────────────────────────────────────────────────
+// Unified response schema — IDENTICAL for web + extension
+// ────────────────────────────────────────────────────────────────
 
-export const generateExtensionAnalysisPrompt = (userContext: string, pageText: string) => `
-      Important, do not include any extra text, formatting or whitespace or linebreaks other than the formats provided.
-      
-      Your task is to:
-      1. Parse the online shopping page text to identify items in the shopping cart/checkout.
-      2. Perform a financial impact analysis on these items based on the user's profile.
+export interface UnifiedAnalysisResponse {
+  /** Items that were analyzed (echoed back or parsed from page). */
+  items: AnalysisItem[];
+  verdict: 'likely_impulsive' | 'borderline' | 'considered';
+  /** Suggested DB status the UI can map to. */
+  suggestedStatus: 'DRAFT' | 'IN_COOL_OFF' | 'AVOIDED' | 'PURCHASED';
+  impulseScore: number;
+  regretRisk: 'low' | 'medium' | 'high';
+  summary: string;
+  keyReasons: { type: string; explanation: string }[];
+  usageRealityCheck?: {
+    predictedFrequency?: string;
+    confidenceLevel?: 'high' | 'medium' | 'low';
+    why?: string;
+  };
+  opportunityCost?: {
+    whatItDisplaces?: string;
+    whyItMatters?: string;
+  };
+  coolOffSuggestion?: {
+    recommendedDelay?: 'none' | '24h' | '72h' | '7d';
+    reflectionPrompt?: string;
+  };
+  alternatives?: { type: string; suggestion: string }[];
+}
 
-      Part 1: User Profile
-      ${userContext}
+// ────────────────────────────────────────────────────────────────
+// Unified prompt generator
+// ────────────────────────────────────────────────────────────────
 
-      Part 2: Shopping Page Text
-      ${pageText}
+export function generateUnifiedPurchaseAnalysisPrompt(
+  input: UnifiedAnalysisInput,
+): string {
+  const sections: string[] = [];
 
-      Output Requirements:
-      Generate a valid JSON response with this structure:
-      {
-        "items": [
-          { "name": "item name", "price": number, "quantity": number }
-        ],
-        "analysis": "A concise (under 50 words) analysis of the financial impact and necessity of this purchase, considering the user's profile. Be neutral and analytical."
-      }
+  // --- System preamble ---
+  sections.push(`You are an AI purchase-decision analyst for the app "MoneyGuard".
 
-      If no valid items are found, return items as [].
-    `;
+RULES — follow strictly:
+- Base reasoning ONLY on the data provided below.
+- Fields may be missing. Missing data means UNKNOWN — never assume negative intent.
+- Be neutral, supportive, and analytical. Never shame or judge.
+- Prefer conservative judgments when data is incomplete.
+- Do not recommend buying unless strong justification exists.
+- Return ONLY the JSON object described at the end — no extra text.`);
+
+  // --- User profile ---
+  if (input.userProfile) {
+    const p = input.userProfile;
+    const parts: string[] = [];
+    if (p.monthlyBudget != null) {parts.push(`Monthly budget: ${p.currency ?? 'USD'} ${p.monthlyBudget}`);}
+    if (p.savingsGoal?.name) {parts.push(`Savings goal: ${p.savingsGoal.name} ($${p.savingsGoal.amount ?? '?'})`);}
+    if (p.hobbies) {parts.push(`Hobbies & interests: ${p.hobbies}`);}
+    if (parts.length) {
+      sections.push(`USER PROFILE:\n${parts.join('\n')}`);
+    }
+  }
+
+  // --- Purchase target (web survey) ---
+  if (input.item) {
+    sections.push(`PURCHASE TARGET:\nItem: ${input.item}\nPrice: ${input.price ?? 'unknown'}`);
+  }
+  if (input.description) {
+    sections.push(`REASON / CONTEXT: ${input.description}`);
+  }
+
+  // --- Detected items (extension) ---
+  if (input.detectedItems && input.detectedItems.length > 0) {
+    sections.push(`DETECTED CART ITEMS:\n${JSON.stringify(input.detectedItems)}`);
+  }
+
+  // --- Raw page text (extension) ---
+  if (input.pageContext) {
+    const trimmed = input.pageContext.slice(0, 6000); // keep within token budget
+    sections.push(`RAW PAGE TEXT (may contain shopping cart / checkout info):\n${trimmed}`);
+  }
+
+  // --- Survey signals (web) ---
+  if (input.surveyAnswers) {
+    const s = input.surveyAnswers;
+    const lines: string[] = [];
+    if (s.urgency) {lines.push(`Urgency: ${s.urgency}`);}
+    if (s.usageFrequency) {lines.push(`Expected usage: ${s.usageFrequency}`);}
+    if (s.lastNeeded) {lines.push(`Last time needed: ${s.lastNeeded}`);}
+    if (s.emotionalState) {lines.push(`Current emotional state: ${s.emotionalState}`);}
+    if (s.thinkingDuration) {lines.push(`Thinking duration: ${s.thinkingDuration}`);}
+    if (s.similarItemsOwned != null) {lines.push(`Similar items already owned: ${s.similarItemsOwned}`);}
+    if (s.reasonOrContext) {lines.push(`Reason / alternative: ${s.reasonOrContext}`);}
+    if (lines.length) {
+      sections.push(`SURVEY SIGNALS:\n${lines.join('\n')}`);
+    }
+  }
+
+  // --- Output schema ---
+  sections.push(`RESPONSE FORMAT — return exactly this JSON structure:
+{
+  "items": [
+    { "name": "string", "price": number, "quantity": number, "currency": "string" }
+  ],
+  "verdict": "likely_impulsive | borderline | considered",
+  "suggestedStatus": "DRAFT | IN_COOL_OFF | AVOIDED | PURCHASED",
+  "impulseScore": 0-100,
+  "regretRisk": "low | medium | high",
+  "summary": "1-2 sentence plain-English summary of the analysis.",
+  "keyReasons": [
+    { "type": "emotion | usage | redundancy | financial | timing", "explanation": "..." }
+  ],
+  "usageRealityCheck": {
+    "predictedFrequency": "...",
+    "confidenceLevel": "high | medium | low",
+    "why": "..."
+  },
+  "opportunityCost": {
+    "whatItDisplaces": "...",
+    "whyItMatters": "..."
+  },
+  "coolOffSuggestion": {
+    "recommendedDelay": "none | 24h | 72h | 7d",
+    "reflectionPrompt": "..."
+  },
+  "alternatives": [
+    { "type": "cheaper | delay | use_existing | rent | skip", "suggestion": "..." }
+  ]
+}
+
+Rules for "items":
+- For a web survey, echo back the single item the user entered.
+- For extension input with pageContext, parse items from the page text.
+- If no items can be identified, return items as [].
+
+Rules for "suggestedStatus":
+- "IN_COOL_OFF" when coolOffSuggestion.recommendedDelay is NOT "none".
+- "DRAFT" when verdict is "borderline" and no cool-off is recommended.
+- "AVOIDED" when verdict is "likely_impulsive" and no cool-off is recommended.
+- "DRAFT" for "considered" verdicts (user still decides).`);
+
+  return sections.join('\n\n---\n\n');
+}
+
+// ────────────────────────────────────────────────────────────────
+// Insight (transaction history) prompt — unchanged
+// ────────────────────────────────────────────────────────────────
 
 export const generateInsightAnalysisPrompt = (start: string, end: string, transactions: string) => `
       Analyze the following user's transactions between ${start} and ${end}. 

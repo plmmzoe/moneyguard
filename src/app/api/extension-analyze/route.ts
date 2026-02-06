@@ -2,7 +2,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 import { createClient } from '@/utils/supabase/server';
-import { generateExtensionAnalysisPrompt } from 'shared/prompts';
+import {
+  generateUnifiedPurchaseAnalysisPrompt,
+  type UnifiedAnalysisInput,
+  type UserProfile,
+} from 'shared/prompts';
 
 // Note: GEMINI_API_KEY must be set. Do not hardcode in client-side code.
 const apiKey = process.env.GEMINI_API_KEY;
@@ -32,24 +36,41 @@ export async function POST(request: Request) {
       generationConfig: { responseMimeType: 'application/json' },
     });
 
-    // Fetch user profile/hobbies
+    // Build user profile from DB
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    let userContext = '';
+    const userProfile: UserProfile = {};
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select()
+        .select('hobbies, monthly_budget, currency, savings_goal_reward, savings_goal_amount')
         .eq('user_id', user.id)
         .single();
 
       if (profile) {
-        userContext = JSON.stringify(profile);
+        userProfile.monthlyBudget = profile.monthly_budget ?? undefined;
+        userProfile.currency = profile.currency ?? undefined;
+        if (profile.savings_goal_reward) {
+          userProfile.savingsGoal = {
+            name: profile.savings_goal_reward,
+            amount: profile.savings_goal_amount ?? undefined,
+          };
+        }
+        if (profile.hobbies && Array.isArray(profile.hobbies) && profile.hobbies.length > 0) {
+          userProfile.hobbies = profile.hobbies
+            .map((h: any) => `${h.name} (Inv: ${h.rating}/10)`)
+            .join(', ');
+        }
       }
     }
 
-    const prompt = generateExtensionAnalysisPrompt(userContext, pageTxt);
+    const input: UnifiedAnalysisInput = {
+      pageContext: pageTxt,
+      userProfile,
+    };
+
+    const prompt = generateUnifiedPurchaseAnalysisPrompt(input);
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
