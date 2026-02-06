@@ -17,12 +17,11 @@ export async function saveAnalysis(data: {
     throw new Error('User not authenticated');
   }
 
-  const { error } = await supabase.from('analyses').insert({
+  const { error } = await supabase.from('transactions').insert({
     user_id: user.id,
-    item_name: data.itemName,
-    price: data.price,
-    description: data.description,
-    ai_analysis: data.aiAnalysis,
+    amount: data.price,
+    transaction_description: data.itemName,
+    analysis: data.aiAnalysis,
   });
 
   if (error) {

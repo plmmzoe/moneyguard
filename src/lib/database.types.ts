@@ -88,25 +88,35 @@ export type Database = {
       }
       transactions: {
         Row: {
-          amount: number | null
-          created_at: string
-          transaction_description: string | null
           transaction_id: number
-          user_id: string | null
+          amount: number
+          transaction_description: string
+          created_at: string
+          user_id: string
+          transaction_state: string | null
+          cooloff_expiry: string | null
+          analysis: string | null
+          verdict: string | null
         }
         Insert: {
-          amount?: number | null
+          amount: number
+          transaction_description: string
           created_at?: string
-          transaction_description?: string | null
-          transaction_id?: number
-          user_id?: string | null
+          user_id: string
+          transaction_state?: string | null
+          cooloff_expiry?: string | null
+          analysis?: string | null
+          verdict?: string | null
         }
         Update: {
-          amount?: number | null
+          amount?: number
+          transaction_description?: string
           created_at?: string
-          transaction_description?: string | null
-          transaction_id?: number
-          user_id?: string | null
+          user_id?: string
+          transaction_state?: string | null
+          cooloff_expiry?: string | null
+          analysis?: string | null
+          verdict?: string | null
         }
         Relationships: []
       }

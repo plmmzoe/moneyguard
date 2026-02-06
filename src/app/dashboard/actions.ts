@@ -3,7 +3,8 @@
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
 
-export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transaction_id'> & Partial<Pick<Tables<'transactions'>, 'user_id'>>;
+export type TransactionData = Pick<Tables<'transactions'>, 'amount' | 'transaction_description' | 'created_at'> &
+  Partial<Pick<Tables<'transactions'>, 'user_id' | 'transaction_state' | 'cooloff_expiry' | 'analysis' | 'verdict'>>;
 
 export async function getProfile() {
   const supabase = await createClient();
@@ -62,6 +63,7 @@ export async function getTransactions() {
   return transactions;
 }
 
+/** Recent transactions (e.g. from Quick Check) with analysis/verdict, ordered by created_at. */
 export async function getAnalyses() {
   const supabase = await createClient();
   const {
@@ -73,7 +75,7 @@ export async function getAnalyses() {
   }
 
   const { data, error } = await supabase
-    .from('analyses')
+    .from('transactions')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -84,7 +86,7 @@ export async function getAnalyses() {
     return [];
   }
 
-  return data;
+  return data ?? [];
 }
 
 export async function postTransaction(transactionData:TransactionData) {

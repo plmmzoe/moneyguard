@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Tables } from '@/lib/database.types';
 
 interface Props {
-  latestAnalysis: Tables<'analyses'> | null;
+  latestAnalysis: Tables<'transactions'> | null;
 }
 
 export function CoolOffStatusCard({ latestAnalysis }: Props) {
@@ -37,16 +37,18 @@ export function CoolOffStatusCard({ latestAnalysis }: Props) {
     );
   }
 
-  // Calculate time since analysis relative to a 24h cool-off window
+  // Use cooloff_expiry when set, otherwise 24h from created_at
   const created = new Date(latestAnalysis.created_at);
+  const expiry = latestAnalysis.cooloff_expiry
+    ? new Date(latestAnalysis.cooloff_expiry)
+    : new Date(created.getTime() + 24 * 60 * 60 * 1000);
   const now = new Date();
-  const totalHours = 24;
-  const elapsedHours = Math.min(
-    totalHours,
-    Math.max(0, (now.getTime() - created.getTime()) / (1000 * 60 * 60)),
-  );
-  const remainingHours = Math.max(0, Math.ceil(totalHours - elapsedHours));
-  const progressPercent = (elapsedHours / totalHours) * 100;
+  const totalMs = expiry.getTime() - created.getTime();
+  const elapsedMs = Math.min(totalMs, Math.max(0, now.getTime() - created.getTime()));
+  const totalHours = totalMs / (1000 * 60 * 60);
+  const elapsedHours = elapsedMs / (1000 * 60 * 60);
+  const remainingHours = Math.max(0, Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60)));
+  const progressPercent = totalHours > 0 ? (elapsedHours / totalHours) * 100 : 0;
 
   return (
     <Card className="bg-card rounded-xl p-5 shadow-sm border border-border flex flex-col justify-between h-full min-h-[280px]">
@@ -58,11 +60,11 @@ export function CoolOffStatusCard({ latestAnalysis }: Props) {
               <span>Reflection Window</span>
             </div>
             <h3 className="text-xl font-bold text-foreground">
-              {latestAnalysis.item_name}
+              {latestAnalysis.transaction_description}
             </h3>
-            {latestAnalysis.description && (
+            {latestAnalysis.analysis && (
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                {latestAnalysis.description}
+                {latestAnalysis.analysis}
               </p>
             )}
           </div>
@@ -95,7 +97,7 @@ export function CoolOffStatusCard({ latestAnalysis }: Props) {
           <span>I decided not to buy</span>
         </button>
         <div className="flex gap-2">
-          <Link href={`/analyze?id=${latestAnalysis.id}`} className="flex-1">
+          <Link href={`/analyze?id=${latestAnalysis.transaction_id}`} className="flex-1">
             <Button
               variant="outline"
               size="sm"

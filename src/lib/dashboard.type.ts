@@ -4,4 +4,5 @@ export interface TransactionDated extends Tables<'transactions'> {
   date: Date | null;
 }
 
-export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transaction_id'> & Partial<Pick<Tables<'transactions'>, 'user_id'>>;
+export type TransactionData = Pick<Tables<'transactions'>, 'amount' | 'transaction_description' | 'created_at'> &
+  Partial<Pick<Tables<'transactions'>, 'user_id' | 'transaction_state' | 'cooloff_expiry' | 'analysis' | 'verdict'>>;
