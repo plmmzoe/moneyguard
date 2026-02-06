@@ -22,13 +22,14 @@ export async function getProfile() {
     .eq('user_id', user.id)
     .single();
 
+  if (!profile) {
+    return null;
+  }
+
   if (error) {
     throw new Error(`Failed to fetch profile: ${error.message}`);
   }
 
-  if (!profile) {
-    return null;
-  }
   return profile;
 }
 
@@ -52,13 +53,15 @@ export async function getTransactions() {
     .eq('user_id', user.id)
     .gte('created_at', past.toISOString())
     .order('created_at', { ascending: true });
-  if (error) {
-    throw new Error(`Failed to fetch user transactions: ${error.message}`);
-  }
 
   if (!transactions) {
     return null;
   }
+
+  if (error) {
+    throw new Error(`Failed to fetch user transactions: ${error.message}`);
+  }
+
   return transactions;
 }
 
