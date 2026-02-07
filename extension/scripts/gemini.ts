@@ -1,7 +1,70 @@
 
-import { generateExtensionAnalysisPrompt } from 'shared/prompts';
+export function generateExtensionAnalysisPrompt(
+  userProfile: string,
+  pageContext: string,
+): string {
+  const sections: string[] = [];
 
-export async function analyzePageText(text: string,userContext:string) {
+  // --- System preamble ---
+  sections.push(`You are an AI purchase-decision analyst for the app "MoneyGuard".
+
+RULES — follow strictly:
+- Base reasoning ONLY on the data provided below.
+- Fields may be missing. Missing data means UNKNOWN — never assume negative intent.
+- Be neutral, supportive, and analytical. Never shame or judge.
+- Prefer conservative judgments when data is incomplete.
+- Do not recommend buying unless strong justification exists.
+- Return ONLY the JSON object described at the end — no extra text.`);
+
+  sections.push(`User Context:${userProfile}`);
+  sections.push(`Purchase Context:${pageContext}`);
+
+  // --- Output schema (aligned with transactions: verdict, transaction_state, analysis) ---
+  sections.push(`RESPONSE FORMAT — return exactly this JSON structure:
+{
+  "items": [
+    { "name": "string", "price": number, "quantity": number, "currency": "string" }
+  ],
+  "verdict": "high | medium | low",
+  "analysis": "Single plain-English paragraph to store in the database: summary of the analysis, key factors, and recommendation.",
+  "impulseScore": 0-100,
+  "summary": "1-2 sentence plain-English summary for the UI.",
+  "keyReasons": [
+    { "type": "emotion | usage | redundancy | financial | timing", "explanation": "..." }
+  ],
+  "usageRealityCheck": {
+    "predictedFrequency": "...",
+    "confidenceLevel": "high | medium | low",
+    "why": "..."
+  },
+  "opportunityCost": {
+    "whatItDisplaces": "...",
+    "whyItMatters": "..."
+  },
+  "coolOffSuggestion": {
+    "recommendedDelay": "none | 24h | 72h | 7d",
+    "reflectionPrompt": "..."
+  },
+  "alternatives": [
+    { "type": "cheaper | delay | use_existing | rent | skip", "suggestion": "..." }
+  ]
+}
+
+Rules for "items":
+- For extension input with pageContext, parse items from the page text.
+- If no items can be identified, return items as [].
+
+Rules for "verdict" (impulse/regret risk — maps to transactions.verdict):
+- "high" = likely impulsive, high regret risk; suggest pausing or cool-off.
+- "medium" = borderline; proceed with care.
+- "low" = considered purchase, lower regret risk.
+
+`);
+
+  return sections.join('\n\n---\n\n');
+}
+
+export async function analyzePageText(text: string, userContext:string) {
   return await llmAnalyze(text,userContext);
 }
 async function llmAnalyze(text: string, userContext:string) {

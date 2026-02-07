@@ -8,14 +8,29 @@ import {
   Sparkles,
   ArrowRight,
   Info,
+  XCircle,
+  ShoppingBag,
+  Eye,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { TransactionState } from '@/lib/transaction-state';
+
+// Schema-aligned verdict (transactions.verdict): high | medium | low
+export type SchemaVerdict = 'high' | 'medium' | 'low';
+
+// Display-oriented verdict for UI labels (derived from schema verdict)
+export type DisplayVerdict = 'likely_impulsive' | 'borderline' | 'considered';
 
 // Schema for the unified AI purchase analysis response (web display)
 export interface AnalysisResultData {
-  aiVerdict: 'likely_impulsive' | 'borderline' | 'considered';
+  /** Schema verdict from API (transactions.verdict). */
+  verdict?: SchemaVerdict;
+  /** Display verdict for styling (mapped from verdict if needed). */
+  aiVerdict: DisplayVerdict;
   confidence: 'low' | 'medium' | 'high';
   impulseScore: number;
   regretRisk?: 'low' | 'medium' | 'high';
@@ -31,47 +46,63 @@ export interface AnalysisResultData {
   };
   suggestedAlternatives?: { type?: string; suggestion: string }[];
   shortExplanation?: string;
+  /** Full analysis text (transactions.analysis). */
+  analysis?: string;
+  /** transactions.transaction_state when saving. */
+  transaction_state?: 'draft' | 'waiting' | 'discarded' | 'bought';
 }
 
-/** Normalize API response to AnalysisResultData (handles both new and legacy shapes). */
+/** Map schema verdict (high | medium | low) to display verdict for UI styling. */
+function schemaVerdictToDisplay(verdict: string | undefined): DisplayVerdict {
+  switch (verdict) {
+    case 'high':
+      return 'likely_impulsive';
+    case 'medium':
+      return 'borderline';
+    case 'low':
+      return 'considered';
+    default:
+      return 'borderline';
+  }
+}
+
+/** Normalize API response to AnalysisResultData (schema-aligned verdict/transaction_state/analysis + legacy). */
 export function normalizeAnalysisResponse(raw: unknown): AnalysisResultData {
   const r = raw as Record<string, unknown>;
-  const hasNewSchema = typeof r?.aiVerdict === 'string';
-  if (hasNewSchema) {
-    return {
-      aiVerdict: r.aiVerdict as AnalysisResultData['aiVerdict'],
-      confidence: (r.confidence as AnalysisResultData['confidence']) ?? 'medium',
-      impulseScore: Number(r.impulseScore) ?? 0,
-      regretRisk: r.regretRisk as AnalysisResultData['regretRisk'],
-      financialImpact: r.financialImpact as AnalysisResultData['financialImpact'],
-      keyReasons: (r.keyReasons as AnalysisResultData['keyReasons']) ?? [],
-      coolOff: r.coolOff as AnalysisResultData['coolOff'],
-      suggestedAlternatives: (r.suggestedAlternatives as AnalysisResultData['suggestedAlternatives']) ?? [],
-      shortExplanation: r.shortExplanation as string | undefined,
-    };
-  }
-  // Legacy shape: verdict, summary, keyReasons, coolOffSuggestion, alternatives, usageRealityCheck
-  const verdict = (r.verdict ?? r.overallVerdict) as string | undefined;
+  const schemaVerdict = (r.verdict ?? r.overallVerdict) as string | undefined;
+  const aiVerdict =
+    schemaVerdict === 'high' || schemaVerdict === 'medium' || schemaVerdict === 'low'
+      ? schemaVerdictToDisplay(schemaVerdict)
+      : (schemaVerdict === 'likely_impulsive' || schemaVerdict === 'borderline' || schemaVerdict === 'considered'
+        ? schemaVerdict
+        : 'borderline') as DisplayVerdict;
   const coolOffSuggestion = r.coolOffSuggestion as { recommendedDelay?: string; reflectionPrompt?: string } | undefined;
   const hasCoolOff = coolOffSuggestion?.recommendedDelay && coolOffSuggestion.recommendedDelay !== 'none';
   return {
-    aiVerdict: (verdict === 'likely_impulsive' || verdict === 'borderline' || verdict === 'considered' ? verdict : 'borderline') as AnalysisResultData['aiVerdict'],
-    confidence: ((r.usageRealityCheck as { confidenceLevel?: string })?.confidenceLevel as 'low' | 'medium' | 'high') ?? 'medium',
+    verdict: (r.verdict as SchemaVerdict) ?? (schemaVerdict === 'high' || schemaVerdict === 'medium' || schemaVerdict === 'low' ? schemaVerdict as SchemaVerdict : undefined),
+    aiVerdict: (r.aiVerdict as DisplayVerdict) ?? aiVerdict,
+    confidence: ((r.usageRealityCheck as { confidenceLevel?: string })?.confidenceLevel ?? r.confidence) as 'low' | 'medium' | 'high' ?? 'medium',
     impulseScore: Number(r.impulseScore) ?? 0,
     regretRisk: r.regretRisk as AnalysisResultData['regretRisk'],
     financialImpact: r.financialImpact as AnalysisResultData['financialImpact'],
     keyReasons: (r.keyReasons as AnalysisResultData['keyReasons']) ?? [],
-    coolOff: hasCoolOff ? { recommended: true, delay: coolOffSuggestion?.recommendedDelay, reflectionPrompt: coolOffSuggestion?.reflectionPrompt } : undefined,
+    coolOff: (r.coolOff as AnalysisResultData['coolOff']) ?? (hasCoolOff ? { recommended: true, delay: coolOffSuggestion?.recommendedDelay, reflectionPrompt: coolOffSuggestion?.reflectionPrompt } : undefined),
     suggestedAlternatives: (r.alternatives ?? r.suggestedAlternatives) as AnalysisResultData['suggestedAlternatives'],
-    shortExplanation: (r.summary ?? r.shortExplanation) as string | undefined,
+    shortExplanation: (r.summary ?? r.shortExplanation ?? r.analysis) as string | undefined,
+    analysis: r.analysis as string | undefined,
+    transaction_state: r.transaction_state as AnalysisResultData['transaction_state'],
   };
 }
 
 interface AnalysisResultProps {
   result: AnalysisResultData;
+  /** When set, show 4 buttons to update transaction_state in DB. */
+  transactionId?: number;
+  onStateUpdate?: (state: TransactionState) => void;
 }
 
-export function AnalysisResult({ result }: AnalysisResultProps) {
+export function AnalysisResult({ result, transactionId, onStateUpdate }: AnalysisResultProps) {
+  const [selectedState, setSelectedState] = useState<TransactionState | null>(null);
   const {
     aiVerdict,
     confidence,
@@ -82,6 +113,12 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
     suggestedAlternatives = [],
     shortExplanation,
   } = result;
+
+  const handleDecideClick = (state: TransactionState) => {
+    if (selectedState != null) {return;}
+    setSelectedState(state);
+    onStateUpdate?.(state);
+  };
 
   const displayReasons = keyReasons.slice(0, 3);
   const percentOfBudget = financialImpact?.percentOfMonthlyBudget;
@@ -184,7 +221,69 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
         </CardContent>
       </Card>
 
-      {/* 2. Financial impact — budget %, savings impact */}
+      {/* 2. Decide — update transaction_state in DB (grid, top of result) */}
+      {transactionId != null && onStateUpdate && (
+        <Card className="border-border bg-card/50">
+          <CardHeader>
+            <CardTitle className="text-base">Log your decision</CardTitle>
+            <CardDescription>Choose one option to save to your history. You can revisit this later from your dashboard.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={selectedState != null}
+                className={`rounded-lg bg-red-50 hover:bg-red-100 text-red-900 font-medium border-2 h-auto py-2.5 ${
+                  selectedState === 'discarded' ? 'border-red-600' : 'border-transparent'
+                }`}
+                onClick={() => handleDecideClick('discarded')}
+              >
+                <XCircle className="h-4 w-4 mr-1.5 shrink-0" />
+                I won&apos;t buy
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={selectedState != null}
+                className={`rounded-lg bg-green-50 hover:bg-green-100 text-green-900 font-medium border-2 h-auto py-2.5 ${
+                  selectedState === 'bought' ? 'border-green-600' : 'border-transparent'
+                }`}
+                onClick={() => handleDecideClick('bought')}
+              >
+                <ShoppingBag className="h-4 w-4 mr-1.5 shrink-0" />
+                I will buy
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={selectedState != null}
+                className={`rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-medium border-2 h-auto py-2.5 ${
+                  selectedState === 'waiting' ? 'border-amber-600' : 'border-transparent'
+                }`}
+                onClick={() => handleDecideClick('waiting')}
+              >
+                <Hourglass className="h-4 w-4 mr-1.5 shrink-0" />
+                Send to cool-off
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={selectedState != null}
+                className={`rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium border-2 h-auto py-2.5 ${
+                  selectedState === 'draft' ? 'border-gray-600' : 'border-transparent'
+                }`}
+                onClick={() => handleDecideClick('draft')}
+              >
+                <Eye className="h-4 w-4 mr-1.5 shrink-0" />
+                Just browsing
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 3. Financial impact — budget %, savings impact */}
       <Card className="border-border bg-card/50">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -217,7 +316,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
         </CardContent>
       </Card>
 
-      {/* 3. Why this verdict — keyReasons (max 3 bullets) */}
+      {/* 4. Why this verdict — keyReasons (max 3 bullets) */}
       {displayReasons.length > 0 && (
         <Card className="border-border bg-card/50">
           <CardHeader>
@@ -266,7 +365,7 @@ export function AnalysisResult({ result }: AnalysisResultProps) {
         </Card>
       )}
 
-      {/* 5. Alternatives — optional, collapsible */}
+      {/* 6. Alternatives — optional, collapsible */}
       {suggestedAlternatives.length > 0 && (
         <Card className="border-border bg-card/50">
           <CardHeader>

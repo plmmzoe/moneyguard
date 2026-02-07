@@ -3,6 +3,7 @@
 import { Sparkles } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
+import { saveAnalysis, updateTransactionState } from '@/app/analyze/actions';
 import type { AnalysisResultData } from '@/components/analyze/analysis-result';
 import { AnalysisResult, normalizeAnalysisResponse } from '@/components/analyze/analysis-result';
 import { AppLayout } from '@/components/app-layout';
@@ -74,11 +75,13 @@ export default function AnalyzePage() {
   const canSubmit = formData.itemName && formData.price;
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResultData | null>(null);
+  const [savedTransactionId, setSavedTransactionId] = useState<number | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
-  // Clear analysis result when form data changes to prevent stale data
+  // Clear analysis result and saved id when form data changes to prevent stale data
   useEffect(() => {
     setAnalysisResult(null);
+    setSavedTransactionId(null);
   }, [formData]);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -116,7 +119,18 @@ export default function AnalyzePage() {
         throw new Error(data?.error ?? 'Analysis failed');
       }
 
-      setAnalysisResult(normalizeAnalysisResponse(data));
+      const normalized = normalizeAnalysisResponse(data);
+      setAnalysisResult(normalized);
+
+      // Save as draft so user can update state via buttons (transaction_state not set by AI)
+      const priceNum = typeof formData.price === 'string' ? parseFloat(formData.price) : formData.price;
+      const { transaction_id } = await saveAnalysis({
+        itemName: formData.itemName.trim(),
+        price: Number.isFinite(priceNum) ? priceNum : 0,
+        aiAnalysis: normalized.analysis ?? normalized.shortExplanation ?? '',
+        verdict: normalized.verdict ?? undefined,
+      });
+      setSavedTransactionId(transaction_id);
       setActiveTab('result');
     } catch (error) {
       console.error('Analysis error:', error);
@@ -125,6 +139,18 @@ export default function AnalyzePage() {
     } finally {
       setLoading(false);
       isSubmitting.current = false;
+    }
+  }
+
+  async function handleStateUpdate(state: 'draft' | 'waiting' | 'discarded' | 'bought') {
+    if (savedTransactionId == null) {return;}
+    try {
+      const cooloff_expiry = state === 'waiting'
+        ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        : null;
+      await updateTransactionState(savedTransactionId, state, cooloff_expiry ?? undefined);
+    } catch {
+      toast({ description: 'Failed to save. Please try again.', variant: 'destructive' });
     }
   }
 
@@ -338,10 +364,15 @@ export default function AnalyzePage() {
           <TabsContent value="result">
             {analysisResult ? (
               <div ref={resultRef} className="mt-8">
-                <AnalysisResult result={analysisResult} />
+                <AnalysisResult
+                  result={analysisResult}
+                  transactionId={savedTransactionId ?? undefined}
+                  onStateUpdate={handleStateUpdate}
+                />
                 <div className="flex justify-center mt-8">
                   <Button variant="outline" onClick={() => {
                     setAnalysisResult(null);
+                    setSavedTransactionId(null);
                     setActiveTab('survey');
                   }}>
                   Analyze Another Item

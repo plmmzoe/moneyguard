@@ -48,17 +48,22 @@ export interface UnifiedAnalysisInput {
 }
 
 // ────────────────────────────────────────────────────────────────
-// Unified response schema — IDENTICAL for web + extension
+// Unified response schema — verdict + analysis only (transaction_state is set by user in UI, default draft)
 // ────────────────────────────────────────────────────────────────
+
+/** Matches transactions.verdict enum: high | medium | low (impulse/regret risk). */
+export type AnalysisVerdict = 'high' | 'medium' | 'low';
 
 export interface UnifiedAnalysisResponse {
   /** Items that were analyzed (echoed back or parsed from page). */
   items: AnalysisItem[];
-  verdict: 'likely_impulsive' | 'borderline' | 'considered';
-  /** Suggested DB status the UI can map to. */
-  suggestedStatus: 'DRAFT' | 'IN_COOL_OFF' | 'AVOIDED' | 'PURCHASED';
+  /** Impulse/regret risk — maps to transactions.verdict. */
+  verdict: AnalysisVerdict;
+
+  /** Plain-text analysis to store in transactions.analysis. */
+  analysis: string;
   impulseScore: number;
-  regretRisk: 'low' | 'medium' | 'high';
+  /** Human-readable 1–2 sentence summary (for UI); can mirror or extend analysis. */
   summary: string;
   keyReasons: { type: string; explanation: string }[];
   usageRealityCheck?: {
@@ -144,17 +149,16 @@ RULES — follow strictly:
     }
   }
 
-  // --- Output schema ---
+  // --- Output schema (verdict + analysis only; do not include transaction_state — UI sets it when user clicks) ---
   sections.push(`RESPONSE FORMAT — return exactly this JSON structure:
 {
   "items": [
     { "name": "string", "price": number, "quantity": number, "currency": "string" }
   ],
-  "verdict": "likely_impulsive | borderline | considered",
-  "suggestedStatus": "DRAFT | IN_COOL_OFF | AVOIDED | PURCHASED",
+  "verdict": "high | medium | low",
+  "analysis": "Single plain-English paragraph to store in the database: summary of the analysis, key factors, and recommendation.",
   "impulseScore": 0-100,
-  "regretRisk": "low | medium | high",
-  "summary": "1-2 sentence plain-English summary of the analysis.",
+  "summary": "1-2 sentence plain-English summary for the UI.",
   "keyReasons": [
     { "type": "emotion | usage | redundancy | financial | timing", "explanation": "..." }
   ],
@@ -181,11 +185,11 @@ Rules for "items":
 - For extension input with pageContext, parse items from the page text.
 - If no items can be identified, return items as [].
 
-Rules for "suggestedStatus":
-- "IN_COOL_OFF" when coolOffSuggestion.recommendedDelay is NOT "none".
-- "DRAFT" when verdict is "borderline" and no cool-off is recommended.
-- "AVOIDED" when verdict is "likely_impulsive" and no cool-off is recommended.
-- "DRAFT" for "considered" verdicts (user still decides).`);
+Rules for "verdict" (impulse/regret risk — maps to transactions.verdict):
+- "high" = likely impulsive, high regret risk; suggest pausing or cool-off.
+- "medium" = borderline; proceed with care.
+- "low" = considered purchase, lower regret risk.
+`);
 
   return sections.join('\n\n---\n\n');
 }
