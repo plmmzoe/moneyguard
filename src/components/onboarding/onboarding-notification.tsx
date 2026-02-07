@@ -27,12 +27,12 @@ export function OnboardingNotification({ user }: { user: User | null }) {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('user_id')
+        .select('setup_complete')
         .eq('user_id', user.id)
         .single();
 
-      if (!profile) {
-        // New user - show notification
+      if (!profile || !profile.setup_complete) {
+        // New user or incomplete setup - show notification
         setIsNewUser(true);
         setShowNotification(true);
         sessionStorage.setItem(sessionKey, 'true');

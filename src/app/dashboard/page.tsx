@@ -1,23 +1,26 @@
-import { getAnalyses, getActiveSavingsGoal, getProfile, getSavedTowardsGoal } from '@/app/dashboard/actions';
+import { getCoolOffs, getProfile, getTotalSaved, getTransactionPeriod } from '@/app/dashboard/actions';
 import { AppLayout } from '@/components/app-layout';
 import { DashboardPage } from '@/components/dashboard/dashboard-page';
+import { Tables } from '@/lib/database.types';
 
 export default async function Dashboard() {
-  const [profile, analyses, savedTowardsGoal, activeGoal] = await Promise.all([
+  const [profile, cooloffs, savedTowardsGoal, monthlySpending] = await Promise.all([
     getProfile(),
-    getAnalyses(),
-    getSavedTowardsGoal(),
-    getActiveSavingsGoal(),
+    getCoolOffs(),
+    getTotalSaved(),
+    getTransactionPeriod(30),
   ]);
-  const latestAnalysis = analyses && analyses.length > 0 ? analyses[0] : null;
 
   return (
     <AppLayout>
       <DashboardPage
         profile={profile}
-        latestAnalysis={latestAnalysis}
-        activeGoal={activeGoal}
+        coolOffs={cooloffs}
+        saving={profile?.savings}
         savedTowardsGoal={savedTowardsGoal}
+        monthlySpending={monthlySpending.reduce((accumulator:number, t:Tables<'transactions'>) => {
+          return accumulator + t.amount;
+        }, 0)}
       />
     </AppLayout>
   );

@@ -31,12 +31,6 @@ export default function Profile({
               <dt className="text-sm font-medium text-muted-foreground">Monthly Budget</dt>
               <dd className="mt-1 text-foreground">{profile.monthly_budget ?? '—'}</dd>
             </div>
-            {profile.savings_goal_target_date && (
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Savings Target Date</dt>
-                <dd className="mt-1 text-foreground">{new Date(profile.savings_goal_target_date).toLocaleDateString()}</dd>
-              </div>
-            )}
           </dl>
         </>
       ) : (
@@ -51,7 +45,7 @@ export default function Profile({
         </Link>
 
         <Link
-          href="/onboarding"
+          href="/savings"
           className="inline-flex items-center px-3 py-1.5 rounded-md border border-border text-sm font-medium hover:bg-primary/5"
         >
               Edit Goals

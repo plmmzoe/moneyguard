@@ -16,109 +16,124 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          active_saving: number | null
           created_at: string | null
           currency: string | null
           monthly_budget: number | null
-          monthly_irregular_spending: number | null
-          savings_goal_amount: number | null
-          savings_goal_reward: string | null
-          savings_goal_target_date: string | null
-          total_saved: number | null
+          setup_complete: boolean
           updated_at: string | null
           user_id: string
           username: string | null
         }
         Insert: {
+          active_saving?: number | null
           created_at?: string | null
           currency?: string | null
           monthly_budget?: number | null
-          monthly_irregular_spending?: number | null
-          savings_goal_amount?: number | null
-          savings_goal_reward?: string | null
-          savings_goal_target_date?: string | null
-          total_saved?: number | null
+          setup_complete?: boolean
           updated_at?: string | null
           user_id: string
           username?: string | null
         }
         Update: {
+          active_saving?: number | null
           created_at?: string | null
           currency?: string | null
           monthly_budget?: number | null
-          monthly_irregular_spending?: number | null
-          savings_goal_amount?: number | null
-          savings_goal_reward?: string | null
-          savings_goal_target_date?: string | null
-          total_saved?: number | null
+          setup_complete?: boolean
           updated_at?: string | null
           user_id?: string
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'profiles_active_saving_fkey'
+            columns: ['active_saving']
+            isOneToOne: false
+            referencedRelation: 'savings'
+            referencedColumns: ['id']
+          },
+        ]
       }
       savings: {
         Row: {
           created_at: string
-          desc: string | null
-          expire_at: string | null
-          goal_amount: number | null
+          description: string | null
+          expire_at: string
+          goal: number
           id: number
-          saved_amount: number | null
-          user_id: string | null
+          is_active: boolean
+          name: string
+          user_id: string
         }
         Insert: {
           created_at?: string
-          desc?: string | null
-          expire_at?: string | null
-          goal_amount?: number | null
+          description?: string | null
+          expire_at: string
+          goal: number
           id?: number
-          saved_amount?: number | null
-          user_id?: string | null
+          is_active?: boolean
+          name: string
+          user_id: string
         }
         Update: {
           created_at?: string
-          desc?: string | null
-          expire_at?: string | null
-          goal_amount?: number | null
+          description?: string | null
+          expire_at?: string
+          goal?: number
           id?: number
-          saved_amount?: number | null
-          user_id?: string | null
+          is_active?: boolean
+          name?: string
+          user_id?: string
         }
         Relationships: []
       }
       transactions: {
         Row: {
-          transaction_id: number
           amount: number
-          transaction_description: string
-          created_at: string
-          user_id: string
-          transaction_state: string | null
-          cooloff_expiry: string | null
           analysis: string | null
-          verdict: string | null
+          associated_savings: number | null
+          cooloff_expiry: string | null
+          created_at: string
+          transaction_description: string
+          transaction_id: number
+          transaction_state: Database['public']['Enums']['status'] | null
+          user_id: string
+          verdict: Database['public']['Enums']['impulse'] | null
         }
         Insert: {
           amount: number
-          transaction_description: string
-          created_at?: string
-          user_id: string
-          transaction_state?: string | null
-          cooloff_expiry?: string | null
           analysis?: string | null
-          verdict?: string | null
+          associated_savings?: number | null
+          cooloff_expiry?: string | null
+          created_at?: string
+          transaction_description: string
+          transaction_id?: number
+          transaction_state?: Database['public']['Enums']['status'] | null
+          user_id: string
+          verdict?: Database['public']['Enums']['impulse'] | null
         }
         Update: {
           amount?: number
-          transaction_description?: string
-          created_at?: string
-          user_id?: string
-          transaction_state?: string | null
-          cooloff_expiry?: string | null
           analysis?: string | null
-          verdict?: string | null
+          associated_savings?: number | null
+          cooloff_expiry?: string | null
+          created_at?: string
+          transaction_description?: string
+          transaction_id?: number
+          transaction_state?: Database['public']['Enums']['status'] | null
+          user_id?: string
+          verdict?: Database['public']['Enums']['impulse'] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'transactions_associated_savings_fkey'
+            columns: ['associated_savings']
+            isOneToOne: false
+            referencedRelation: 'savings'
+            referencedColumns: ['id']
+          },
+        ]
       }
     }
     Views: {
@@ -126,9 +141,18 @@ export type Database = {
     }
     Functions: {
       increment: { Args: { row_id: string; x: number }; Returns: undefined }
+      incrementsavings: {
+        Args: { price: number; target_user_id: string }
+        Returns: undefined
+      }
+      total_amount: {
+        Args: { savings_row: Database['public']['Tables']['savings']['Row'] }
+        Returns: number
+      }
     }
     Enums: {
-      [_ in never]: never
+      impulse: 'high' | 'medium' | 'low'
+      status: 'bought' | 'waiting' | 'discarded' | 'draft'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -255,6 +279,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      impulse: ['high', 'medium', 'low'],
+      status: ['bought', 'waiting', 'discarded', 'draft'],
+    },
   },
 } as const;

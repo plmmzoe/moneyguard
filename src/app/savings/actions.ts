@@ -2,10 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { Saving } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
 
-export async function getSavings() {
+export async function getSavings():Promise<Saving[]> {
   const supabase = await createClient();
 
   const {
@@ -18,7 +19,7 @@ export async function getSavings() {
 
   const { data: savings, error } = await supabase
     .from('savings')
-    .select('*')
+    .select('*,total_amount')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -67,7 +68,6 @@ export async function createSavingsGoal(data: {
       goal: data.goal,
       description: data.description || null,
       expire_at: data.expire_at ? new Date(data.expire_at).toISOString() : null,
-      amount: 0,
       is_active: isFirstGoal,
       created_at: new Date().toISOString(),
     })
@@ -76,6 +76,17 @@ export async function createSavingsGoal(data: {
 
   if (error) {
     throw new Error(`Failed to create savings goal: ${error.message}`);
+  }
+
+  // Set the foreign key of the profile's active savings goal if this is the first goal
+  if (isFirstGoal) {
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ active_saving: newSavings.id })
+      .eq('user_id', user.id);
+    if (profileError) {
+      throw new Error(`Failed to update profile's active saving: ${profileError.message}`);
+    }
   }
 
   revalidatePath('/savings');
@@ -186,6 +197,15 @@ export async function deleteSavingsGoal(id: number): Promise<number | null> {
         .update({ is_active: true })
         .eq('id', nextGoal.id);
       nextActiveId = nextGoal.id;
+
+      // Update the profile's active_saving foreign key
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ active_saving: nextActiveId })
+        .eq('user_id', user.id);
+      if (profileError) {
+        throw new Error(`Failed to update profile's active saving: ${profileError.message}`);
+      }
     }
   }
 
@@ -235,6 +255,15 @@ export async function setActiveSavingsGoal(id: number) {
 
   if (activateError) {
     throw new Error(`Failed to activate savings goal: ${activateError.message}`);
+  }
+
+  // Update the profile's active_saving foreign key
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ active_saving: id })
+    .eq('user_id', user.id);
+  if (profileError) {
+    throw new Error(`Failed to update profile's active saving: ${profileError.message}`);
   }
 
   revalidatePath('/savings');

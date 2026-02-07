@@ -4,5 +4,15 @@ export interface TransactionDated extends Tables<'transactions'> {
   date: Date | null;
 }
 
-export type TransactionData = Pick<Tables<'transactions'>, 'amount' | 'transaction_description' | 'created_at'> &
-  Partial<Pick<Tables<'transactions'>, 'user_id' | 'transaction_state' | 'cooloff_expiry' | 'analysis' | 'verdict'>>;
+export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transaction_id'> & Partial<Pick<Tables<'transactions'>, 'user_id'>>;
+
+export type TransactionGoal = Tables<'transactions'> & {
+  cooloff_expiry: string;
+  transaction_state: 'bought' | 'waiting' | 'discarded' | 'draft';
+};
+
+export type Saving = Tables<'savings'> & {total_amount:number}
+
+export type Profile = Tables<'profiles'> & {
+  savings:Saving | null
+}

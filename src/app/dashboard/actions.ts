@@ -1,12 +1,13 @@
 'use server';
 
+import { Profile, TransactionGoal } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
 
 export type TransactionData = Pick<Tables<'transactions'>, 'amount' | 'transaction_description' | 'created_at'> &
   Partial<Pick<Tables<'transactions'>, 'user_id' | 'transaction_state' | 'cooloff_expiry' | 'analysis' | 'verdict'>>;
 
-export async function getProfile() {
+export async function getProfile():Promise<Profile|null> {
   const supabase = await createClient();
 
   const {
@@ -19,18 +20,20 @@ export async function getProfile() {
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(`
+      *,
+      savings (*,total_amount)
+    `)
     .eq('user_id', user.id)
     .single();
-
-  if (!profile) {
-    return null;
-  }
 
   if (error) {
     throw new Error(`Failed to fetch profile: ${error.message}`);
   }
 
+  if (!profile) {
+    return null;
+  }
   return profile;
 }
 
@@ -44,31 +47,26 @@ export async function getTransactions() {
   if (!user) {
     return null;
   }
-
-  const today = new Date();
-  const dayInMs = 86400000;
-  const past = new Date(today.getTime() - dayInMs * 7);
   const { data: transactions, error } = await supabase
     .from('transactions')
     .select('*')
     .eq('user_id', user.id)
-    .gte('created_at', past.toISOString())
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: false });
 
   if (!transactions) {
     return null;
   }
 
   if (error) {
-    throw new Error(`Failed to fetch user transactions: ${error.message}`);
+    throw new Error(`Failed to fetch user transactions: ${error}`);
   }
 
   return transactions;
 }
 
-/** Recent transactions (e.g. from Quick Check) with analysis/verdict, ordered by created_at. */
-export async function getAnalyses() {
+export async function updateTransactions(transactionData:TransactionData) {
   const supabase = await createClient();
+  const transaction = transactionData;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -76,17 +74,20 @@ export async function getAnalyses() {
   if (!user) {
     return [];
   }
-
+  transaction.user_id = user.id;
+  if (transaction.associated_savings) {
+    if (transaction.transaction_state !== 'discarded') {
+      transaction.associated_savings = null;
+    }
+  }
   const { data, error } = await supabase
     .from('transactions')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(5);
+    .update([transaction])
+    .eq('user_id', user.id);
 
   if (error) {
-    console.error('Error fetching analyses:', error);
-    return [];
+    console.error('Failed to update user transaction:', error);
+    throw new Error(`Error updating transaction: ${error.message}`);
   }
 
   return data ?? [];
@@ -103,6 +104,11 @@ export async function postTransaction(transactionData:TransactionData) {
     return [];
   }
   transaction.user_id = user.id;
+  if (transaction.associated_savings) {
+    if (transaction.transaction_state !== 'discarded') {
+      transaction.associated_savings = null;
+    }
+  }
   const { data, error } = await supabase
     .from('transactions')
     .insert([transaction]);
@@ -111,11 +117,10 @@ export async function postTransaction(transactionData:TransactionData) {
     console.error('Failed to post user transaction:', error);
     throw new Error(`Error posting transaction: ${error.message}`);
   }
-
   return data;
 }
 
-export async function deleteTransactions(transactionIds:number[]) {
+export async function deleteTransactions(transaction:Tables<'transactions'>) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -127,17 +132,16 @@ export async function deleteTransactions(transactionIds:number[]) {
   const { data, error } = await supabase
     .from('transactions')
     .delete()
-    .in('transaction_id', transactionIds);
+    .eq('transaction_id', transaction.transaction_id);
   if (error) {
     console.error('Failed to delete user transaction:', error);
     throw new Error(`Error deleting transaction: ${error.message}`);
   }
-
   return data;
 }
 
 /** Sum of transaction amounts where user chose "skipped" (decided not to buy). Derived from history/transactions. */
-export async function getSavedTowardsGoal(): Promise<number> {
+export async function getTotalSaved(): Promise<number> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -149,17 +153,68 @@ export async function getSavedTowardsGoal(): Promise<number> {
 
   const { data: transactions, error } = await supabase
     .from('transactions')
-    .select('amount, transaction_description')
+    .select('amount, transaction_state')
+    .eq('transaction_state', 'discarded')
     .eq('user_id', user.id);
 
   if (error || !transactions) {
     return 0;
   }
+  let sum = 0;
+  transactions.forEach((transaction) => { sum += transaction.amount;});
+  return sum;
+}
 
-  const skipped = transactions.filter(
-    (t) => t.transaction_description?.toLowerCase().includes('status: skipped'),
-  );
-  return skipped.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+export async function getTransactionPeriod(days:number): Promise<Tables<'transactions'>[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+  const dayInMs = 86400000;
+  const timeDelta = days * dayInMs;
+  const current = new Date();
+  const limit = new Date(current.getTime() - timeDelta);
+  const { data: transactions, error } = await supabase
+    .from('transactions')
+    .select()
+    .eq('transaction_state', 'bought')
+    .lt('created_at', current.toISOString())
+    .gt('created_at', limit.toISOString())
+    .eq('user_id', user.id);
+
+  if (error || !transactions) {
+    return [];
+  }
+  return transactions;
+}
+
+/** Get up to 5 most recent transactions where user chose to wait. */
+export async function getCoolOffs(): Promise<TransactionGoal[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data: transactions, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('transaction_state', 'waiting')
+    .gt('cooloff_expiry', new Date().toISOString())
+    .order('cooloff_expiry', { ascending: true })
+    .limit(5);
+  if (error || !transactions) {
+    return [];
+  }
+  return transactions;
 }
 
 export async function updateMindset(mindset: string) {
@@ -181,29 +236,4 @@ export async function updateMindset(mindset: string) {
     console.error('Error updating mindset:', error);
     throw new Error('Failed to update mindset');
   }
-}
-
-export async function getActiveSavingsGoal() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  const { data: goal, error } = await supabase
-    .from('savings')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error fetching active savings goal:', error);
-    throw new Error('Failed to fetch active savings goal');
-  }
-
-  return goal || null;
 }

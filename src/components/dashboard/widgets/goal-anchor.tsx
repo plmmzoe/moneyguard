@@ -4,54 +4,24 @@ import { Anchor, Mountain, Plane } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { Saving } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 
 interface Props {
   profile: Tables<'profiles'> | null;
-  activeGoal: Tables<'savings'> | null;
   /** Sum of amounts from history (transactions) where user chose "skipped" (decided not to buy). */
-  savedTowardsGoal: number;
+  saving: Saving| null | undefined;
 }
 
-export function GoalAnchor({ profile, activeGoal, savedTowardsGoal }: Props) {
-  const hasGoal = activeGoal && activeGoal.goal && activeGoal.goal > 0;
-
-  if (!hasGoal) {
-    return (
-      <div className="relative overflow-hidden rounded-xl shadow-sm border border-border bg-gray-900 h-full min-h-[280px] flex flex-col items-center justify-center p-5 text-white">
-        {/* Background image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-          style={{
-            backgroundImage:
-              "url('https://lh3.googleusercontent.com/aida-public/AB6AXuARtBbgX6xsp2LEh63KbcL_qGc0Mg2g5xq7cpuisK_bTg7g5p9P6rODhtXqSfsdBL02_bZdi-dQPx-H_T6BpAcbvZKtqOFNrTZoF9oBDmlUHZrc7-HQhvKFnADhqitWPxaWzKO2tobO5ZmbMo8UI1CiXvpWR00Ayneh3Y-mEC7FurebwPgqbfLEwrdBN5zhJf3LPpGi1p6qhFgK-uLkoTHJqVdKoTCcWy5NTrg8UYglFMnyoGCIeZcE5Hu801r4pYKDjJSFlcJcRuo')",
-          }}
-        />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
-
-        <div className="relative text-center space-y-4">
-          <Mountain className="w-12 h-12 mx-auto opacity-80" />
-          <div>
-            <h3 className="text-xl font-bold mb-2">No Active Savings Goal</h3>
-            <p className="text-sm text-white/70 mb-4">Create your first savings goal to get started</p>
-          </div>
-          <Link href="/savings">
-            <Button className="w-full">Create Savings Goal</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const reward = activeGoal?.name || 'Your Savings Goal';
-  const targetRaw = activeGoal?.expire_at;
+export function GoalAnchor({ profile, saving }: Props) {
+  const reward = saving?.name || 'Add a new goal';
+  const targetRaw = saving?.expire_at;
   const targetDate = targetRaw
     ? new Date(targetRaw).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : 'No date set';
+    : 'Start now';
 
-  const goalAmount = Number(activeGoal?.goal ?? 0);
-  const savedAmount = Number(activeGoal?.amount ?? 0) || savedTowardsGoal;
+  const goalAmount = Number(saving?.goal ?? -1);
+  const savedAmount = saving?.total_amount ?? 0;
   const hasGoalAmount = goalAmount > 0;
   const progressPercent = hasGoalAmount ? Math.min(100, (savedAmount / goalAmount) * 100) : 0;
   const currency = profile?.currency || 'USD';
@@ -108,9 +78,9 @@ export function GoalAnchor({ profile, activeGoal, savedTowardsGoal }: Props) {
 
           <div className="p-4 rounded-lg bg-white/10 backdrop-blur-md border border-white/10">
             <p className="text-sm leading-relaxed text-gray-100">
-              {hasGoalAmount
-                ? `"Pausing impulse purchases today brings you closer to ${reward}."`
-                : '"Track your progress toward this goal."'}
+              {hasGoalAmount && saving && saving.description
+                ? `"${saving.description}"`
+                : '"Set a savings goal in your profile to track progress."'}
             </p>
           </div>
 
