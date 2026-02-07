@@ -11,10 +11,11 @@ import { QuickIntentCheckIn } from './widgets/quick-intent-check-in';
 interface Props {
   profile: Tables<'profiles'> | null;
   latestAnalysis: Tables<'analyses'> | null;
+  activeGoal: Tables<'savings'> | null;
   savedTowardsGoal: number;
 }
 
-export function DashboardPage({ profile, latestAnalysis, savedTowardsGoal }: Props) {
+export function DashboardPage({ profile, latestAnalysis, activeGoal, savedTowardsGoal }: Props) {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
       <DecisionReadinessBanner mindset={profile?.spending_mindset ?? null} />
@@ -23,7 +24,7 @@ export function DashboardPage({ profile, latestAnalysis, savedTowardsGoal }: Pro
         <InlineQuickCheckTrigger />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <CoolOffStatusCard latestAnalysis={latestAnalysis} />
-          <GoalAnchor profile={profile} savedTowardsGoal={savedTowardsGoal} />
+          <GoalAnchor profile={profile} activeGoal={activeGoal} savedTowardsGoal={savedTowardsGoal} />
         </div>
       </div>
     </div>

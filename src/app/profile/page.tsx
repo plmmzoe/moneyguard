@@ -1,34 +1,19 @@
-'use client';
-
+import { getProfile } from '@/app/dashboard/actions';
 import { AppLayout } from '@/components/app-layout';
-import { useUserInfo } from '@/hooks/useUserInfo';
-import { createClient } from '@/utils/supabase/client';
+import Profile from '@/components/profile/profile';
+import { createClient } from '@/utils/supabase/server';
 
-export default function ProfilePage() {
-  const supabase = createClient();
-  const { user } = useUserInfo(supabase);
+export default async function ProfilePage() {
+  const profile = await getProfile();
+
+  // fetch auth user email server-side to avoid exposing `user_id`
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  const email = data?.user?.email ?? null;
 
   return (
     <AppLayout>
-      <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Account</h1>
-        {user ? (
-          <dl className="space-y-4">
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Email</dt>
-              <dd className="mt-1 text-foreground">{user.email ?? '—'}</dd>
-            </div>
-            {user.user_metadata?.full_name && (
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Name</dt>
-                <dd className="mt-1 text-foreground">{user.user_metadata.full_name}</dd>
-              </div>
-            )}
-          </dl>
-        ) : (
-          <p className="text-muted-foreground">Sign in to view your account details.</p>
-        )}
-      </div>
+      <Profile profile={profile} email={email} />
     </AppLayout>
   );
 }
