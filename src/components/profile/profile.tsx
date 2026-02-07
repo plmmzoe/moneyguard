@@ -31,18 +31,6 @@ export default function Profile({
               <dt className="text-sm font-medium text-muted-foreground">Monthly Budget</dt>
               <dd className="mt-1 text-foreground">{profile.monthly_budget ?? '—'}</dd>
             </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Irregular Spending</dt>
-              <dd className="mt-1 text-foreground">{profile.monthly_irregular_spending ?? '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Total Saved</dt>
-              <dd className="mt-1 text-foreground">{profile.total_saved ?? '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Savings Goal</dt>
-              <dd className="mt-1 text-foreground">{profile.savings_goal_amount ?? '—'}</dd>
-            </div>
             {profile.savings_goal_target_date && (
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Savings Target Date</dt>
