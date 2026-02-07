@@ -11,6 +11,8 @@ export type TransactionGoal = Tables<'transactions'> & {
   transaction_state: 'bought' | 'waiting' | 'discarded' | 'draft';
 };
 
+export type Saving = Tables<'savings'> & {total_amount:number}
+
 export type Profile = Tables<'profiles'> & {
-  savings:Tables<'savings'> | null
+  savings:Saving | null
 }

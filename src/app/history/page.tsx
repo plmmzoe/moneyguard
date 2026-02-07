@@ -5,7 +5,6 @@ import { useEffect, useState, useCallback } from 'react';
 
 import { TransactionData, deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
 import { AppLayout } from '@/components/app-layout';
-import { RecentAnalyses } from '@/components/dashboard/recent-analyses';
 import { calcuateTimeProgress } from '@/components/dashboard/widgets/cool-off-status-card';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,7 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { useProfileInfo } from '@/hooks/useProfileInfo';
 import { Tables } from '@/lib/database.types';
+import { createClient } from '@/utils/supabase/client';
 
 const PAGE_CNT = 15;
 
@@ -69,7 +70,6 @@ export default function HistoryPage() {
             Log impulse purchase
           </Button>
         </div>
-        <RecentAnalyses />
         {transactions.length > 0 && (
           <>
             <div className={'grid grid-cols-2 w-full m-0 p-0'}>
@@ -187,6 +187,7 @@ export default function HistoryPage() {
 }
 
 function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const supabase = createClient();
   const { toast } = useToast();
   const [productName, setProductName] = useState('');
   const [amount, setAmount] = useState<number | ''>('');
@@ -196,6 +197,7 @@ function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved:
   const [trigger, setTrigger] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 16)); // yyyy-MM-ddTHH:mm
   const [saving, setSaving] = useState(false);
+  const { profile } = useProfileInfo(supabase);
 
   const emotions: { id: string; label: string; icon: string }[] = [
     { id: 'bored', label: 'Bored', icon: '😐' },
@@ -226,6 +228,7 @@ function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved:
       const status = 'bought';
       const verdict = null;
       const data: TransactionData = {
+        associated_savings: profile?.active_saving ?? null,
         analysis: null,
         cooloff_expiry: null,
         transaction_state: status,
