@@ -163,6 +163,33 @@ export async function getTotalSaved(): Promise<number> {
   return sum;
 }
 
+export async function getTransactionPeriod(days:number): Promise<Tables<'transactions'>[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+  const dayInMs = 86400000;
+  const timeDelta = days * dayInMs;
+  const current = new Date();
+  const limit = new Date(current.getTime() - timeDelta);
+  const { data: transactions, error } = await supabase
+    .from('transactions')
+    .select()
+    .eq('transaction_state', 'bought')
+    .lt('created_at', current.toISOString())
+    .gt('created_at', limit.toISOString())
+    .eq('user_id', user.id);
+
+  if (error || !transactions) {
+    return [];
+  }
+  return transactions;
+}
+
 /** Get up to 5 most recent transactions where user chose to wait. */
 export async function getCoolOffs(): Promise<TransactionGoal[]> {
   const supabase = await createClient();
