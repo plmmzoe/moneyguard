@@ -1,5 +1,6 @@
 'use client';
 
+import { BudgetBanner } from '@/components/dashboard/widgets/monthly-budget-banner';
 import { StatsBanner } from '@/components/dashboard/widgets/stats-banner';
 import { Saving, TransactionGoal } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
@@ -22,6 +23,10 @@ export function DashboardPage({ profile, coolOffs, saving, savedTowardsGoal }: P
       <DecisionReadinessBanner mindset={profile?.spending_mindset ?? null} />
       <div className="rounded-xl bg-card border border-border p-6 space-y-8">
         <QuickIntentCheckIn />
+        {profile?.monthly_budget && profile.currency
+          ? <BudgetBanner budget={profile.monthly_budget} currency={profile.currency} monthlySpending={savedTowardsGoal} />
+          : <div/>
+        }
         <StatsBanner totalSpending={savedTowardsGoal} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <CoolOffStatusCard transactions={coolOffs} />
