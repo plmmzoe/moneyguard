@@ -22,6 +22,7 @@ interface OnboardingFormProps {
     monthlyIrregularSpending?: number | null;
     savingsGoalAmount?: number | null;
     savingsGoalReward?: string | null;
+    savingsGoalDescription?: string | null;
     savingsGoalTargetDate?: string | null;
     hobbies?: { name: string; rating: number }[] | null;
   };
@@ -32,6 +33,7 @@ interface OnboardingFormProps {
     monthlyIrregularSpending: number;
     savingsGoalAmount: number;
     savingsGoalReward: string;
+    savingsGoalDescription: string;
     savingsGoalTargetDate: string;
     hobbies: { name: string; rating: number }[];
   }) => Promise<void>;
@@ -63,6 +65,7 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
     monthlyIrregularSpending: initialData?.monthlyIrregularSpending?.toString() || '',
     savingsGoalAmount: initialData?.savingsGoalAmount?.toString() || '',
     savingsGoalReward: initialData?.savingsGoalReward || '',
+    savingsGoalDescription: initialData?.savingsGoalDescription || '',
     savingsGoalTargetDate: initialData?.savingsGoalTargetDate?.split('T')[0] || '',
     hobbies: initialData?.hobbies || [] as { name: string; rating: number }[],
   });
@@ -70,6 +73,8 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
   // Hobbies local state
   const [hobbyInput, setHobbyInput] = useState('');
   const [hobbyRating, setHobbyRating] = useState(5);
+
+  // savings description local optional field is part of formData
 
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
 
@@ -91,14 +96,26 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
         newErrors.monthlyIrregularSpending = 'Must be 0 or greater';
       }
     } else if (currentStep === 'rewards') {
-      if (!formData.savingsGoalAmount || parseFloat(formData.savingsGoalAmount) <= 0) {
-        newErrors.savingsGoalAmount = 'Savings goal must be greater than 0';
-      }
-      if (!formData.savingsGoalReward.trim()) {
-        newErrors.savingsGoalReward = 'Reward is required';
-      }
-      if (!formData.savingsGoalTargetDate) {
-        newErrors.savingsGoalTargetDate = 'Target date is required';
+      // Make savings optional: only validate if the user entered any savings info
+      const amountStr = formData.savingsGoalAmount ?? '';
+      const rewardStr = (formData.savingsGoalReward ?? '').trim();
+      const dateStr = (formData.savingsGoalTargetDate ?? '').trim();
+
+      const hasAnySavingsInput =
+        (amountStr !== '' && !Number.isNaN(parseFloat(amountStr))) ||
+        rewardStr !== '' ||
+        dateStr !== '';
+
+      if (hasAnySavingsInput) {
+        if (amountStr === '' || Number.isNaN(parseFloat(amountStr)) || parseFloat(amountStr) <= 0) {
+          newErrors.savingsGoalAmount = 'Savings goal must be greater than 0';
+        }
+        if (!rewardStr) {
+          newErrors.savingsGoalReward = 'Reward is required';
+        }
+        if (!dateStr) {
+          newErrors.savingsGoalTargetDate = 'Target date is required';
+        }
       }
     }
 
@@ -155,6 +172,7 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
             : 0,
           savingsGoalAmount: parseFloat(formData.savingsGoalAmount),
           savingsGoalReward: formData.savingsGoalReward,
+          savingsGoalDescription: formData.savingsGoalDescription,
           savingsGoalTargetDate: formData.savingsGoalTargetDate,
           hobbies: formData.hobbies,
         });
@@ -320,6 +338,17 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
                 {errors.savingsGoalTargetDate && (
                   <p className="text-sm text-red-500">{errors.savingsGoalTargetDate}</p>
                 )}
+              </div>
+
+              {/* Description */}
+              <div className="grid w-full gap-2">
+                <Label htmlFor="savingsGoalDescription">Description (optional)</Label>
+                <Input
+                  id="savingsGoalDescription"
+                  placeholder="Describe this savings goal"
+                  value={formData.savingsGoalDescription}
+                  onChange={(e) => handleInputChange('savingsGoalDescription', e.target.value)}
+                />
               </div>
             </>
           )}

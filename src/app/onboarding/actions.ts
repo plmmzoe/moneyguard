@@ -11,6 +11,7 @@ export async function createOrUpdateProfile(data: {
   monthlyIrregularSpending: number;
   savingsGoalAmount: number;
   savingsGoalReward: string;
+  savingsGoalDescription?: string;
   savingsGoalTargetDate: string;
   hobbies?: { name: string; rating: number }[];
 }) {
@@ -39,9 +40,6 @@ export async function createOrUpdateProfile(data: {
         monthly_budget: data.monthlyBudget,
         currency: data.currency,
         monthly_irregular_spending: data.monthlyIrregularSpending,
-        savings_goal_amount: data.savingsGoalAmount,
-        savings_goal_reward: data.savingsGoalReward,
-        savings_goal_target_date: new Date(data.savingsGoalTargetDate).toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', user.id);
@@ -57,14 +55,43 @@ export async function createOrUpdateProfile(data: {
       monthly_budget: data.monthlyBudget,
       currency: data.currency,
       monthly_irregular_spending: data.monthlyIrregularSpending,
-      savings_goal_amount: data.savingsGoalAmount,
-      savings_goal_reward: data.savingsGoalReward,
-      savings_goal_target_date: new Date(data.savingsGoalTargetDate).toISOString(),
     });
 
     if (error) {
       console.error('Error creating profile:', error);
       throw new Error(`Failed to create profile: ${error.message}`);
+    }
+  }
+
+  // If user provided any savings info, create a new savings goal row.
+  const hasSavingsInput =
+    (typeof data.savingsGoalAmount === 'number' && isFinite(data.savingsGoalAmount) && data.savingsGoalAmount > 0) ||
+    (data.savingsGoalReward && data.savingsGoalReward.trim() !== '') ||
+    (data.savingsGoalTargetDate && data.savingsGoalTargetDate.trim() !== '');
+
+  if (hasSavingsInput) {
+    try {
+      const expireAt = data.savingsGoalTargetDate
+        ? new Date(data.savingsGoalTargetDate).toISOString()
+        : null;
+
+      const { error: sError } = await supabase.from('savings').insert({
+        user_id: user.id,
+        goal: typeof data.savingsGoalAmount === 'number' && isFinite(data.savingsGoalAmount)
+          ? data.savingsGoalAmount
+          : null,
+        name: data.savingsGoalReward || null,
+        description: data.savingsGoalDescription ?? data.savingsGoalReward ?? null,
+        expire_at: expireAt,
+        amount: 0,
+      });
+
+      if (sError) {
+        throw new Error(`Failed to create savings: ${sError.message}`);
+      }
+    } catch (err) {
+      console.error('Savings insert error:', err);
+      throw err;
     }
   }
 
@@ -99,6 +126,19 @@ export async function getProfile() {
     return null;
   }
 
+  // Fetch latest savings record for the user (if any)
+  const { data: savings, error: sError } = await supabase
+    .from('savings')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (sError && sError.code !== 'PGRST116') {
+    throw new Error(`Failed to fetch savings: ${sError.message}`);
+  }
+
   return {
     id: profile.id,
     userId: profile.user_id,
@@ -106,9 +146,9 @@ export async function getProfile() {
     monthlyBudget: profile.monthly_budget,
     currency: profile.currency,
     monthlyIrregularSpending: profile.monthly_irregular_spending,
-    savingsGoalAmount: profile.savings_goal_amount,
-    savingsGoalReward: profile.savings_goal_reward,
-    savingsGoalTargetDate: profile.savings_goal_target_date,
+    savingsGoalAmount: savings ? savings.goal : null,
+    savingsGoalReward: savings ? savings.name : null,
+    savingsGoalTargetDate: savings ? savings.expire_at : null,
     hobbies: profile.hobbies as { name: string; rating: number }[] | null,
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
