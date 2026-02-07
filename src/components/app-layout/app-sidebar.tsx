@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, Search, Clock3, LineChart, Flag } from 'lucide-react';
+import { LayoutDashboard, Search, Clock3, LineChart, Flag, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -9,7 +9,8 @@ export const navItems = [
   { label: 'Quick Check', href: '/analyze', icon: Search },
   { label: 'History', href: '/history', icon: Clock3 },
   { label: 'Insight', href: '/analysis', icon: LineChart },
-  { label: 'Goals', href: '/onboarding', icon: Flag },
+  { label: 'Goals', href: '/savings', icon: Flag },
+  { label: 'Profile', href: '/profile', icon: User },
 ];
 
 export function AppSidebar() {
