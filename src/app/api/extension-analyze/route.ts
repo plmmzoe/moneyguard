@@ -10,6 +10,7 @@ import {
 
 // Note: GEMINI_API_KEY must be set. Do not hardcode in client-side code.
 const apiKey = process.env.GEMINI_API_KEY;
+const MODEL = 'gemini-3-flash-preview';
 
 export async function POST(request: Request) {
   try {
@@ -20,19 +21,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
-    const { item, price, description, surveySignals } = body;
+    const { pageTxt } = await request.json();
 
-    if (!item || !price) {
+    if (!pageTxt) {
       return NextResponse.json(
-        { error: 'Item name and price are required.' },
+        { error: 'text is required.' },
         { status: 400 },
       );
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
+      model: MODEL,
       generationConfig: { responseMimeType: 'application/json' },
     });
 
@@ -66,11 +66,8 @@ export async function POST(request: Request) {
     }
 
     const input: UnifiedAnalysisInput = {
-      item,
-      price,
-      description: description || undefined,
+      pageContext: pageTxt,
       userProfile,
-      surveyAnswers: surveySignals || undefined,
     };
 
     const prompt = generateUnifiedPurchaseAnalysisPrompt(input);
@@ -87,7 +84,6 @@ export async function POST(request: Request) {
       message.includes('Too Many Requests') ||
       message.includes('quota') ||
       message.includes('Quota exceeded');
-
     if (is429) {
       console.error('Gemini API quota/rate limit:', error);
       return NextResponse.json(

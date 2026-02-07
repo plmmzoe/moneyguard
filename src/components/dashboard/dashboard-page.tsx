@@ -21,7 +21,7 @@ interface Props {
 export function DashboardPage({ profile, coolOffs, saving, savedTowardsGoal, monthlySpending }: Props) {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
-      <DecisionReadinessBanner mindset={profile?.spending_mindset ?? null} />
+      <DecisionReadinessBanner mindset={null} />
       <div className="rounded-xl bg-card border border-border p-6 space-y-8">
         <QuickIntentCheckIn />
         {profile?.monthly_budget && profile.currency

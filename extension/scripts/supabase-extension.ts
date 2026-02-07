@@ -9,16 +9,17 @@ export async function createExtensionSupabaseClient(url: string, anonKey: string
   }
   const client = createClient(url, anonKey);
 
-  const stored = await new Promise<{ session?: Session }>((resolve) => {
+  const stored = await new Promise<Record<string, Session | undefined>>((resolve) => {
     chrome.storage.local.get(STORAGE_KEY, (data) => {
-      resolve(data as { session?: Session });
+      resolve(data as Record<string, Session | undefined>);
     });
   });
 
-  if (stored?.session?.access_token) {
+  const session = stored?.[STORAGE_KEY];
+  if (session?.access_token) {
     await client.auth.setSession({
-      access_token: stored.session.access_token,
-      refresh_token: stored.session.refresh_token ?? '',
+      access_token: session.access_token,
+      refresh_token: session.refresh_token ?? '',
     });
   }
 

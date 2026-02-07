@@ -1,5 +1,70 @@
 
-export async function analyzePageText(text: string,userContext:string) {
+function generateExtensionAnalysisPrompt(
+  userProfile: string,
+  pageContext: string,
+): string {
+  const sections: string[] = [];
+
+  // --- System preamble ---
+  sections.push(`You are an AI purchase-decision analyst for the app "MoneyGuard".
+
+RULES — follow strictly:
+- Base reasoning ONLY on the data provided below.
+- Fields may be missing. Missing data means UNKNOWN — never assume negative intent.
+- Be neutral, supportive, and analytical. Never shame or judge.
+- Prefer conservative judgments when data is incomplete.
+- Do not recommend buying unless strong justification exists.
+- Return ONLY the JSON object described at the end — no extra text.`);
+
+  sections.push(`User Context:${userProfile}`);
+  sections.push(`Purchase Context:${pageContext}`);
+
+  // --- Output schema (aligned with transactions: verdict, transaction_state, analysis) ---
+  sections.push(`RESPONSE FORMAT — return exactly this JSON structure:
+{
+  "items": [
+    { "name": "string", "price": number, "quantity": number, "currency": "string" }
+  ],
+  "verdict": "high | medium | low",
+  "analysis": "Single plain-English paragraph to store in the database: summary of the analysis, key factors, and recommendation.",
+  "impulseScore": 0-100,
+  "summary": "1-2 sentence plain-English summary for the UI.",
+  "keyReasons": [
+    { "type": "emotion | usage | redundancy | financial | timing", "explanation": "..." }
+  ],
+  "usageRealityCheck": {
+    "predictedFrequency": "...",
+    "confidenceLevel": "high | medium | low",
+    "why": "..."
+  },
+  "opportunityCost": {
+    "whatItDisplaces": "...",
+    "whyItMatters": "..."
+  },
+  "coolOffSuggestion": {
+    "recommendedDelay": "none | 24h | 72h | 7d",
+    "reflectionPrompt": "..."
+  },
+  "alternatives": [
+    { "type": "cheaper | delay | use_existing | rent | skip", "suggestion": "..." }
+  ]
+}
+
+Rules for "items":
+- For extension input with pageContext, parse items from the page text.
+- If no items can be identified, return items as [].
+
+Rules for "verdict" (impulse/regret risk — maps to transactions.verdict):
+- "high" = likely impulsive, high regret risk; suggest pausing or cool-off.
+- "medium" = borderline; proceed with care.
+- "low" = considered purchase, lower regret risk.
+
+`);
+
+  return sections.join('\n\n---\n\n');
+}
+
+export async function analyzePageText(text: string, userContext:string) {
   return await llmAnalyze(text,userContext);
 }
 async function llmAnalyze(text: string, userContext:string) {
@@ -9,20 +74,7 @@ async function llmAnalyze(text: string, userContext:string) {
     throw new Error('No api key provided.');
   }
   const gemini_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
-  const msg = `
-      Important, do not include any extra text, formatting or whitespace or linebreaks other than the formats provided : 
-      Generate a response in a json format of 
-      {items:list of item from part 2, analysis:brief <50 word analysis of items from part 2 about the financial impact of this purchase on the user}
-      Part 1:
-      Below is the json format of a user's profile details:
-      ${userContext}
-      Part 2:
-      Lastly, given the body text of an online shopping page, parse out the items in the shopping cart along with their prices.
-      Format the items in an array of json formatted like the following {name:item-name,price:item-price-number,quantity:item-quantity}.
-      if there are no valid items, return only [].
-      Below is the shopping page text:
-      ${text}
-    `;
+  const msg = generateExtensionAnalysisPrompt(userContext, text);
   const body ={
     contents:[{
       parts: [{

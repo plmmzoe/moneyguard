@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { TransactionGoal } from '@/lib/dashboard.type';
 
 interface Props {
-  transactions: TransactionGoal[] | [];
+  transactions: TransactionGoal[];
 }
 
 function parseUnit(time:number, unit:number, postfix:string) {
@@ -49,10 +49,39 @@ export function calcuateTimeProgress(start:string, end:string) {
 }
 
 export function CoolOffStatusCard({ transactions }: Props) {
+  const validTransactions = transactions.filter(
+    (t): t is TransactionGoal => t.cooloff_expiry != null && t.cooloff_expiry !== '',
+  );
+
+  if (validTransactions.length === 0) {
+    return (
+      <Card className="bg-card rounded-xl p-5 shadow-sm border border-border flex flex-col justify-between h-full min-h-[280px]">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-bold uppercase tracking-wider mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/70 animate-pulse" />
+            <span>Reflection Window</span>
+          </div>
+          <h3 className="text-lg font-bold text-foreground">No active cool-off period</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Your recent purchase analyses will appear here when you run a check or send an item to
+            cool-off.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 mt-4">
+          <Link href="/analyze">
+            <Button className="w-full py-2.5 px-4 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm transition-colors flex items-center justify-center gap-2">
+              Run a quick check
+            </Button>
+          </Link>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-card rounded-xl p-5 shadow-sm border border-border flex flex-col justify-between h-full min-h-[280px]">
       <div className={'overflow-x-auto snap-y snap-mandatory h-[260px] snap-always no-scrollbar'}>
-        {transactions.map((transaction) => (
+        {validTransactions.map((transaction) => (
           <div key={transaction.transaction_id} className={'snap-center mb-7 mt-2'}>
             <div className="flex justify-between items-start mb-4">
               <div>

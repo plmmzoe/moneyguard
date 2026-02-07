@@ -4,7 +4,8 @@ import { Profile, TransactionGoal } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
 
-export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transaction_id'> & Partial<Pick<Tables<'transactions'>, 'user_id'>>;
+export type TransactionData = Pick<Tables<'transactions'>, 'amount' | 'transaction_description' | 'created_at'> &
+  Partial<Pick<Tables<'transactions'>, 'user_id' | 'transaction_state' | 'cooloff_expiry' | 'analysis' | 'verdict'>>;
 
 export async function getProfile():Promise<Profile|null> {
   const supabase = await createClient();
@@ -88,7 +89,8 @@ export async function updateTransactions(transactionData:TransactionData) {
     console.error('Failed to update user transaction:', error);
     throw new Error(`Error updating transaction: ${error.message}`);
   }
-  return data;
+
+  return data ?? [];
 }
 
 export async function postTransaction(transactionData:TransactionData) {

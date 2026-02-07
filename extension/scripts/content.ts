@@ -1,9 +1,10 @@
 import { detectPurchaseIntent } from './detect';
 import { showPermissionUI } from '../UIs/permissionUI.ts';
-import {analysisUI} from '../UIs/analysisUI.ts';
+import { analysisUI } from '../UIs/analysisUI.ts';
 import { analyzePageText } from './gemini.ts';
 import { loadingUI } from '../UIs/loadingUI.ts';
 import { toastUI } from '../UIs/toastUI.ts';
+import type { LlmResponse } from '../shared/types';
 
 type Item = {
   name: string,
@@ -11,10 +12,6 @@ type Item = {
   quantity:number,
 }
 
-type LlmResponse = {
-  items: Item[],
-  analysis: string,
-}
 
 type MsgRequest = {
   type: string,
@@ -27,15 +24,17 @@ type MsgResp = {
 }
 
 const requestTypes = {
-  openAnalysis:"OPEN_ANALYSIS",
-  addTransaction:"ADD_TRANSACTION",
-  updateSaving:"UPDATE_SAVINGS",
-  getProfile:"GET_PROFILE",
-  getUser:"GET_USER",
-  prevTab:"PREV_TAB",
+  openAnalysis: "OPEN_ANALYSIS",
+  addTransaction: "ADD_TRANSACTION",
+  updateSaving: "UPDATE_SAVINGS",
+  getProfile: "GET_PROFILE",
+  getUser: "GET_USER",
+  prevTab: "PREV_TAB",
+  createAnalysisTransaction: "CREATE_ANALYSIS_TRANSACTION",
+  updateTransactionState: "UPDATE_TRANSACTION_STATE",
 }
 
-function parseItem(text: string) : LlmResponse| undefined {
+function parseItem(text: string): LlmResponse | undefined {
   try{
     return JSON.parse(text);
   }catch(error){
@@ -134,8 +133,43 @@ function proceedWithProfile(userID:string,profile:any,textContent:string){
             warningToast("MoneyTracker logging error")
             console.error("saving logging failed")
           })
-        loadingScreen.remove();
-        document.body.appendChild(analysisUI(userID,items,profile,boundPurchase,boundSave));
+        const cost = items.items.reduce((s, i) => s + (i.price ?? 0) * (i.quantity ?? 1), 0);
+        const transactionDescription = items.items.length
+          ? items.items.map((i: Item) => i.name).join(', ')
+          : 'Cart';
+        const payload = {
+          transaction_description: transactionDescription,
+          amount: cost,
+          analysis: items.analysis ?? '',
+          verdict: items.verdict ?? null,
+        };
+        chrome.runtime.sendMessage(
+          { type: requestTypes.createAnalysisTransaction, user: userID, payload },
+          (resp: MsgResp & { transaction_id?: number }) => {
+            loadingScreen.remove();
+            if (resp?.success && typeof resp.transaction_id === 'number') {
+              const transactionId = resp.transaction_id;
+              const onDecision = (state: string) => {
+                const cooloff_expiry = state === 'waiting'
+                  ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                  : undefined;
+                chrome.runtime.sendMessage({
+                  type: requestTypes.updateTransactionState,
+                  user: userID,
+                  transactionId,
+                  transaction_state: state,
+                  cooloff_expiry,
+                });
+              };
+              document.body.appendChild(
+                analysisUI(userID, items as LlmResponse, profile, transactionId, boundPurchase, boundSave, onDecision)
+              );
+            } else {
+              loadingScreen.remove();
+              warningToast("Could not save analysis. Please try again.");
+            }
+          }
+        );
       } else {
         console.log(txt)
         warningToast("Gemini response error")
