@@ -39,7 +39,6 @@ export async function createOrUpdateProfile(data: {
         username: data.username,
         monthly_budget: data.monthlyBudget,
         currency: data.currency,
-        monthly_irregular_spending: data.monthlyIrregularSpending,
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', user.id);
