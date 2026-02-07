@@ -150,7 +150,14 @@ export function SavingsPageContent() {
         <>
           {/* Active Goal Section */}
           <div>
-            <h2 className="text-lg font-semibold mb-3">Active Goal</h2>
+            <div className="flex items-center justify-between gap-4 mb-3">
+              <h2 className="text-lg font-semibold">Active Goal</h2>
+              {!isAddingNew && !editingId && (
+                <Button onClick={() => setIsAddingNew(true)} variant="outline" size="sm">
+                  + Add Another Goal
+                </Button>
+              )}
+            </div>
             {profile?.savings ? (
               <SavingsGoalCard
                 goal={profile.savings}

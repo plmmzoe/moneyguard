@@ -1,7 +1,7 @@
 'use client';
 
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import { LogOut, User } from 'lucide-react';
+import { LayoutDashboard, LogOut, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -32,6 +32,13 @@ export default function Header({ user }: Props) {
         <div className="flex items-center gap-4">
           {user?.id ? (
             <>
+              <Link
+                href="/dashboard"
+                className="p-2 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                aria-label="Dashboard"
+              >
+                <LayoutDashboard className="h-5 w-5" />
+              </Link>
               <Link
                 href="/profile"
                 className="p-2 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"

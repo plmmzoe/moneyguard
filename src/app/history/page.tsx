@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 
 import { TransactionData, deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
@@ -13,12 +14,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { useProfileInfo } from '@/hooks/useProfileInfo';
+import { useUserInfo } from '@/hooks/useUserInfo';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/client';
 
 const PAGE_CNT = 15;
 
 export default function HistoryPage() {
+  const supabase = createClient();
+  const { user } = useUserInfo(supabase);
   const [open, setOpen] = useState(false);
   const [pageNum, setPageNum] = useState<number>(1);
   const [transactions, setTransactions] = useState<Tables<'transactions'>[]>([]);
@@ -61,6 +65,23 @@ export default function HistoryPage() {
       setPageNum(pageNum - 1);
     }
   }
+
+  if (!user) {
+    return (
+      <AppLayout>
+        <div className="w-full max-w-4xl mx-auto rounded-xl bg-card border border-border p-8 text-center">
+          <p className="text-muted-foreground mb-4">Please log in to view your history.</p>
+          <Link
+            href="/login"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
+          >
+            Log in
+          </Link>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="w-full max-w-4xl mx-auto space-y-6">

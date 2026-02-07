@@ -8,7 +8,7 @@ export const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Quick Check', href: '/analyze', icon: Search },
   { label: 'History', href: '/history', icon: Clock3 },
-  { label: 'Insight', href: '/analysis', icon: LineChart },
+  { label: 'Insight', href: '/insight', icon: LineChart },
   { label: 'Goals', href: '/savings', icon: Flag },
   { label: 'Profile', href: '/profile', icon: User },
 ];

@@ -34,7 +34,7 @@ export function LoginForm() {
         password={password}
         onPasswordChange={(password) => setPassword(password)}
       />
-      <Button formAction={() => handleLogin()} type={'submit'} variant={'secondary'} className={'w-full'}>
+      <Button formAction={() => handleLogin()} type="submit" variant={'secondary'} className={'w-full'}>
         Log in
       </Button>
       <div className={'text-center text-sm'}>

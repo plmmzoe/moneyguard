@@ -1,5 +1,7 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import { useState, useCallback } from 'react';
 
 import { AppLayout } from '@/components/app-layout';
@@ -46,7 +48,7 @@ interface AnalysisResponse {
   text?: string;
 }
 
-export default function TransactionsAnalysisPage() {
+export default function InsightPage() {
   const supabase = createBrowserSupabase();
   const { user } = useUserInfo(supabase);
 
@@ -86,6 +88,22 @@ export default function TransactionsAnalysisPage() {
     }
   }, [user, period]);
 
+  if (!user) {
+    return (
+      <AppLayout>
+        <div className="w-full max-w-4xl mx-auto rounded-xl bg-card border border-border p-8 text-center">
+          <p className="text-muted-foreground mb-4">Please log in to view your insight.</p>
+          <Link
+            href="/login"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
+          >
+            Log in
+          </Link>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
@@ -104,12 +122,12 @@ export default function TransactionsAnalysisPage() {
               <CardDescription>Select how far back to analyze.</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center gap-4">
-              <div>
+              <div className="flex flex-col gap-3">
                 <Label>Period</Label>
                 <select
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
-                  className="mt-2 rounded-md border px-3 py-2"
+                  className="rounded-md border px-3 py-2 w-fit"
                 >
                   <option value="day">Past day</option>
                   <option value="week">Past week</option>
@@ -119,7 +137,14 @@ export default function TransactionsAnalysisPage() {
               </div>
               <div className="ml-auto">
                 <Button onClick={fetchAnalysis} disabled={loading}>
-                  {loading ? 'Analyzing...' : 'Run Analysis'}
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Get Insight'
+                  )}
                 </Button>
               </div>
             </CardContent>

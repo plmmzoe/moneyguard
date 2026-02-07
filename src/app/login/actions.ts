@@ -6,6 +6,17 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { createAuthApi } from 'shared/auth';
 
+/** Base URL of the app (for OAuth redirect). Set NEXT_PUBLIC_SITE_URL in production. */
+function getAppBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return 'http://localhost:3000';
+}
+
 interface FormData {
   email: string;
   password: string;
@@ -33,10 +44,11 @@ export async function signOut() {
 
 export async function signInWithGithub() {
   const supabase = await createClient();
+  const baseUrl = getAppBaseUrl();
   const { data } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
-      redirectTo: 'https://paddle-billing.vercel.app/auth/callback',
+      redirectTo: `${baseUrl}/auth/callback`,
     },
   });
   if (data.url) {

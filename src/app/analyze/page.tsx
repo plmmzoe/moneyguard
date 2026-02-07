@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 import { saveAnalysis, updateTransactionState } from '@/app/analyze/actions';
@@ -90,6 +90,7 @@ export default function AnalyzePage() {
 
     isSubmitting.current = true;
     setLoading(true);
+    setActiveTab('result');
 
     try {
       const submissionPayload = {
@@ -185,185 +186,203 @@ export default function AnalyzePage() {
           </TabsList>
 
           <TabsContent value="survey" className="space-y-6">
-            <div className="gap-6">
+            <div className="gap-6 relative">
+              {loading && (
+                <div
+                  className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80 backdrop-blur-[2px]"
+                  aria-busy="true"
+                  aria-label="Analyzing"
+                >
+                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-8">
-                {/* SECTION 1: Purchase Basics */}
-                <Card className="border-none shadow-sm bg-card/50">
-                  <CardHeader>
-                    <CardTitle>The Basics</CardTitle>
-                    <CardDescription>What are you looking to buy?</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="itemName">Item Name <span className="text-red-500">*</span></Label>
-                      <Input id="itemName" name="itemName" value={formData.itemName} onChange={handleChange} placeholder="e.g. Noise Cancelling Headphones" required />
-                    </div>
+                <fieldset className="space-y-8" disabled={loading}>
+                  {/* SECTION 1: Purchase Basics */}
+                  <Card className="border-none shadow-sm bg-card/50">
+                    <CardHeader>
+                      <CardTitle>The Basics</CardTitle>
+                      <CardDescription>What are you looking to buy?</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="itemName">Item Name <span className="text-red-500">*</span></Label>
+                        <Input id="itemName" name="itemName" value={formData.itemName} onChange={handleChange} placeholder="e.g. Noise Cancelling Headphones" required />
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price <span className="text-red-500">*</span></Label>
-                      <div className="flex gap-2">
-                        <Select onValueChange={(val) => handleSelectChange('currency', val)} value={formData.currency}>
-                          <SelectTrigger className="w-[80px]">
-                            <SelectValue />
+                      <div className="space-y-2">
+                        <Label htmlFor="price">Price <span className="text-red-500">*</span></Label>
+                        <div className="flex gap-2">
+                          <Select onValueChange={(val) => handleSelectChange('currency', val)} value={formData.currency}>
+                            <SelectTrigger className="w-[80px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="CAD">CAD</SelectItem>
+                              <SelectItem value="USD">USD</SelectItem>
+                              <SelectItem value="EUR">EUR</SelectItem>
+                              <SelectItem value="GBP">GBP</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input id="price" name="price" type="number" min="0" step="0.01" value={formData.price} onChange={handleChange} placeholder="0.00" className="flex-1" required />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>How urgent is this?</Label>
+                        <RadioGroup
+                          name="urgency"
+                          value={formData.urgency}
+                          onChange={handleRadioChange}
+                          options={[
+                            { value: 'today', label: 'I need it today' },
+                            { value: 'this week', label: 'This week' },
+                            { value: 'someday', label: 'Someday / No rush' },
+                          ]}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* SECTION 2: Utility & Context */}
+                  <Card className="border-none shadow-sm bg-card/50">
+                    <CardHeader>
+                      <CardTitle>Utility &amp; Context</CardTitle>
+                      <CardDescription>How will this fit into your life?</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="reasonOrContext">Why do you want this? What are you using now instead?</Label>
+                        <Input id="reasonOrContext" name="reasonOrContext" value={formData.reasonOrContext} onChange={handleChange} placeholder="e.g. My current ones broke, using old earbuds for now..." />
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>How often will you honestly use it?</Label>
+                        <RadioGroup
+                          name="expectedUsageFrequency"
+                          value={formData.expectedUsageFrequency}
+                          onChange={handleRadioChange}
+                          options={[
+                            { value: 'daily', label: 'Daily - Part of my routine' },
+                            { value: 'weekly', label: 'Weekly' },
+                            { value: 'monthly', label: 'Monthly' },
+                            { value: 'rarely', label: 'Rarely / Special Occasions' },
+                          ]}
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label>When was the last time you actively needed this?</Label>
+                        <RadioGroup
+                          name="lastTimeYouNeededThis"
+                          value={formData.lastTimeYouNeededThis}
+                          onChange={handleRadioChange}
+                          options={[
+                            { value: 'today', label: 'Today' },
+                            { value: 'last week', label: 'Last Week' },
+                            { value: 'months ago', label: 'Months ago' },
+                            { value: 'never', label: 'Never, just thought of it' },
+                          ]}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="similarItemsOwned">How many similar items do you already own?</Label>
+                        <Input id="similarItemsOwned" name="similarItemsOwned" type="number" min="0" value={formData.similarItemsOwned} onChange={handleChange} className="max-w-[120px]" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* SECTION 3: Emotional Check */}
+                  <Card className="border-none shadow-sm bg-card/50">
+                    <CardHeader>
+                      <CardTitle>Emotional Check</CardTitle>
+                      <CardDescription>Understanding the &apos;why&apos; behind the buy.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="emotionalTrigger">How are you feeling right now?</Label>
+                        <Select onValueChange={(val) => handleSelectChange('emotionalTrigger', val)} value={formData.emotionalTrigger}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select mood" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="CAD">CAD</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
-                            <SelectItem value="GBP">GBP</SelectItem>
+                            <SelectItem value="bored">Bored / Browsing</SelectItem>
+                            <SelectItem value="stressed">Stressed / Anxious</SelectItem>
+                            <SelectItem value="rewarded">Celebrating / Reward</SelectItem>
+                            <SelectItem value="influenced">Influenced (Saw on social media)</SelectItem>
+                            <SelectItem value="rational">Calm / Rational</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Input id="price" name="price" type="number" min="0" step="0.01" value={formData.price} onChange={handleChange} placeholder="0.00" className="flex-1" required />
                       </div>
-                    </div>
 
-                    <div className="space-y-3">
-                      <Label>How urgent is this?</Label>
-                      <RadioGroup
-                        name="urgency"
-                        value={formData.urgency}
-                        onChange={handleRadioChange}
-                        options={[
-                          { value: 'today', label: 'I need it today' },
-                          { value: 'this week', label: 'This week' },
-                          { value: 'someday', label: 'Someday / No rush' },
-                        ]}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                      <div className="space-y-3">
+                        <Label>How long have you been thinking about this?</Label>
+                        <RadioGroup
+                          name="sleepOnItTest"
+                          value={formData.sleepOnItTest}
+                          onChange={handleRadioChange}
+                          options={[
+                            { value: 'not yet', label: 'Just saw it now' },
+                            { value: '<24h', label: 'Less than 24 hours' },
+                            { value: '>48h', label: 'More than 48 hours' },
+                            { value: 'weeks', label: 'Weeks or Months' },
+                          ]}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                {/* SECTION 2: Utility & Context */}
-                <Card className="border-none shadow-sm bg-card/50">
-                  <CardHeader>
-                    <CardTitle>Utility &amp; Context</CardTitle>
-                    <CardDescription>How will this fit into your life?</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="reasonOrContext">Why do you want this? What are you using now instead?</Label>
-                      <Input id="reasonOrContext" name="reasonOrContext" value={formData.reasonOrContext} onChange={handleChange} placeholder="e.g. My current ones broke, using old earbuds for now..." />
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label>How often will you honestly use it?</Label>
-                      <RadioGroup
-                        name="expectedUsageFrequency"
-                        value={formData.expectedUsageFrequency}
-                        onChange={handleRadioChange}
-                        options={[
-                          { value: 'daily', label: 'Daily - Part of my routine' },
-                          { value: 'weekly', label: 'Weekly' },
-                          { value: 'monthly', label: 'Monthly' },
-                          { value: 'rarely', label: 'Rarely / Special Occasions' },
-                        ]}
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label>When was the last time you actively needed this?</Label>
-                      <RadioGroup
-                        name="lastTimeYouNeededThis"
-                        value={formData.lastTimeYouNeededThis}
-                        onChange={handleRadioChange}
-                        options={[
-                          { value: 'today', label: 'Today' },
-                          { value: 'last week', label: 'Last Week' },
-                          { value: 'months ago', label: 'Months ago' },
-                          { value: 'never', label: 'Never, just thought of it' },
-                        ]}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="similarItemsOwned">How many similar items do you already own?</Label>
-                      <Input id="similarItemsOwned" name="similarItemsOwned" type="number" min="0" value={formData.similarItemsOwned} onChange={handleChange} className="max-w-[120px]" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* SECTION 3: Emotional Check */}
-                <Card className="border-none shadow-sm bg-card/50">
-                  <CardHeader>
-                    <CardTitle>Emotional Check</CardTitle>
-                    <CardDescription>Understanding the &apos;why&apos; behind the buy.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="emotionalTrigger">How are you feeling right now?</Label>
-                      <Select onValueChange={(val) => handleSelectChange('emotionalTrigger', val)} value={formData.emotionalTrigger}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select mood" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="bored">Bored / Browsing</SelectItem>
-                          <SelectItem value="stressed">Stressed / Anxious</SelectItem>
-                          <SelectItem value="rewarded">Celebrating / Reward</SelectItem>
-                          <SelectItem value="influenced">Influenced (Saw on social media)</SelectItem>
-                          <SelectItem value="rational">Calm / Rational</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label>How long have you been thinking about this?</Label>
-                      <RadioGroup
-                        name="sleepOnItTest"
-                        value={formData.sleepOnItTest}
-                        onChange={handleRadioChange}
-                        options={[
-                          { value: 'not yet', label: 'Just saw it now' },
-                          { value: '<24h', label: 'Less than 24 hours' },
-                          { value: '>48h', label: 'More than 48 hours' },
-                          { value: 'weeks', label: 'Weeks or Months' },
-                        ]}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Profile context (read-only) */}
-                {profile && (
-                  <div className="p-4 bg-muted/50 rounded-lg flex flex-wrap gap-x-8 gap-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Budget:</span>
-                      <span className="font-semibold">
-                        {profile.currency || '$'} {profile.monthly_budget || 0}/mo
-                      </span>
-                    </div>
-                    {profile.savings_goal_reward && (
+                  {/* Profile context (read-only) */}
+                  {profile && (
+                    <div className="p-4 bg-muted/50 rounded-lg flex flex-wrap gap-x-8 gap-y-2 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Saving for:</span>
+                        <span className="text-muted-foreground">Budget:</span>
                         <span className="font-semibold">
-                          {profile.savings_goal_reward} (${profile.savings_goal_amount})
+                          {profile.currency || '$'} {profile.monthly_budget || 0}/mo
                         </span>
                       </div>
-                    )}
-                    <p className="w-full text-xs text-muted-foreground mt-1">
+                      {profile.savings_goal_reward && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Saving for:</span>
+                          <span className="font-semibold">
+                            {profile.savings_goal_reward} (${profile.savings_goal_amount})
+                          </span>
+                        </div>
+                      )}
+                      <p className="w-full text-xs text-muted-foreground mt-1">
                       Your profile data is automatically included in the analysis.
-                    </p>
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button type="submit" disabled={!canSubmit || loading || !!analysisResult} size="lg" className="w-full sm:w-auto">
+                      {analysisResult ? (
+                        <>Analysis Complete</>
+                      ) : loading ? (
+                        <>Analyzing...</>
+                      ) : (
+                        <>Get Analysis <Sparkles className="ml-2 h-4 w-4" /></>
+                      )}
+                    </Button>
                   </div>
-                )}
-
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={!canSubmit || loading || !!analysisResult} size="lg" className="w-full sm:w-auto">
-                    {analysisResult ? (
-                      <>Analysis Complete</>
-                    ) : loading ? (
-                      <>Analyzing...</>
-                    ) : (
-                      <>Get Analysis <Sparkles className="ml-2 h-4 w-4" /></>
-                    )}
-                  </Button>
-                </div>
-
+                </fieldset>
               </form>
             </div>
           </TabsContent>
 
           <TabsContent value="result">
-            {analysisResult ? (
+            {loading && !analysisResult ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-2 border-dashed rounded-lg border-muted">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <h3 className="text-xl font-semibold">Analyzing...</h3>
+                <p className="text-muted-foreground max-w-sm">
+                  We&apos;re reviewing your answers. Results will appear here shortly.
+                </p>
+              </div>
+            ) : analysisResult ? (
               <div ref={resultRef} className="mt-8">
                 <AnalysisResult
                   result={analysisResult}

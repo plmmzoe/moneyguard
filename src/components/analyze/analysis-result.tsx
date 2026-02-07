@@ -329,7 +329,7 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
           <CardContent>
             <ul className="space-y-3">
               {displayReasons.map((reason) => (
-                <li key={`${reason.type ?? 'reason'}-${reason.explanation.slice(0, 40)}`} className="flex gap-3">
+                <li key={`${reason.type ?? 'reason'}-${(reason.explanation ?? '').slice(0, 40)}`} className="flex gap-3">
                   <span className="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
                   <div>
                     {reason.type && (
@@ -382,8 +382,8 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
             <Accordion type="single" collapsible className="w-full">
               {suggestedAlternatives.map((alt) => (
                 <AccordionItem
-                  key={`alt-${alt.type ?? 'unknown'}-${alt.suggestion.slice(0, 40)}`}
-                  value={`alt-${alt.type ?? 'unknown'}-${alt.suggestion.slice(0, 40)}`}
+                  key={`alt-${alt.type ?? 'unknown'}-${(alt.suggestion ?? '').slice(0, 40)}`}
+                  value={`alt-${alt.type ?? 'unknown'}-${(alt.suggestion ?? '').slice(0, 40)}`}
                 >
                   <AccordionTrigger className="text-left hover:no-underline">
                     <span className="flex items-center gap-2">
