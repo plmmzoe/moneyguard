@@ -7,18 +7,18 @@ import { Tables } from '@/lib/database.types';
 interface Props {
   profile: Tables<'profiles'> | null;
   /** Sum of amounts from history (transactions) where user chose "skipped" (decided not to buy). */
-  savedTowardsGoal: number;
+  saving: Tables<'savings'>| null | undefined;
 }
 
-export function GoalAnchor({ profile, savedTowardsGoal }: Props) {
-  const reward = profile?.savings_goal_reward || 'Trip to Japan';
-  const targetRaw = profile?.savings_goal_target_date;
+export function GoalAnchor({ profile, saving }: Props) {
+  const reward = saving?.name || 'Add a new goal';
+  const targetRaw = saving?.expire_at;
   const targetDate = targetRaw
     ? new Date(targetRaw).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : 'August 2026';
+    : 'Start now';
 
-  const goalAmount = Number(profile?.savings_goal_amount ?? 0);
-  const savedAmount = savedTowardsGoal;
+  const goalAmount = Number(saving?.goal ?? -1);
+  const savedAmount = saving?.amount ?? 0;
   const hasGoalAmount = goalAmount > 0;
   const progressPercent = hasGoalAmount ? Math.min(100, (savedAmount / goalAmount) * 100) : 0;
   const currency = profile?.currency || 'USD';
@@ -73,9 +73,9 @@ export function GoalAnchor({ profile, savedTowardsGoal }: Props) {
 
           <div className="p-4 rounded-lg bg-white/10 backdrop-blur-md border border-white/10">
             <p className="text-sm leading-relaxed text-gray-100">
-              {hasGoalAmount
-                ? `"Pausing impulse purchases today brings you closer to ${reward}."`
-                : '"Set a savings goal amount in your profile to track progress."'}
+              {hasGoalAmount && saving && saving.description
+                ? `"${saving.description}"`
+                : '"Set a savings goal in your profile to track progress."'}
             </p>
           </div>
         </div>

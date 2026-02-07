@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { TransactionData, deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
 import { AppLayout } from '@/components/app-layout';
 import { RecentAnalyses } from '@/components/dashboard/recent-analyses';
+import { calcuateTimeProgress } from '@/components/dashboard/widgets/cool-off-status-card';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,36 +13,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Tables } from '@/lib/database.types';
-
-function parseTransactionMeta(description: string | null) {
-  const fallback = description ?? 'Impulse purchase';
-  if (!description) {
-    return { product: fallback, verdict: '', status: '' };
-  }
-
-  const segments = description.split('|').map((s) => s.trim());
-  let product = fallback;
-  let verdict = '';
-  let status = '';
-
-  for (const seg of segments) {
-    const lower = seg.toLowerCase();
-    if (lower.startsWith('product:')) {
-      product = seg.slice('product:'.length).trim();
-    } else if (lower.startsWith('ai verdict:')) {
-      verdict = seg.split(':')[1]?.trim() ?? '';
-    } else if (lower.startsWith('verdict:')) {
-      verdict = seg.split(':')[1]?.trim() ?? '';
-    } else if (lower.startsWith('status:')) {
-      status = seg.split(':')[1]?.trim() ?? '';
-    }
-  }
-
-  // Capitalize each word in the product name
-  product = product.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
-
-  return { product, verdict, status };
-}
 
 export default function HistoryPage() {
   const [open, setOpen] = useState(false);
@@ -112,46 +83,47 @@ export default function HistoryPage() {
                 </thead>
                 <tbody className="divide-y divide-border/60">
                   {transactions.map((t) => {
-                    const { product, verdict, status } = parseTransactionMeta(t.transaction_description);
-                    const statusLower = status.toLowerCase();
+                    const statusLower = (t.transaction_state ?? '').toLowerCase();
                     const statusClasses =
                       statusLower === 'bought'
                         ? 'bg-primary/10 text-primary'
-                        : statusLower === 'skipped'
+                        : statusLower === 'discarded'
                           ? 'bg-emerald-100 text-emerald-700'
-                          : status
-                            ? 'bg-muted text-muted-foreground'
+                          : statusLower === 'waiting'
+                            ? 'bg-blue-100 text-blue-500'
                             : '';
 
                     return (
                       <tr key={t.transaction_id} className="hover:bg-muted/40 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1">
-                            <span className="text-sm font-medium text-foreground line-clamp-2">{product}</span>
+                            <span className="text-sm font-medium text-foreground line-clamp-2">{t.transaction_description}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                           {t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-foreground whitespace-nowrap">
-                          {typeof t.amount === 'number' ? `$${t.amount.toFixed(2)}` : '-'}
+                          {`$${t.amount.toFixed(2)}`}
                         </td>
                         <td className="px-4 py-3">
-                          {verdict ? (
+                          {t.verdict ? (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-muted text-foreground">
-                              {verdict}
+                              {t.verdict}
                             </span>
                           ) : (
                             <span className="text-xs text-muted-foreground">-</span>
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          {status ? (
+                          {t.transaction_state ? (
                             <span
                               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${statusClasses}`}
                             >
                               <span className="size-1.5 rounded-full bg-current" />
-                              {status}
+                              {t.transaction_state === 'waiting' && t.cooloff_expiry
+                                ? (`Cooloff: ${calcuateTimeProgress(new Date().toISOString(), new Date(t.cooloff_expiry).toISOString()).timeLeft  } left`)
+                                : (t.transaction_state)}
                             </span>
                           ) : (
                             <span className="text-xs text-muted-foreground">-</span>
@@ -223,21 +195,16 @@ function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved:
     try {
       setSaving(true);
       const createdAt = date ? new Date(date) : new Date();
-      const status = 'Bought';
-      const verdict = '';
-      const descParts = [
-        `Product: ${productName.trim()}`,
-        category ? `Category: ${category} (${currency})` : '',
-        emotion ? `feeling: ${emotion}` : '',
-        trigger ? `trigger: ${trigger}` : '',
-        verdict ? `AI Verdict: ${verdict}` : '',
-        status ? `Status: ${status}` : '',
-      ].filter(Boolean);
-
+      const status = 'discarded';
+      const verdict = null;
       const data: TransactionData = {
+        analysis: null,
+        cooloff_expiry: null,
+        transaction_state: status,
+        verdict,
         amount,
         created_at: createdAt.toISOString(),
-        transaction_description: descParts.join(' | '),
+        transaction_description: productName.trim(),
       };
 
       await postTransaction(data);

@@ -1,11 +1,14 @@
 'use server';
 
+import { SupabaseClient } from '@supabase/supabase-js';
+
+import { Profile, TransactionGoal } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
 
 export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transaction_id'> & Partial<Pick<Tables<'transactions'>, 'user_id'>>;
 
-export async function getProfile() {
+export async function getProfile():Promise<Profile|null> {
   const supabase = await createClient();
 
   const {
@@ -18,10 +21,12 @@ export async function getProfile() {
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(`
+      *,
+      savings (*)
+    `)
     .eq('user_id', user.id)
     .single();
-
   if (error) {
     throw new Error(`Failed to fetch profile: ${error.message}`);
   }
@@ -87,6 +92,28 @@ export async function getAnalyses() {
   return data;
 }
 
+async function updateSavings(transactionData:TransactionData, supabase:SupabaseClient) {
+  if (transactionData.transaction_state === 'discarded') {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return [];
+    }
+    const { data, error } = await supabase
+      .rpc('incrementSavings', {
+        target_user_id: user.id,
+        price: transactionData.amount,
+      });
+    if (error) {
+      console.error('Failed to update savings:', error);
+      throw new Error(`Error updating savings: ${error.message}`);
+    }
+    return data;
+  }
+}
+
 export async function postTransaction(transactionData:TransactionData) {
   const supabase = await createClient();
   const transaction = transactionData;
@@ -101,12 +128,11 @@ export async function postTransaction(transactionData:TransactionData) {
   const { data, error } = await supabase
     .from('transactions')
     .insert([transaction]);
-
   if (error) {
     console.error('Failed to post user transaction:', error);
     throw new Error(`Error posting transaction: ${error.message}`);
   }
-
+  await updateSavings(transactionData, supabase);
   return data;
 }
 
@@ -144,17 +170,42 @@ export async function getSavedTowardsGoal(): Promise<number> {
 
   const { data: transactions, error } = await supabase
     .from('transactions')
-    .select('amount, transaction_description')
+    .select('amount, transaction_state')
+    .eq('transaction_state', 'discarded')
     .eq('user_id', user.id);
 
   if (error || !transactions) {
     return 0;
   }
+  let sum = 0;
+  transactions.forEach((transaction) => { sum += transaction.amount;});
+  return sum;
+}
 
-  const skipped = transactions.filter(
-    (t) => t.transaction_description?.toLowerCase().includes('status: skipped'),
-  );
-  return skipped.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+/** Get up to 5 most recent transactions where user chose to wait. */
+export async function getCoolOffs(): Promise<TransactionGoal[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data: transactions, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('transaction_state', 'waiting')
+    .gt('cooloff_expiry', new Date().toISOString())
+    .order('cooloff_expiry', { ascending: true })
+    .limit(5);
+
+  if (error || !transactions) {
+    return [];
+  }
+  return transactions;
 }
 
 export async function updateMindset(mindset: string) {
