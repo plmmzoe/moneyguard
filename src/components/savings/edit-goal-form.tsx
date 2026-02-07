@@ -26,7 +26,6 @@ export function EditSavingsGoalForm({
     goal: goal.goal?.toString() || '',
     description: goal.description || '',
     expire_at: goal.expire_at ? goal.expire_at.split('T')[0] : '',
-    amount: goal.amount?.toString() || '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -44,10 +43,6 @@ export function EditSavingsGoalForm({
 
     if (!formData.expire_at) {
       newErrors.expire_at = 'Target date is required';
-    }
-
-    if (formData.amount && parseFloat(formData.amount) < 0) {
-      newErrors.amount = 'Amount cannot be negative';
     }
 
     setErrors(newErrors);
@@ -68,7 +63,6 @@ export function EditSavingsGoalForm({
         goal: parseFloat(formData.goal),
         description: formData.description || undefined,
         expire_at: formData.expire_at,
-        amount: formData.amount ? parseFloat(formData.amount) : undefined,
       });
 
       toast({
@@ -130,23 +124,6 @@ export function EditSavingsGoalForm({
           disabled={isLoading}
         />
         {errors.goal && <p className="text-sm text-red-500">{errors.goal}</p>}
-      </div>
-
-      {/* Current Savings Amount */}
-      <div className="grid w-full gap-2">
-        <Label htmlFor="edit-amount">Amount Saved</Label>
-        <Input
-          id="edit-amount"
-          type="number"
-          placeholder="0.00"
-          step="0.01"
-          min="0"
-          value={formData.amount}
-          onChange={(e) => handleChange('amount', e.target.value)}
-          className={errors.amount ? 'border-red-500' : ''}
-          disabled={isLoading}
-        />
-        {errors.amount && <p className="text-sm text-red-500">{errors.amount}</p>}
       </div>
 
       {/* Description */}

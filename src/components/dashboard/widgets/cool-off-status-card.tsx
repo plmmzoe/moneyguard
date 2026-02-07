@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { TransactionGoal } from '@/lib/dashboard.type';;
+import { TransactionGoal } from '@/lib/dashboard.type';
 
 interface Props {
   transactions: TransactionGoal[] | [];
@@ -29,11 +29,11 @@ function parseTime(time:number) {
   const day = hour * 24;
   const month = day * 30;
   const year = month * 12;
-  const yearLeft = parseUnit(time, year, 'years');
-  const monthLeft = parseUnit(yearLeft.timeLeft, month, 'months');
+  const yearLeft = parseUnit(time, year, 'yrs');
+  const monthLeft = parseUnit(yearLeft.timeLeft, month, 'mths');
   const dayLeft = parseUnit(monthLeft.timeLeft, day, 'days');
-  const hourLeft = parseUnit(dayLeft.timeLeft, hour, 'hours');
-  const minuteLeft = parseUnit(hourLeft.timeLeft, minute, 'minutes');
+  const hourLeft = parseUnit(dayLeft.timeLeft, hour, 'hrs');
+  const minuteLeft = parseUnit(hourLeft.timeLeft, minute, 'mins');
   return yearLeft.unitStr + monthLeft.unitStr + dayLeft.unitStr + hourLeft.unitStr + minuteLeft.unitStr;
 }
 

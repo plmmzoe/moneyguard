@@ -2,10 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { Saving } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
 
-export async function getSavings() {
+export async function getSavings():Promise<Saving[]> {
   const supabase = await createClient();
 
   const {
@@ -18,7 +19,7 @@ export async function getSavings() {
 
   const { data: savings, error } = await supabase
     .from('savings')
-    .select('*')
+    .select('*,total_amount')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -67,7 +68,6 @@ export async function createSavingsGoal(data: {
       goal: data.goal,
       description: data.description || null,
       expire_at: data.expire_at ? new Date(data.expire_at).toISOString() : null,
-      amount: 0,
       is_active: isFirstGoal,
       created_at: new Date().toISOString(),
     })

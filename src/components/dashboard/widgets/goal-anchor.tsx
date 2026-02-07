@@ -4,12 +4,13 @@ import { Anchor, Mountain, Plane } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { Saving } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 
 interface Props {
   profile: Tables<'profiles'> | null;
   /** Sum of amounts from history (transactions) where user chose "skipped" (decided not to buy). */
-  saving: Tables<'savings'>| null | undefined;
+  saving: Saving| null | undefined;
 }
 
 export function GoalAnchor({ profile, saving }: Props) {
@@ -20,7 +21,7 @@ export function GoalAnchor({ profile, saving }: Props) {
     : 'Start now';
 
   const goalAmount = Number(saving?.goal ?? -1);
-  const savedAmount = saving?.amount ?? 0;
+  const savedAmount = saving?.total_amount ?? 0;
   const hasGoalAmount = goalAmount > 0;
   const progressPercent = hasGoalAmount ? Math.min(100, (savedAmount / goalAmount) * 100) : 0;
   const currency = profile?.currency || 'USD';

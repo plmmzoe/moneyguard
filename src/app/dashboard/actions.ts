@@ -1,7 +1,5 @@
 'use server';
 
-import { SupabaseClient } from '@supabase/supabase-js';
-
 import { Profile, TransactionGoal } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
@@ -23,7 +21,7 @@ export async function getProfile():Promise<Profile|null> {
     .from('profiles')
     .select(`
       *,
-      savings (*)
+      savings (*,total_amount)
     `)
     .eq('user_id', user.id)
     .single();
@@ -65,8 +63,9 @@ export async function getTransactions() {
   return transactions;
 }
 
-export async function getAnalyses() {
+export async function updateTransactions(transactionData:TransactionData) {
   const supabase = await createClient();
+  const transaction = transactionData;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -74,42 +73,22 @@ export async function getAnalyses() {
   if (!user) {
     return [];
   }
-
+  transaction.user_id = user.id;
+  if (transaction.associated_savings) {
+    if (transaction.transaction_state !== 'discarded') {
+      transaction.associated_savings = null;
+    }
+  }
   const { data, error } = await supabase
-    .from('analyses')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(5);
+    .from('transactions')
+    .update([transaction])
+    .eq('user_id', user.id);
 
   if (error) {
-    console.error('Error fetching analyses:', error);
-    return [];
+    console.error('Failed to update user transaction:', error);
+    throw new Error(`Error updating transaction: ${error.message}`);
   }
-
   return data;
-}
-
-async function updateSavings(transactionData:TransactionData, supabase:SupabaseClient) {
-  if (transactionData.transaction_state === 'discarded') {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return [];
-    }
-    const { data, error } = await supabase
-      .rpc('incrementsavings', {
-        target_user_id: user.id,
-        price: transactionData.amount,
-      });
-    if (error) {
-      console.error('Failed to update savings:', error);
-      throw new Error(`Error updating savings: ${error.message}`);
-    }
-    return data;
-  }
 }
 
 export async function postTransaction(transactionData:TransactionData) {
@@ -123,6 +102,11 @@ export async function postTransaction(transactionData:TransactionData) {
     return [];
   }
   transaction.user_id = user.id;
+  if (transaction.associated_savings) {
+    if (transaction.transaction_state !== 'discarded') {
+      transaction.associated_savings = null;
+    }
+  }
   const { data, error } = await supabase
     .from('transactions')
     .insert([transaction]);
@@ -131,7 +115,6 @@ export async function postTransaction(transactionData:TransactionData) {
     console.error('Failed to post user transaction:', error);
     throw new Error(`Error posting transaction: ${error.message}`);
   }
-  await updateSavings(transactionData, supabase);
   return data;
 }
 
@@ -152,14 +135,11 @@ export async function deleteTransactions(transaction:Tables<'transactions'>) {
     console.error('Failed to delete user transaction:', error);
     throw new Error(`Error deleting transaction: ${error.message}`);
   }
-  const t = transaction;
-  t.amount = -t.amount;
-  await updateSavings(t, supabase);
   return data;
 }
 
 /** Sum of transaction amounts where user chose "skipped" (decided not to buy). Derived from history/transactions. */
-export async function getSavedTowardsGoal(): Promise<number> {
+export async function getTotalSaved(): Promise<number> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -227,29 +207,4 @@ export async function updateMindset(mindset: string) {
     console.error('Error updating mindset:', error);
     throw new Error('Failed to update mindset');
   }
-}
-
-export async function getActiveSavingsGoal() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  const { data: goal, error } = await supabase
-    .from('savings')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error fetching active savings goal:', error);
-    throw new Error('Failed to fetch active savings goal');
-  }
-
-  return goal || null;
 }

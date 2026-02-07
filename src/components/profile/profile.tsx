@@ -31,12 +31,6 @@ export default function Profile({
               <dt className="text-sm font-medium text-muted-foreground">Monthly Budget</dt>
               <dd className="mt-1 text-foreground">{profile.monthly_budget ?? '—'}</dd>
             </div>
-            {profile.savings_goal_target_date && (
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Savings Target Date</dt>
-                <dd className="mt-1 text-foreground">{new Date(profile.savings_goal_target_date).toLocaleDateString()}</dd>
-              </div>
-            )}
           </dl>
         </>
       ) : (

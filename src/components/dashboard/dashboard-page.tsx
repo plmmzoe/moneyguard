@@ -1,7 +1,7 @@
 'use client';
 
 import { StatsBanner } from '@/components/dashboard/widgets/stats-banner';
-import { TransactionGoal } from '@/lib/dashboard.type';
+import { Saving, TransactionGoal } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 
 import { CoolOffStatusCard } from './widgets/cool-off-status-card';
@@ -12,7 +12,7 @@ import { QuickIntentCheckIn } from './widgets/quick-intent-check-in';
 interface Props {
   profile: Tables<'profiles'> | null;
   coolOffs: TransactionGoal[] | [];
-  saving: Tables<'savings'> | null | undefined;
+  saving: Saving | null | undefined;
   savedTowardsGoal: number;
 }
 

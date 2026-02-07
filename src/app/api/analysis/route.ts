@@ -127,7 +127,7 @@ export async function GET(request: Request) {
     if (GEMINI_KEY) {
       try {
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
         const prompt = `Analyze the following user's transactions between ${start} and ${end}. Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis. Return JSON with keys: summary, impulseCandidates, recommendations. Return your response in a single key value pair in your json response such as { response: "Your entire written response here of multiple paragraphs, include any newline special characters to separate paragraphs" }. Transactions: ${JSON.stringify(
           transactions.slice(0, 200),

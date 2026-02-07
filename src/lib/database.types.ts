@@ -20,6 +20,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           monthly_budget: number | null
+          setup_complete: boolean
           updated_at: string | null
           user_id: string
           username: string | null
@@ -29,6 +30,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           monthly_budget?: number | null
+          setup_complete?: boolean
           updated_at?: string | null
           user_id: string
           username?: string | null
@@ -38,6 +40,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           monthly_budget?: number | null
+          setup_complete?: boolean
           updated_at?: string | null
           user_id?: string
           username?: string | null
@@ -54,7 +57,6 @@ export type Database = {
       }
       savings: {
         Row: {
-          amount: number
           created_at: string
           description: string | null
           expire_at: string
@@ -65,7 +67,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          amount?: number
           created_at?: string
           description?: string | null
           expire_at: string
@@ -76,7 +77,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          amount?: number
           created_at?: string
           description?: string | null
           expire_at?: string
@@ -92,6 +92,7 @@ export type Database = {
         Row: {
           amount: number
           analysis: string | null
+          associated_savings: number | null
           cooloff_expiry: string | null
           created_at: string
           transaction_description: string
@@ -103,6 +104,7 @@ export type Database = {
         Insert: {
           amount: number
           analysis?: string | null
+          associated_savings?: number | null
           cooloff_expiry?: string | null
           created_at?: string
           transaction_description: string
@@ -114,6 +116,7 @@ export type Database = {
         Update: {
           amount?: number
           analysis?: string | null
+          associated_savings?: number | null
           cooloff_expiry?: string | null
           created_at?: string
           transaction_description?: string
@@ -122,7 +125,15 @@ export type Database = {
           user_id?: string
           verdict?: Database['public']['Enums']['impulse'] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'transactions_associated_savings_fkey'
+            columns: ['associated_savings']
+            isOneToOne: false
+            referencedRelation: 'savings'
+            referencedColumns: ['id']
+          },
+        ]
       }
     }
     Views: {
@@ -130,6 +141,14 @@ export type Database = {
     }
     Functions: {
       increment: { Args: { row_id: string; x: number }; Returns: undefined }
+      incrementsavings: {
+        Args: { price: number; target_user_id: string }
+        Returns: undefined
+      }
+      total_amount: {
+        Args: { savings_row: Database['public']['Tables']['savings']['Row'] }
+        Returns: number
+      }
     }
     Enums: {
       impulse: 'high' | 'medium' | 'low'

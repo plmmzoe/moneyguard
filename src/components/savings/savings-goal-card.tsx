@@ -2,10 +2,10 @@ import { Trash2, Edit2, Star } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tables } from '@/lib/database.types';
+import { Saving } from '@/lib/dashboard.type';
 
 interface SavingsGoalCardProps {
-  goal: Tables<'savings'>;
+  goal: Saving;
   isActive: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -19,9 +19,9 @@ export function SavingsGoalCard({
   onDelete,
   onSetActive,
 }: SavingsGoalCardProps) {
-  const progress = goal.goal && goal.goal > 0 ? (goal.amount || 0) / goal.goal : 0;
+  const progress = goal.goal && goal.goal > 0 ? (goal.total_amount || 0) / goal.goal : 0;
   const progressPercent = Math.min(100, progress * 100);
-  const remaining = goal.goal && goal.goal > 0 ? Math.max(0, goal.goal - (goal.amount || 0)) : goal.goal;
+  const remaining = goal.goal && goal.goal > 0 ? Math.max(0, goal.goal - (goal.total_amount || 0)) : goal.goal;
 
   return (
     <Card className={isActive ? 'border-primary bg-primary/5' : ''}>
@@ -64,7 +64,7 @@ export function SavingsGoalCard({
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progress</span>
               <span className="font-medium">
-                {(goal.amount || 0).toLocaleString('en-US', {
+                {(goal.total_amount || 0).toLocaleString('en-US', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}{' '}
