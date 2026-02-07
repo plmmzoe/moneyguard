@@ -103,10 +103,6 @@ export function CoolOffStatusCard({ transactions }: Props) {
                   </p>
                 )}
               </div>
-              <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden flex items-center justify-center">
-                {/* Placeholder for product image */}
-                <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-400" />
-              </div>
             </div>
 
             <div className="mb-6">

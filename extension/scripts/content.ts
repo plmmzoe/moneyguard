@@ -145,9 +145,9 @@ function proceedWithProfile(userID:string,profile:any,textContent:string){
         };
         chrome.runtime.sendMessage(
           { type: requestTypes.createAnalysisTransaction, user: userID, payload },
-          (resp: MsgResp & { transaction_id?: number }) => {
+          (resp: MsgResp & { transaction_id?: string }) => {
             loadingScreen.remove();
-            if (resp?.success && typeof resp.transaction_id === 'number') {
+            if (resp?.success && typeof resp.transaction_id === 'string') {
               const transactionId = resp.transaction_id;
               const onDecision = (state: string) => {
                 const cooloff_expiry = state === 'waiting'

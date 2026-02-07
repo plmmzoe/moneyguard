@@ -75,7 +75,7 @@ export default function AnalyzePage() {
   const canSubmit = formData.itemName && formData.price;
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResultData | null>(null);
-  const [savedTransactionId, setSavedTransactionId] = useState<number | null>(null);
+  const [savedTransactionId, setSavedTransactionId] = useState<string | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
   // Clear analysis result and saved id when form data changes to prevent stale data
@@ -123,15 +123,19 @@ export default function AnalyzePage() {
       const normalized = normalizeAnalysisResponse(data);
       setAnalysisResult(normalized);
 
-      // Save as draft so user can update state via buttons (transaction_state not set by AI)
-      const priceNum = typeof formData.price === 'string' ? parseFloat(formData.price) : formData.price;
-      const { transaction_id } = await saveAnalysis({
-        itemName: formData.itemName.trim(),
-        price: Number.isFinite(priceNum) ? priceNum : 0,
-        aiAnalysis: normalized.analysis ?? normalized.shortExplanation ?? '',
-        verdict: normalized.verdict ?? undefined,
-      });
-      setSavedTransactionId(transaction_id);
+      // Only save to DB and show "Log your decision" when user is signed in
+      const supabase = createClient();
+      const { data: { user } } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+      if (user) {
+        const priceNum = typeof formData.price === 'string' ? parseFloat(formData.price) : formData.price;
+        const { transaction_id } = await saveAnalysis({
+          itemName: formData.itemName.trim(),
+          price: Number.isFinite(priceNum) ? priceNum : 0,
+          aiAnalysis: normalized.analysis ?? normalized.shortExplanation ?? '',
+          verdict: normalized.verdict ?? undefined,
+        });
+        setSavedTransactionId(transaction_id);
+      }
       setActiveTab('result');
     } catch (error) {
       console.error('Analysis error:', error);
@@ -144,14 +148,19 @@ export default function AnalyzePage() {
   }
 
   async function handleStateUpdate(state: 'draft' | 'waiting' | 'discarded' | 'bought') {
-    if (savedTransactionId == null) {return;}
-    try {
-      const cooloff_expiry = state === 'waiting'
+    if (savedTransactionId == null) {
+      return;
+    }
+    const cooloff_expiry =
+      state === 'waiting'
         ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         : null;
+    try {
       await updateTransactionState(savedTransactionId, state, cooloff_expiry ?? undefined);
+      toast({ description: 'Decision saved to your history.' });
     } catch {
       toast({ description: 'Failed to save. Please try again.', variant: 'destructive' });
+      throw new Error('Failed to save decision');
     }
   }
 
@@ -186,6 +195,22 @@ export default function AnalyzePage() {
           </TabsList>
 
           <TabsContent value="survey" className="space-y-6">
+            {analysisResult && (
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    setAnalysisResult(null);
+                    setSavedTransactionId(null);
+                    setActiveTab('survey');
+                  }}
+                >
+                  Analyze another
+                </Button>
+              </div>
+            )}
             <div className="gap-6 relative">
               {loading && (
                 <div
@@ -197,7 +222,7 @@ export default function AnalyzePage() {
                 </div>
               )}
               <form onSubmit={handleSubmit} className="space-y-8">
-                <fieldset className="space-y-8" disabled={loading}>
+                <fieldset className="space-y-8" disabled={loading || !!analysisResult}>
                   {/* SECTION 1: Purchase Basics */}
                   <Card className="border-none shadow-sm bg-card/50">
                     <CardHeader>
@@ -370,6 +395,22 @@ export default function AnalyzePage() {
                   </div>
                 </fieldset>
               </form>
+              {analysisResult && (
+                <div className="flex justify-end mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    onClick={() => {
+                      setAnalysisResult(null);
+                      setSavedTransactionId(null);
+                      setActiveTab('survey');
+                    }}
+                  >
+                    Analyze another
+                  </Button>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -390,12 +431,16 @@ export default function AnalyzePage() {
                   onStateUpdate={handleStateUpdate}
                 />
                 <div className="flex justify-center mt-8">
-                  <Button variant="outline" onClick={() => {
-                    setAnalysisResult(null);
-                    setSavedTransactionId(null);
-                    setActiveTab('survey');
-                  }}>
-                  Analyze Another Item
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => {
+                      setAnalysisResult(null);
+                      setSavedTransactionId(null);
+                      setActiveTab('survey');
+                    }}
+                  >
+                    Analyze another
                   </Button>
                 </div>
               </div>

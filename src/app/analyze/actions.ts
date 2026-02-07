@@ -2,7 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 
-/** Save analysis as a new transaction in draft; transaction_state set by user via UI. Returns transaction_id. */
+/** Save analysis as a new transaction in draft; transaction_state set by user via UI. Returns transaction_id (uuid). */
 export async function saveAnalysis(data: {
   itemName: string;
   price: number;
@@ -13,7 +13,7 @@ export async function saveAnalysis(data: {
   verdict?: 'high' | 'medium' | 'low';
   /** When cool-off ends (optional; set when user chooses "Send to cool-off"). */
   cooloff_expiry?: string;
-}): Promise<{ transaction_id: number }> {
+}): Promise<{ transaction_id: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -23,9 +23,11 @@ export async function saveAnalysis(data: {
     throw new Error('User not authenticated');
   }
 
+  const transaction_id = crypto.randomUUID();
   const { data: row, error } = await supabase
     .from('transactions')
     .insert({
+      transaction_id,
       user_id: user.id,
       amount: data.price,
       transaction_description: data.itemName,
@@ -46,7 +48,7 @@ export async function saveAnalysis(data: {
 
 /** Update transaction_state when user clicks I won't buy / I will buy / Send to cool-off / Just browsing. */
 export async function updateTransactionState(
-  transactionId: number,
+  transactionId: string,
   transaction_state: 'draft' | 'waiting' | 'discarded' | 'bought',
   cooloff_expiry?: string | null,
 ): Promise<void> {
@@ -62,14 +64,20 @@ export async function updateTransactionState(
   const updates: { transaction_state: string; cooloff_expiry?: string | null } = { transaction_state };
   if (cooloff_expiry !== undefined) {updates.cooloff_expiry = cooloff_expiry;}
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('transactions')
     .update(updates)
     .eq('transaction_id', transactionId)
-    .eq('user_id', user.id);
+    .eq('user_id', user.id)
+    .select('transaction_id')
+    .maybeSingle();
 
   if (error) {
     console.error('Error updating transaction state:', error);
     throw new Error(`Failed to update: ${error.message}`);
+  }
+  if (!data) {
+    console.error('Update matched no row:', { transactionId, userId: user.id });
+    throw new Error('Transaction not found or you do not have permission to update it.');
   }
 }

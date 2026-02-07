@@ -111,7 +111,7 @@ export type Database = {
           cooloff_expiry: string | null
           created_at: string
           transaction_description: string
-          transaction_id: number
+          transaction_id: string
           transaction_state: Database['public']['Enums']['status'] | null
           user_id: string
           verdict: Database['public']['Enums']['impulse'] | null
@@ -123,7 +123,7 @@ export type Database = {
           cooloff_expiry?: string | null
           created_at?: string
           transaction_description: string
-          transaction_id?: number
+          transaction_id?: string
           transaction_state?: Database['public']['Enums']['status'] | null
           user_id: string
           verdict?: Database['public']['Enums']['impulse'] | null
@@ -135,7 +135,7 @@ export type Database = {
           cooloff_expiry?: string | null
           created_at?: string
           transaction_description?: string
-          transaction_id?: number
+          transaction_id?: string
           transaction_state?: Database['public']['Enums']['status'] | null
           user_id?: string
           verdict?: Database['public']['Enums']['impulse'] | null

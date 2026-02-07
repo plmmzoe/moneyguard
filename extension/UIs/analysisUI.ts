@@ -29,7 +29,7 @@ export function analysisUI(
   user: string,
   resp: LlmResponse,
   profile: any,
-  _transactionId: number,
+  _transactionId: string,
   onAccept: (user: string, items: Item[]) => void,
   onDecline: (user: string, items: Item[]) => void,
   onDecision: (state: DecisionState) => void

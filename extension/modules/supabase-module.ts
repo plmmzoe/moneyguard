@@ -114,13 +114,15 @@ export type AnalysisTransactionInput = {
   verdict?: string | null;
 };
 
-/** Create a draft transaction from analysis; returns transaction_id for later state update. */
-export async function createAnalysisTransaction(userID: string, input: AnalysisTransactionInput): Promise<number> {
+/** Create a draft transaction from analysis; returns transaction_id (uuid) for later state update. */
+export async function createAnalysisTransaction(userID: string, input: AnalysisTransactionInput): Promise<string> {
   const client = await initClient();
   if (!client) throw new Error('client init failed');
+  const transaction_id = crypto.randomUUID();
   const { data, error } = await client
     .from('transactions')
     .insert({
+      transaction_id,
       user_id: userID,
       amount: input.amount,
       transaction_description: input.transaction_description,
@@ -137,7 +139,7 @@ export async function createAnalysisTransaction(userID: string, input: AnalysisT
 /** Update transaction_state (and optionally cooloff_expiry for waiting). */
 export async function updateTransactionState(
   userID: string,
-  transactionId: number,
+  transactionId: string,
   transaction_state: string,
   cooloff_expiry?: string | null
 ): Promise<void> {

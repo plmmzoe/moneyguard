@@ -77,7 +77,7 @@ const handleCreateAnalysisTransaction = async (
 
 const handleUpdateTransactionState = async (
   user: string,
-  transactionId: number,
+  transactionId: string,
   transaction_state: string,
   cooloff_expiry: string | undefined,
   sendResponse: (response: any) => void
@@ -141,7 +141,7 @@ chrome.runtime.onMessage.addListener(
       handleCreateAnalysisTransaction(user, payload, sendResponse);
     } else if (request.type === requestTypes.updateTransactionState) {
       const user = request.user as string;
-      const transactionId = request.transactionId as number;
+      const transactionId = request.transactionId as string;
       const transaction_state = request.transaction_state as string;
       const cooloff_expiry = request.cooloff_expiry as string | undefined;
       handleUpdateTransactionState(user, transactionId, transaction_state, cooloff_expiry, sendResponse);

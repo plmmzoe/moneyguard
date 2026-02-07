@@ -96,13 +96,14 @@ export function normalizeAnalysisResponse(raw: unknown): AnalysisResultData {
 
 interface AnalysisResultProps {
   result: AnalysisResultData;
-  /** When set, show 4 buttons to update transaction_state in DB. */
-  transactionId?: number;
-  onStateUpdate?: (state: TransactionState) => void;
+  /** When set, show 4 buttons to update transaction_state in DB. Promise on failure keeps buttons enabled. */
+  transactionId?: string;
+  onStateUpdate?: (state: TransactionState) => void | Promise<void>;
 }
 
 export function AnalysisResult({ result, transactionId, onStateUpdate }: AnalysisResultProps) {
   const [selectedState, setSelectedState] = useState<TransactionState | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const {
     aiVerdict,
     confidence,
@@ -114,10 +115,24 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
     shortExplanation,
   } = result;
 
-  const handleDecideClick = (state: TransactionState) => {
-    if (selectedState != null) {return;}
-    setSelectedState(state);
-    onStateUpdate?.(state);
+  const handleDecideClick = async (state: TransactionState) => {
+    if (selectedState != null || isUpdating) {
+      return;
+    }
+    const fn = onStateUpdate;
+    if (!fn) {
+      setSelectedState(state);
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      await Promise.resolve(fn(state));
+      setSelectedState(state);
+    } catch {
+      // On failure: leave selectedState null so buttons stay enabled and unhighlighted
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const displayReasons = keyReasons.slice(0, 3);
@@ -232,13 +247,14 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Button → transaction_state: I won't buy → discarded, I will buy → bought, Send to cool-off → waiting, Just browsing → draft */}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={selectedState != null}
+                disabled={selectedState != null || isUpdating}
                 className={`rounded-lg bg-red-50 hover:bg-red-100 text-red-900 font-medium border-2 h-auto py-2.5 ${
-                  selectedState === 'discarded' ? 'border-red-600' : 'border-transparent'
+                  selectedState === 'discarded' ? 'border-red-800' : 'border-transparent'
                 }`}
                 onClick={() => handleDecideClick('discarded')}
               >
@@ -248,9 +264,9 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={selectedState != null}
+                disabled={selectedState != null || isUpdating}
                 className={`rounded-lg bg-green-50 hover:bg-green-100 text-green-900 font-medium border-2 h-auto py-2.5 ${
-                  selectedState === 'bought' ? 'border-green-600' : 'border-transparent'
+                  selectedState === 'bought' ? 'border-green-800' : 'border-transparent'
                 }`}
                 onClick={() => handleDecideClick('bought')}
               >
@@ -260,9 +276,9 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={selectedState != null}
+                disabled={selectedState != null || isUpdating}
                 className={`rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-medium border-2 h-auto py-2.5 ${
-                  selectedState === 'waiting' ? 'border-amber-600' : 'border-transparent'
+                  selectedState === 'waiting' ? 'border-amber-800' : 'border-transparent'
                 }`}
                 onClick={() => handleDecideClick('waiting')}
               >
@@ -272,9 +288,9 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={selectedState != null}
+                disabled={selectedState != null || isUpdating}
                 className={`rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium border-2 h-auto py-2.5 ${
-                  selectedState === 'draft' ? 'border-gray-600' : 'border-transparent'
+                  selectedState === 'draft' ? 'border-gray-800' : 'border-transparent'
                 }`}
                 onClick={() => handleDecideClick('draft')}
               >
