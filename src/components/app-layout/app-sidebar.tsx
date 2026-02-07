@@ -9,7 +9,7 @@ export const navItems = [
   { label: 'Quick Check', href: '/analyze', icon: Search },
   { label: 'History', href: '/history', icon: Clock3 },
   { label: 'Insight', href: '/analysis', icon: LineChart },
-  { label: 'Goals', href: '/onboarding', icon: Flag },
+  { label: 'Goals', href: '/savings', icon: Flag },
   { label: 'Profile', href: '/profile', icon: User },
 ];
 
