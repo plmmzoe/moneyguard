@@ -1,5 +1,5 @@
 
-export function generateExtensionAnalysisPrompt(
+function generateExtensionAnalysisPrompt(
   userProfile: string,
   pageContext: string,
 ): string {

@@ -106,3 +106,49 @@ export async function addTransactions(userID:string, items: Item[]) {
     throw new Error(`Error posting transaction: ${error.message}`);
   }
 }
+
+export type AnalysisTransactionInput = {
+  transaction_description: string;
+  amount: number;
+  analysis: string;
+  verdict?: string | null;
+};
+
+/** Create a draft transaction from analysis; returns transaction_id for later state update. */
+export async function createAnalysisTransaction(userID: string, input: AnalysisTransactionInput): Promise<number> {
+  const client = await initClient();
+  if (!client) throw new Error('client init failed');
+  const { data, error } = await client
+    .from('transactions')
+    .insert({
+      user_id: userID,
+      amount: input.amount,
+      transaction_description: input.transaction_description,
+      analysis: input.analysis,
+      verdict: input.verdict ?? null,
+      transaction_state: 'draft',
+    })
+    .select('transaction_id')
+    .single();
+  if (error) throw new Error(`Error creating analysis transaction: ${error.message}`);
+  return data.transaction_id;
+}
+
+/** Update transaction_state (and optionally cooloff_expiry for waiting). */
+export async function updateTransactionState(
+  userID: string,
+  transactionId: number,
+  transaction_state: string,
+  cooloff_expiry?: string | null
+): Promise<void> {
+  const client = await initClient();
+  if (!client) throw new Error('client init failed');
+  const updates: { transaction_state: string; cooloff_expiry?: string | null } = { transaction_state };
+  if (cooloff_expiry !== undefined) updates.cooloff_expiry = cooloff_expiry;
+  const { error } = await client
+    .from('transactions')
+    .update(updates)
+    .eq('transaction_id', transactionId)
+    .eq('user_id', userID);
+  if (error) throw new Error(`Error updating transaction state: ${error.message}`);
+}

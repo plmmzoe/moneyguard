@@ -2,7 +2,14 @@
  * Service worker for MoneyGuard extension.
  */
 
-import {addTransactions,updateSavings, getProfile, getUser} from '../modules/supabase-module.ts';
+import {
+  addTransactions,
+  updateSavings,
+  getProfile,
+  getUser,
+  createAnalysisTransaction,
+  updateTransactionState,
+} from '../modules/supabase-module.ts';
 import { Item, MsgRequest, requestTypes } from '../shared/types.ts';
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -53,6 +60,36 @@ const handleAddTransactions = async (user:string,items:Item[],sendResponse:(resp
   })
 }
 
+const handleCreateAnalysisTransaction = async (
+  user: string,
+  payload: { transaction_description: string; amount: number; analysis: string; verdict?: string | null },
+  sendResponse: (response: any) => void
+) => {
+  createAnalysisTransaction(user, payload)
+    .then((transaction_id) => {
+      sendResponse({ success: true, transaction_id });
+    })
+    .catch((err) => {
+      console.error('Failed to create analysis transaction', err);
+      sendResponse({ success: false });
+    });
+};
+
+const handleUpdateTransactionState = async (
+  user: string,
+  transactionId: number,
+  transaction_state: string,
+  cooloff_expiry: string | undefined,
+  sendResponse: (response: any) => void
+) => {
+  updateTransactionState(user, transactionId, transaction_state, cooloff_expiry ?? null)
+    .then(() => sendResponse({ success: true }))
+    .catch((err) => {
+      console.error('Failed to update transaction state', err);
+      sendResponse({ success: false });
+    });
+};
+
 chrome.runtime.onMessage.addListener(
   function(request:MsgRequest, sender, sendResponse) {
     console.log("got message");
@@ -92,12 +129,22 @@ chrome.runtime.onMessage.addListener(
     }else if (request.type === requestTypes.getProfile) {
       const user:string = request.user
       handleGetProfile(user,sendResponse)
-    }else if (request.type === requestTypes.prevTab) {
+    } else if (request.type === requestTypes.prevTab) {
       chrome.tabs.goBack().then(_=>{
         console.log('return tab success');
       }).catch(err=>{
         console.error(err);
       })
+    } else if (request.type === requestTypes.createAnalysisTransaction) {
+      const user = request.user as string;
+      const payload = request.payload as { transaction_description: string; amount: number; analysis: string; verdict?: string | null };
+      handleCreateAnalysisTransaction(user, payload, sendResponse);
+    } else if (request.type === requestTypes.updateTransactionState) {
+      const user = request.user as string;
+      const transactionId = request.transactionId as number;
+      const transaction_state = request.transaction_state as string;
+      const cooloff_expiry = request.cooloff_expiry as string | undefined;
+      handleUpdateTransactionState(user, transactionId, transaction_state, cooloff_expiry, sendResponse);
     }
     return true;
   }
