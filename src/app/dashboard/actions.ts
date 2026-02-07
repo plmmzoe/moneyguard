@@ -102,7 +102,7 @@ async function updateSavings(transactionData:TransactionData, supabase:SupabaseC
       return [];
     }
     const { data, error } = await supabase
-      .rpc('incrementSavings', {
+      .rpc('incrementsavings', {
         target_user_id: user.id,
         price: transactionData.amount,
       });
@@ -136,7 +136,7 @@ export async function postTransaction(transactionData:TransactionData) {
   return data;
 }
 
-export async function deleteTransactions(transactionIds:number[]) {
+export async function deleteTransactions(transaction:Tables<'transactions'>) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -148,12 +148,14 @@ export async function deleteTransactions(transactionIds:number[]) {
   const { data, error } = await supabase
     .from('transactions')
     .delete()
-    .in('transaction_id', transactionIds);
+    .eq('transaction_id', transaction.transaction_id);
   if (error) {
     console.error('Failed to delete user transaction:', error);
     throw new Error(`Error deleting transaction: ${error.message}`);
   }
-
+  const t = transaction;
+  t.amount = -t.amount;
+  await updateSavings(t, supabase);
   return data;
 }
 

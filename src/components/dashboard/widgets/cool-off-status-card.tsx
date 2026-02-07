@@ -58,7 +58,7 @@ export function CoolOffStatusCard({ transactions }: Props) {
               <div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                  <span>Cooloff progress: {(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).percentageProgressed * 100).toFixed(1)} %</span>
+                  <span>Cooloff progress: {(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).percentageProgressed * 100).toFixed(1)}%</span>
                 </div>
                 <h3 className="text-xl font-bold text-foreground">
                   {transaction.transaction_description}

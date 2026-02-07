@@ -35,10 +35,10 @@ export default function HistoryPage() {
     refreshTransactions();
   }, [refreshTransactions]);
 
-  async function handleDeleteRow(id: number) {
+  async function handleDeleteRow(transaction: Tables<'transactions'>) {
     try {
-      await deleteTransactions([id]);
-      setTransactions((prev) => prev.filter((t) => t.transaction_id !== id));
+      await deleteTransactions(transaction);
+      setTransactions((prev) => prev.filter((t) => t.transaction_id !== transaction.transaction_id));
       toast({ description: 'Transaction deleted.' });
     } catch {
       toast({ description: 'Failed to delete transaction.', variant: 'destructive' });
@@ -134,7 +134,7 @@ export default function HistoryPage() {
                             size="sm"
                             variant="ghost"
                             className="text-xs text-destructive hover:bg-destructive/5 hover:text-destructive"
-                            onClick={() => handleDeleteRow(t.transaction_id)}
+                            onClick={() => handleDeleteRow(t)}
                           >
                             Delete
                           </Button>
@@ -195,7 +195,7 @@ function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved:
     try {
       setSaving(true);
       const createdAt = date ? new Date(date) : new Date();
-      const status = 'discarded';
+      const status = 'bought';
       const verdict = null;
       const data: TransactionData = {
         analysis: null,
