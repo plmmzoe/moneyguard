@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 
 import { TransactionData, deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
@@ -14,8 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Tables } from '@/lib/database.types';
 
+const PAGE_CNT = 15;
+
 export default function HistoryPage() {
   const [open, setOpen] = useState(false);
+  const [pageNum, setPageNum] = useState<number>(1);
   const [transactions, setTransactions] = useState<Tables<'transactions'>[]>([]);
   const { toast } = useToast();
 
@@ -24,6 +28,7 @@ export default function HistoryPage() {
       .then((t) => {
         if (t) {
           setTransactions(t);
+          setPageNum(1);
         }
       })
       .catch(() => {
@@ -44,7 +49,17 @@ export default function HistoryPage() {
       toast({ description: 'Failed to delete transaction.', variant: 'destructive' });
     }
   }
+  function incrementPageNum() {
 
+    if (transactions.length > pageNum * PAGE_CNT) {
+      setPageNum(pageNum + 1);
+    }
+  }
+  function decresePageNum() {
+    if (pageNum > 1) {
+      setPageNum(pageNum - 1);
+    }
+  }
   return (
     <AppLayout>
       <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -56,35 +71,47 @@ export default function HistoryPage() {
         </div>
         <RecentAnalyses />
         {transactions.length > 0 && (
-          <Card className="mt-4 bg-card border border-border">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead className="bg-muted/60 border-b border-border">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+          <>
+            <div className={'grid grid-cols-2 w-full m-0 p-0'}>
+              <p className={'text-xs m-0 p-0'}>Showing {Math.min(transactions.length, PAGE_CNT * pageNum)} / {transactions.length}</p>
+              <div className={'ml-auto text-xl'}>
+                <button onClick={(_) => decresePageNum()}> <ArrowLeft /> </button>
+                <button className={'ml-2'} onClick={(_) => incrementPageNum()}> <ArrowRight /> </button>
+              </div>
+            </div>
+            <Card className="mt-4 bg-card border border-border">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead className="bg-muted/60 border-b border-border">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
                       Product
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+                      </th>
+                      <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
                       Date
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+                      </th>
+                      <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
                       Amount
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+                      </th>
+                      <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
                       AI Verdict
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
+                      </th>
+                      <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide">
                       Status
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide text-right">
+                      </th>
+                      <th className="px-4 py-3 font-semibold text-xs text-muted-foreground uppercase tracking-wide text-right">
                       Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {transactions.map((t) => {
-                    const statusLower = (t.transaction_state ?? '').toLowerCase();
-                    const statusClasses =
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {transactions.slice(
+                      (pageNum - 1) * PAGE_CNT,
+                      Math.min(
+                        transactions.length - ((pageNum - 1) * PAGE_CNT),
+                        PAGE_CNT) + (pageNum - 1) * PAGE_CNT).map((t) => {
+                      const statusLower = (t.transaction_state ?? '').toLowerCase();
+                      const statusClasses =
                       statusLower === 'bought'
                         ? 'bg-primary/10 text-primary'
                         : statusLower === 'discarded'
@@ -93,59 +120,60 @@ export default function HistoryPage() {
                             ? 'bg-blue-100 text-blue-500'
                             : '';
 
-                    return (
-                      <tr key={t.transaction_id} className="hover:bg-muted/40 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm font-medium text-foreground line-clamp-2">{t.transaction_description}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                          {t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-semibold text-foreground whitespace-nowrap">
-                          {`$${t.amount.toFixed(2)}`}
-                        </td>
-                        <td className="px-4 py-3">
-                          {t.verdict ? (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-muted text-foreground">
-                              {t.verdict}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          {t.transaction_state ? (
-                            <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${statusClasses}`}
+                      return (
+                        <tr key={t.transaction_id} className="hover:bg-muted/40 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-sm font-medium text-foreground line-clamp-2">{t.transaction_description}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                            {t.created_at ? new Date(t.created_at).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-semibold text-foreground whitespace-nowrap">
+                            {`$${t.amount.toFixed(2)}`}
+                          </td>
+                          <td className="px-4 py-3">
+                            {t.verdict ? (
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-muted text-foreground">
+                                {t.verdict}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {t.transaction_state ? (
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ${statusClasses}`}
+                              >
+                                <span className="size-1.5 rounded-full bg-current" />
+                                {t.transaction_state === 'waiting' && t.cooloff_expiry
+                                  ? (`Cooloff: ${calcuateTimeProgress(new Date().toISOString(), new Date(t.cooloff_expiry).toISOString()).timeLeft  } left`)
+                                  : (t.transaction_state)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-xs text-destructive hover:bg-destructive/5 hover:text-destructive"
+                              onClick={() => handleDeleteRow(t)}
                             >
-                              <span className="size-1.5 rounded-full bg-current" />
-                              {t.transaction_state === 'waiting' && t.cooloff_expiry
-                                ? (`Cooloff: ${calcuateTimeProgress(new Date().toISOString(), new Date(t.cooloff_expiry).toISOString()).timeLeft  } left`)
-                                : (t.transaction_state)}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-xs text-destructive hover:bg-destructive/5 hover:text-destructive"
-                            onClick={() => handleDeleteRow(t)}
-                          >
                             Delete
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </>
         )}
       </div>
       {open && (

@@ -47,16 +47,11 @@ export async function getTransactions() {
   if (!user) {
     return null;
   }
-
-  const today = new Date();
-  const dayInMs = 86400000;
-  const past = new Date(today.getTime() - dayInMs * 7);
   const { data: transactions, error } = await supabase
     .from('transactions')
     .select('*')
     .eq('user_id', user.id)
-    .gte('created_at', past.toISOString())
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: false });
   if (error) {
     throw new Error(`Failed to fetch user transactions: ${error.message}`);
   }
@@ -203,7 +198,6 @@ export async function getCoolOffs(): Promise<TransactionGoal[]> {
     .gt('cooloff_expiry', new Date().toISOString())
     .order('cooloff_expiry', { ascending: true })
     .limit(5);
-
   if (error || !transactions) {
     return [];
   }
