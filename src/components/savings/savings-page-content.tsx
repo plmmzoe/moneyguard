@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { getProfile } from '@/app/dashboard/actions';
 import {
   deleteSavingsGoal,
   getSavings,
@@ -11,29 +12,27 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { useProfileInfo } from '@/hooks/useProfileInfo';
-import { Saving } from '@/lib/dashboard.type';
-import { createClient } from '@/utils/supabase/client';
+import { Profile, Saving } from '@/lib/dashboard.type';
 
 import { AddSavingsGoalForm } from './add-goal-form';
 import { EditSavingsGoalForm } from './edit-goal-form';
 import { SavingsGoalCard } from './savings-goal-card';
 
 export function SavingsPageContent() {
-  const supabase = createClient();
   const [goals, setGoals] = useState<Saving[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const { profile } = useProfileInfo(supabase);
+  const [profile, setProfile]  = useState<Profile|null>(null);
 
   const loadGoals = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await getSavings();
       setGoals(data);
+      setProfile(await getProfile());
     } catch (error) {
       toast({
         title: 'Error',
@@ -56,7 +55,7 @@ export function SavingsPageContent() {
 
     try {
       await deleteSavingsGoal(id);
-      setGoals(goals.filter((g) => g.id !== id));
+      loadGoals();
       toast({
         title: 'Success',
         description: 'Savings goal deleted successfully',
@@ -74,7 +73,7 @@ export function SavingsPageContent() {
   const handleSetActive = async (id: number) => {
     try {
       await setActiveSavingsGoal(id);
-      setGoals(goals.map((g) => ({ ...g, is_active: g.id === id })));
+      loadGoals();
       toast({
         title: 'Success',
         description: 'Active savings goal updated',
