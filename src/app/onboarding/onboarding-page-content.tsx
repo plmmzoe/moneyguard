@@ -23,10 +23,10 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSkip = () => {
-    // Skip onboarding and redirect to dashboard
+  const handleSkip = (): Promise<void> => {
     router.push('/dashboard');
     router.refresh();
+    return Promise.resolve();
   };
 
   const handleSubmit = async (data: {

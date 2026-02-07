@@ -8,10 +8,10 @@ export async function createOrUpdateProfile(data: {
   username: string;
   monthlyBudget: number;
   currency: string;
-  savingsGoalAmount: number;
-  savingsGoalReward: string;
+  savingsGoalAmount?: number;
+  savingsGoalReward?: string;
   savingsGoalDescription?: string;
-  savingsGoalTargetDate: string;
+  savingsGoalTargetDate?: string;
   hobbies?: { name: string; rating: number }[];
 }) {
   const supabase = await createClient();
@@ -68,16 +68,19 @@ export async function createOrUpdateProfile(data: {
 
   if (hasSavingsInput) {
     try {
-      const expireAt = data.savingsGoalTargetDate
+      const expireAt = data.savingsGoalTargetDate?.trim()
         ? new Date(data.savingsGoalTargetDate).toISOString()
-        : null;
+        : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // default 1 year
+
+      const goal =
+        typeof data.savingsGoalAmount === 'number' && isFinite(data.savingsGoalAmount) && data.savingsGoalAmount > 0
+          ? data.savingsGoalAmount
+          : 0;
 
       const { error: sError } = await supabase.from('savings').insert({
         user_id: user.id,
-        goal: typeof data.savingsGoalAmount === 'number' && isFinite(data.savingsGoalAmount)
-          ? data.savingsGoalAmount
-          : null,
-        name: data.savingsGoalReward || null,
+        goal,
+        name: data.savingsGoalReward?.trim() || 'Savings goal',
         description: data.savingsGoalDescription ?? data.savingsGoalReward ?? null,
         expire_at: expireAt,
         amount: 0,

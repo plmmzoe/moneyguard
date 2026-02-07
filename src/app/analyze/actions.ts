@@ -2,7 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 
-/** Save analysis as a new transaction in draft; transaction_state is set by user via UI buttons. Returns transaction_id. */
+/** Save analysis as a new transaction in draft; transaction_state set by user via UI. Returns transaction_id. */
 export async function saveAnalysis(data: {
   itemName: string;
   price: number;

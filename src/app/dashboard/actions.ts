@@ -5,7 +5,7 @@ import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
 
 export type TransactionData = Pick<Tables<'transactions'>, 'amount' | 'transaction_description' | 'created_at'> &
-  Partial<Pick<Tables<'transactions'>, 'user_id' | 'transaction_state' | 'cooloff_expiry' | 'analysis' | 'verdict'>>;
+  Partial<Pick<Tables<'transactions'>, 'user_id' | 'transaction_state' | 'cooloff_expiry' | 'analysis' | 'verdict' | 'associated_savings'>>;
 
 export async function getProfile():Promise<Profile|null> {
   const supabase = await createClient();
@@ -62,6 +62,32 @@ export async function getTransactions() {
   }
 
   return transactions;
+}
+
+/** Recent transactions (e.g. from Quick Check) for RecentAnalyses list. */
+export async function getAnalyses(): Promise<Tables<'transactions'>[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error('Error fetching analyses:', error);
+    return [];
+  }
+
+  return data ?? [];
 }
 
 export async function updateTransactions(transactionData:TransactionData) {

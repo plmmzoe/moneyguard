@@ -163,7 +163,8 @@ export default function AnalyzePage() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Quick Check</h1>
           <p className="text-muted-foreground max-w-lg">
-            Thinking about buying something? Answer a few quick questions and get an AI-powered recommendation on whether it&apos;s worth it.
+            Thinking about buying something? Answer a few quick questions and get an AI-powered
+            recommendation on whether it&apos;s worth it.
           </p>
         </div>
 

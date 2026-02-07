@@ -226,7 +226,10 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
         <Card className="border-border bg-card/50">
           <CardHeader>
             <CardTitle className="text-base">Log your decision</CardTitle>
-            <CardDescription>Choose one option to save to your history. You can revisit this later from your dashboard.</CardDescription>
+            <CardDescription>
+              Choose one option to save to your history. You can revisit this later from your
+              dashboard.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -325,8 +328,8 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {displayReasons.map((reason, i) => (
-                <li key={i} className="flex gap-3">
+              {displayReasons.map((reason) => (
+                <li key={`${reason.type ?? 'reason'}-${reason.explanation.slice(0, 40)}`} className="flex gap-3">
                   <span className="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
                   <div>
                     {reason.type && (
@@ -377,8 +380,11 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
-              {suggestedAlternatives.map((alt, i) => (
-                <AccordionItem key={i} value={`alt-${i}`}>
+              {suggestedAlternatives.map((alt) => (
+                <AccordionItem
+                  key={`alt-${alt.type ?? 'unknown'}-${alt.suggestion.slice(0, 40)}`}
+                  value={`alt-${alt.type ?? 'unknown'}-${alt.suggestion.slice(0, 40)}`}
+                >
                   <AccordionTrigger className="text-left hover:no-underline">
                     <span className="flex items-center gap-2">
                       {alt.type && (

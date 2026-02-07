@@ -49,7 +49,8 @@ export function SavingsPageContent() {
   }, [loadGoals]);
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this savings goal?')) {
+    // eslint-disable-next-line no-alert -- simple delete confirmation
+    if (!window.confirm('Are you sure you want to delete this savings goal?')) {
       return;
     }
 
@@ -112,11 +113,6 @@ export function SavingsPageContent() {
     );
   }
 
-  // @ts-ignore
-  // @ts-ignore
-  // @ts-ignore
-  // @ts-ignore
-  // @ts-ignore
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -196,21 +192,24 @@ export function SavingsPageContent() {
           )}
 
           {/* Edit Form */}
-          {editingId !== null && (
-            <Card className="border-primary/50 bg-primary/5">
-              <CardHeader>
-                <CardTitle>Edit Savings Goal</CardTitle>
-                <CardDescription>Update the details of your savings goal</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <EditSavingsGoalForm
-                  goal={goals.find((g) => g.id === editingId)!}
-                  onSuccess={handleGoalUpdated}
-                  onCancel={() => setEditingId(null)}
-                />
-              </CardContent>
-            </Card>
-          )}
+          {editingId !== null && (() => {
+            const editingGoal = goals.find((g) => g.id === editingId);
+            return editingGoal ? (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardHeader>
+                  <CardTitle>Edit Savings Goal</CardTitle>
+                  <CardDescription>Update the details of your savings goal</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EditSavingsGoalForm
+                    goal={editingGoal}
+                    onSuccess={handleGoalUpdated}
+                    onCancel={() => setEditingId(null)}
+                  />
+                </CardContent>
+              </Card>
+            ) : null;
+          })()}
 
           {/* Add Another Goal Button */}
           {!isAddingNew && !editingId && (

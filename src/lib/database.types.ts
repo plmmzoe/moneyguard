@@ -24,6 +24,11 @@ export type Database = {
           updated_at: string | null
           user_id: string
           username: string | null
+          savings_goal_reward: string | null
+          savings_goal_amount: number | null
+          monthly_irregular_spending: number | null
+          savings_goal_target_date: string | null
+          total_saved: number | null
         }
         Insert: {
           active_saving?: number | null
@@ -34,6 +39,11 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           username?: string | null
+          savings_goal_reward?: string | null
+          savings_goal_amount?: number | null
+          monthly_irregular_spending?: number | null
+          savings_goal_target_date?: string | null
+          total_saved?: number | null
         }
         Update: {
           active_saving?: number | null
@@ -44,6 +54,11 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           username?: string | null
+          savings_goal_reward?: string | null
+          savings_goal_amount?: number | null
+          monthly_irregular_spending?: number | null
+          savings_goal_target_date?: string | null
+          total_saved?: number | null
         }
         Relationships: [
           {

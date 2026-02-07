@@ -59,7 +59,7 @@ export async function POST(request: Request) {
         }
         if (profile.hobbies && Array.isArray(profile.hobbies) && profile.hobbies.length > 0) {
           userProfile.hobbies = profile.hobbies
-            .map((h: any) => `${h.name} (Inv: ${h.rating}/10)`)
+            .map((h: { name?: string; rating?: number }) => `${h.name} (Inv: ${h.rating}/10)`)
             .join(', ');
         }
       }

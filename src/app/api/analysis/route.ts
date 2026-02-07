@@ -88,8 +88,11 @@ export async function POST(request: Request) {
 
     let period = 'month';
     try {
-      const body = await request.json();
-      if (body.period) {period = body.period;}
+      const body = (await request.json()) as { period?: string };
+      const { period: bodyPeriod } = body;
+      if (bodyPeriod) {
+        period = bodyPeriod;
+      }
     } catch {
       // ignore JSON parse error, default to month
     }

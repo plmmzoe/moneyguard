@@ -92,7 +92,8 @@ export default function TransactionsAnalysisPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Insight</h1>
           <p className="text-muted-foreground">
-            View your transaction history over a chosen period. See totals, top merchants, and which recent small purchases might be impulse buys—so you can spot patterns and adjust spending.
+            View your transaction history over a chosen period. See totals, top merchants, and which
+            recent small purchases might be impulse buys—so you can spot patterns and adjust spending.
           </p>
         </div>
 
