@@ -180,3 +180,28 @@ export async function updateMindset(mindset: string) {
     throw new Error('Failed to update mindset');
   }
 }
+
+export async function getActiveSavingsGoal() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const { data: goal, error } = await supabase
+    .from('savings')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching active savings goal:', error);
+    throw new Error('Failed to fetch active savings goal');
+  }
+
+  return goal || null;
+}

@@ -8,7 +8,6 @@ export async function createOrUpdateProfile(data: {
   username: string;
   monthlyBudget: number;
   currency: string;
-  monthlyIrregularSpending: number;
   savingsGoalAmount: number;
   savingsGoalReward: string;
   savingsGoalDescription?: string;
@@ -53,7 +52,6 @@ export async function createOrUpdateProfile(data: {
       username: data.username,
       monthly_budget: data.monthlyBudget,
       currency: data.currency,
-      monthly_irregular_spending: data.monthlyIrregularSpending,
     });
 
     if (error) {
@@ -144,7 +142,6 @@ export async function getProfile() {
     username: profile.username,
     monthlyBudget: profile.monthly_budget,
     currency: profile.currency,
-    monthlyIrregularSpending: profile.monthly_irregular_spending,
     savingsGoalAmount: savings ? savings.goal : null,
     savingsGoalReward: savings ? savings.name : null,
     savingsGoalTargetDate: savings ? savings.expire_at : null,
