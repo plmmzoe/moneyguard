@@ -8,6 +8,7 @@ import { AppLayout } from '@/components/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { createClient as createBrowserSupabase } from '@/utils/supabase/client';
 
@@ -121,22 +122,25 @@ export default function InsightPage() {
               <CardTitle>Analysis Range</CardTitle>
               <CardDescription>Select how far back to analyze.</CardDescription>
             </CardHeader>
-            <CardContent className="flex items-center gap-4">
-              <div className="flex flex-col gap-3">
-                <Label>Period</Label>
-                <select
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  className="rounded-md border px-3 py-2 w-fit"
-                >
-                  <option value="day">Past day</option>
-                  <option value="week">Past week</option>
-                  <option value="month">Past month</option>
-                  <option value="year">Past year</option>
-                </select>
-              </div>
-              <div className="ml-auto">
-                <Button onClick={fetchAnalysis} disabled={loading}>
+            <CardContent>
+              <div className="flex flex-row flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="insight-period" className="text-sm font-medium shrink-0">
+                    Period
+                  </Label>
+                  <Select value={period} onValueChange={setPeriod}>
+                    <SelectTrigger id="insight-period" className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="day">Past day</SelectItem>
+                      <SelectItem value="week">Past week</SelectItem>
+                      <SelectItem value="month">Past month</SelectItem>
+                      <SelectItem value="year">Past year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={fetchAnalysis} disabled={loading} className="ml-auto shrink-0">
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

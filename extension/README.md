@@ -58,11 +58,11 @@ dist-extension/
 
 ## Prerequisites
 
-- Same Supabase project as the web app.
+- Same Supabase project as the web app (same database).
 - `.env` or `.env.local` with:
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
-  (The extension build reads these so the popup uses the same Supabase project.)
+  (The extension build reads these so the popup and “log my decision” updates use the same DB. Transaction IDs are UUIDs.)
 
 ## Build
 

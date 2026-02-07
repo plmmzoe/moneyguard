@@ -34,15 +34,13 @@ export function analysisUI(
   onDecline: (user: string, items: Item[]) => void,
   onDecision: (state: DecisionState) => void
 ) {
-  if (!user) {
-    throw new Error('No user found!');
-  }
+  const hasUser = Boolean(user);
   let cost = 0;
   for (const item of resp.items) {
     cost += (item.price ?? 0) * (item.quantity ?? 1);
   }
-  const budget = profile?.monthly_budget ?? 1;
-  const budgetImpact = budget > 0 ? Math.floor((cost / budget) * 100) : 0;
+  const budget = profile?.monthly_budget;
+  const budgetImpact = budget != null && budget > 0 ? Math.floor((cost / budget) * 100) : null;
   const impulseScore = resp.impulseScore ?? 0;
   const verdictDisplay = getVerdictDisplay(resp.verdict);
   const analysisText = resp.summary ?? resp.analysis ?? '';
@@ -114,6 +112,12 @@ export function analysisUI(
   .mg-decision-btn.btn-gray { background: #f1f5f9; color: #334155; }
   .mg-decision-btn.btn-gray:hover:not(:disabled) { background: #e2e8f0; }
   .mg-decision-btn.btn-gray.selected { border-color: #64748b; }
+  .mg-decision-btn.btn-primary { background: #79aaaf; color: #fff; }
+  .mg-decision-btn.btn-primary:hover { background: #6b9a9f; }
+  .mg-signin-link { display: inline-flex; align-items: center; justify-content: center; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; color: #fff; text-decoration: none; }
+  .mg-card-header { position: relative; padding: 12px 24px 0; display: flex; justify-content: flex-end; }
+  .mg-close-btn { border: none; background: transparent; padding: 6px; border-radius: 6px; cursor: pointer; color: #94a3b8; font-size: 20px; line-height: 1; }
+  .mg-close-btn:hover { background: #f1f5f9; color: #475569; }
   `;
 
   const iconClass = verdictDisplay.iconClass ? `mg-header-icon ${verdictDisplay.iconClass}` : 'mg-header-icon success';
@@ -121,6 +125,9 @@ export function analysisUI(
   const content = document.createElement('div');
   content.innerHTML = `
   <div class="mg-card">
+    <div class="mg-card-header">
+      <button type="button" class="mg-close-btn" id="mg-analysis-close" aria-label="Close">×</button>
+    </div>
     <!-- 1. AI verdict + Impulse score (same row) -->
     <div class="mg-section">
       <div class="mg-section-title">AI Verdict & Impulse score</div>
@@ -142,8 +149,8 @@ export function analysisUI(
       <div class="mg-metric-row">
         <div class="mg-metric-card">
           <div class="mg-metric-label">Budget impact</div>
-          <div class="mg-metric-value">${budgetImpact}%</div>
-          <div class="mg-metric-sub">of monthly budget</div>
+          <div class="mg-metric-value">${budgetImpact != null ? budgetImpact + '%' : '—'}</div>
+          <div class="mg-metric-sub">${budgetImpact != null ? 'of monthly budget' : 'Sign in for budget'}</div>
         </div>
         <div class="mg-metric-card">
           <div class="mg-metric-label">Total cost</div>
@@ -162,13 +169,16 @@ export function analysisUI(
     <!-- 4. Log your decision (simplified) -->
     <div class="mg-section">
       <div class="mg-section-title">Log your decision</div>
-      <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Choose one option. Your choice will be saved.</p>
-      <div class="mg-decision-grid">
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">${hasUser ? 'Choose one option. Your choice will be saved.' : 'Sign in to save your choice.'}</p>
+      ${hasUser
+        ? `<div class="mg-decision-grid">
         <button type="button" class="mg-decision-btn btn-red" id="btn-discarded" data-state="discarded">I won't buy</button>
         <button type="button" class="mg-decision-btn btn-green" id="btn-bought" data-state="bought">I will buy</button>
         <button type="button" class="mg-decision-btn btn-amber" id="btn-waiting" data-state="waiting">Send to cool-off</button>
         <button type="button" class="mg-decision-btn btn-gray" id="btn-draft" data-state="draft">Just browsing</button>
-      </div>
+      </div>`
+        : `<a id="btn-signin" href="#" class="mg-decision-btn btn-primary mg-signin-link">Sign in to save your decision</a>`
+      }
     </div>
   </div>
   `;
@@ -176,32 +186,47 @@ export function analysisUI(
   shadow.appendChild(style);
   shadow.appendChild(content);
 
-  let selectedState: string | null = null;
-
-  const setSelected = (state: string) => {
-    selectedState = state;
-    ['btn-discarded', 'btn-bought', 'btn-waiting', 'btn-draft'].forEach((id) => {
-      const btn = shadow.getElementById(id);
-      if (btn) {
-        btn.classList.toggle('selected', btn.getAttribute('data-state') === state);
-        (btn as HTMLButtonElement).disabled = true;
-      }
-    });
-  };
-
-  const handleDecision = (state: DecisionState) => {
-    if (selectedState) return;
-    setSelected(state);
-    onDecision(state);
-    if (state === 'bought') onAccept(user, resp.items);
-    else if (state === 'discarded') onDecline(user, resp.items);
+  shadow.getElementById('mg-analysis-close')?.addEventListener('click', () => {
     container.remove();
-  };
+  });
 
-  shadow.getElementById('btn-bought')?.addEventListener('click', () => handleDecision('bought'));
-  shadow.getElementById('btn-discarded')?.addEventListener('click', () => handleDecision('discarded'));
-  shadow.getElementById('btn-waiting')?.addEventListener('click', () => handleDecision('waiting'));
-  shadow.getElementById('btn-draft')?.addEventListener('click', () => handleDecision('draft'));
+  if (hasUser) {
+    let selectedState: string | null = null;
+
+    const setSelected = (state: string) => {
+      selectedState = state;
+      ['btn-discarded', 'btn-bought', 'btn-waiting', 'btn-draft'].forEach((id) => {
+        const btn = shadow.getElementById(id);
+        if (btn) {
+          btn.classList.toggle('selected', btn.getAttribute('data-state') === state);
+          (btn as HTMLButtonElement).disabled = true;
+        }
+      });
+    };
+
+    const handleDecision = (state: DecisionState) => {
+      if (selectedState) return;
+      setSelected(state);
+      onDecision(state);
+      if (state === 'bought') onAccept(user, resp.items);
+      else if (state === 'discarded') onDecline(user, resp.items);
+      container.remove();
+    };
+
+    shadow.getElementById('btn-bought')?.addEventListener('click', () => handleDecision('bought'));
+    shadow.getElementById('btn-discarded')?.addEventListener('click', () => handleDecision('discarded'));
+    shadow.getElementById('btn-waiting')?.addEventListener('click', () => handleDecision('waiting'));
+    shadow.getElementById('btn-draft')?.addEventListener('click', () => handleDecision('draft'));
+  } else {
+    const signInBtn = shadow.getElementById('btn-signin');
+    if (signInBtn) {
+      signInBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const popupUrl = typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL('popup.html') : '#';
+        window.open(popupUrl, '_blank', 'noopener,noreferrer');
+      });
+    }
+  }
 
   return container;
 }

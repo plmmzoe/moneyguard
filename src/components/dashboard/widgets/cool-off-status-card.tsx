@@ -55,21 +55,20 @@ export function CoolOffStatusCard({ transactions }: Props) {
 
   if (validTransactions.length === 0) {
     return (
-      <Card className="bg-card rounded-xl p-5 shadow-sm border border-border flex flex-col justify-between h-full min-h-[280px]">
+      <Card className="bg-card rounded-xl p-4 shadow-sm border border-border flex flex-col justify-between h-full min-h-[200px]">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-bold uppercase tracking-wider mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/70 animate-pulse" />
+          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] font-bold uppercase tracking-wider mb-2">
+            <span className="w-1 h-1 rounded-full bg-muted-foreground/70 animate-pulse" />
             <span>Reflection Window</span>
           </div>
-          <h3 className="text-lg font-bold text-foreground">No active cool-off period</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your recent purchase analyses will appear here when you run a check or send an item to
-            cool-off.
+          <h3 className="text-base font-bold text-foreground">No active cool-off period</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Your recent purchase analyses will appear here when you run a check or send an item to cool-off.
           </p>
         </div>
-        <div className="flex flex-col gap-2 mt-4">
+        <div className="mt-3">
           <Link href="/analyze">
-            <Button className="w-full py-2.5 px-4 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm transition-colors flex items-center justify-center gap-2">
+            <Button className="w-full py-2 px-3 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-xs transition-colors">
               Run a quick check
             </Button>
           </Link>
@@ -79,71 +78,49 @@ export function CoolOffStatusCard({ transactions }: Props) {
   }
 
   return (
-    <Card className="bg-card rounded-xl p-5 shadow-sm border border-border flex flex-col justify-between h-full min-h-[280px]">
-      <div className={'overflow-x-auto snap-y snap-mandatory h-[260px] snap-always no-scrollbar'}>
+    <Card className="bg-card rounded-xl p-4 shadow-sm border border-border flex flex-col justify-between h-full min-h-[200px]">
+      <div className="overflow-x-auto snap-y snap-mandatory max-h-[320px] snap-always no-scrollbar">
         {validTransactions.map((transaction) => (
-          <div key={transaction.transaction_id} className={'snap-center mb-7 mt-2'}>
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                  <span>
-                    Cooloff progress:{' '}
-                    {(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry)
-                      .percentageProgressed * 100).toFixed(1)}
-                    %
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-foreground">
-                  {transaction.transaction_description}
-                </h3>
-                {transaction.analysis && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                    {transaction.analysis}
-                  </p>
-                )}
+          <div key={transaction.transaction_id} className="snap-center py-2 pb-4 border-b border-border/50 last:border-0 last:pb-0">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+                <span>{(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).percentageProgressed * 100).toFixed(0)}%</span>
               </div>
+              <span className="text-[10px] text-muted-foreground shrink-0">
+                {calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).timeLeft} left
+              </span>
             </div>
-
-            <div className="mb-6">
-              <div className="flex justify-between text-xs font-medium text-muted-foreground mb-2">
-                <span>Cooling off</span>
-                <span>{calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).timeLeft} left</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-blue-500 h-full rounded-full"
-                  style={{ width: `${(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).percentageProgressed * 100).toFixed(2)}%` }}
-                />
-              </div>
+            <h3 className="text-sm font-bold text-foreground leading-tight line-clamp-1">
+              {transaction.transaction_description}
+            </h3>
+            {transaction.analysis && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-snug">
+                {transaction.analysis}
+              </p>
+            )}
+            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-2">
+              <div
+                className="bg-blue-500 h-full rounded-full transition-[width]"
+                style={{ width: `${(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).percentageProgressed * 100).toFixed(2)}%` }}
+              />
             </div>
-
-            <div className="flex flex-col gap-2 mt-auto">
+            <div className="flex gap-1.5 mt-2 flex-wrap">
               <button
                 type="button"
-                className="w-full py-2.5 px-4 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                className="flex-1 min-w-0 py-1.5 px-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-[11px] transition-colors flex items-center justify-center gap-1"
               >
-                <span className="inline-block rounded-full bg-primary w-2 h-2" />
-                <span>I decided not to buy</span>
+                <span className="rounded-full bg-primary w-1.5 h-1.5 shrink-0" />
+                <span className="truncate">Not buying</span>
               </button>
-              <div className="flex gap-2">
-                <Link href={`/analyze?id=${transaction.transaction_id}`} className="flex-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full py-2.5 px-4 rounded-full border-border hover:bg-muted text-muted-foreground font-medium text-sm transition-colors"
-                  >
-          Analyze again
-                  </Button>
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 py-2.5 px-4 rounded-full border-border hover:bg-muted text-muted-foreground font-medium text-sm transition-colors"
-                >
-        I bought it
+              <Link href={`/analyze?id=${transaction.transaction_id}`} className="flex-1 min-w-0">
+                <Button variant="outline" size="sm" className="w-full h-7 text-[11px] rounded-full py-0 px-2">
+                  Analyze again
                 </Button>
-              </div>
+              </Link>
+              <Button variant="outline" size="sm" className="flex-1 min-w-0 h-7 text-[11px] rounded-full py-0 px-2">
+                I bought it
+              </Button>
             </div>
           </div>
         ))}

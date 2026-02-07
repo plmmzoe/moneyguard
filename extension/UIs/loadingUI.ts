@@ -36,6 +36,23 @@ export function loadingUI() {
     align-items: center;
     text-align: center;
   }
+  .mg-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    border: none;
+    background: transparent;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 20px;
+    line-height: 1;
+  }
+  .mg-close-btn:hover {
+    background: #f1f5f9;
+    color: #475569;
+  }
   .mg-breath-wrapper {
     position: relative;
     display: flex;
@@ -164,6 +181,7 @@ export function loadingUI() {
   const content = document.createElement('div');
   content.innerHTML = `
   <div class="mg-loading-card">
+    <button type="button" class="mg-close-btn" id="mg-loading-close" aria-label="Close">×</button>
     <div class="mg-breath-wrapper">
       <div class="mg-breath-outer"></div>
       <div class="mg-breath-inner"></div>
@@ -178,12 +196,6 @@ export function loadingUI() {
         MoneyGuard is reviewing this product's impact on your goals. Is this purchase aligned with your values today?
       </p>
     </div>
-    <div class="mg-actions">
-      <button class="mg-secondary-btn" id="mg-loading-cancel">
-        <span class="mg-secondary-icon">←</span>
-        <span>I don't need this right now</span>
-      </button>
-    </div>
     <div class="mg-blob mg-blob-top-right"></div>
     <div class="mg-blob mg-blob-bottom-left"></div>
   </div>
@@ -192,8 +204,7 @@ export function loadingUI() {
   shadow.appendChild(style);
   shadow.appendChild(content);
 
-  // Allow the user to dismiss the loading state if they decide to stop
-  shadow.getElementById('mg-loading-cancel')?.addEventListener('click', () => {
+  shadow.getElementById('mg-loading-close')?.addEventListener('click', () => {
     container.remove();
   });
 

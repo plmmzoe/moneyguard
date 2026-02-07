@@ -65,12 +65,12 @@ function getUser(success:(x:any)=>void,failure:()=>void) : void {
     console.log(resp)
     if (resp.success){
       console.log("Successfully got user");
-      console.log(resp)
       success(resp)
-    }else{
-      warningToast("please login and refresh to use MoneyTracker")
-      console.error("Failed to get user");
-      failure()
+    } else {
+      warningToast("Login to enable more features.");
+      console.error("Failed to get user; proceeding without account (no budget, no save).");
+      const textContent = document.body.innerText.toLowerCase();
+      proceedWithProfile(null, null, textContent);
     }
   })
 }
@@ -79,12 +79,11 @@ function proceedWithUser(userID:string){
   const textContent = document.body.innerText.toLowerCase();
   getProfile(userID,
     function(profile:any) {
-      console.log("profile")
-      console.log(profile)
-      proceedWithProfile(userID,profile,textContent)
+      proceedWithProfile(userID, profile, textContent)
     },
     function(){
-      console.error("Error getting profile");
+      console.error("Error getting profile; proceeding with no profile.");
+      proceedWithProfile(userID, null, textContent)
     })
 }
 function getProfile(userID:string,success:(x:any)=>void,failure:()=>void) : void {
@@ -105,11 +104,11 @@ function getProfile(userID:string,success:(x:any)=>void,failure:()=>void) : void
   })
 }
 
-function proceedWithProfile(userID:string,profile:any,textContent:string){
-  console.log("user data retrieved")
+function proceedWithProfile(userID:string | null, profile:any, textContent:string){
+  console.log("user data retrieved", userID ? "with user" : "without user")
   const permissionUI = showPermissionUI(()=>{
     const loadingScreen = loadingUI();
-    const userContext = JSON.stringify(profile)
+    const userContext = JSON.stringify(profile ?? null)
     document.body.appendChild(loadingScreen);
     analyzePageText(textContent,userContext).then(r => {
       console.log(r)
@@ -143,6 +142,18 @@ function proceedWithProfile(userID:string,profile:any,textContent:string){
           analysis: items.analysis ?? '',
           verdict: items.verdict ?? null,
         };
+
+        if (!userID) {
+          loadingScreen.remove();
+          const onDecisionNoUser = () => {
+            warningToast("Sign in to enable more features.");
+          };
+          document.body.appendChild(
+            analysisUI('', items as LlmResponse, null, '', boundPurchase, boundSave, onDecisionNoUser)
+          );
+          return;
+        }
+
         chrome.runtime.sendMessage(
           { type: requestTypes.createAnalysisTransaction, user: userID, payload },
           (resp: MsgResp & { transaction_id?: string }) => {
@@ -153,13 +164,27 @@ function proceedWithProfile(userID:string,profile:any,textContent:string){
                 const cooloff_expiry = state === 'waiting'
                   ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
                   : undefined;
-                chrome.runtime.sendMessage({
-                  type: requestTypes.updateTransactionState,
-                  user: userID,
-                  transactionId,
-                  transaction_state: state,
-                  cooloff_expiry,
-                });
+                chrome.runtime.sendMessage(
+                  {
+                    type: requestTypes.updateTransactionState,
+                    user: userID,
+                    transactionId,
+                    transaction_state: state,
+                    cooloff_expiry,
+                  },
+                  (updateResp: MsgResp) => {
+                    if (chrome.runtime.lastError) {
+                      warningToast('Failed to save decision.');
+                      return;
+                    }
+                    if (updateResp?.success) {
+                      const toast = toastUI('Decision saved to your history.');
+                      document.body.appendChild(toast);
+                    } else {
+                      warningToast('Failed to save decision. Please try again.');
+                    }
+                  }
+                );
               };
               document.body.appendChild(
                 analysisUI(userID, items as LlmResponse, profile, transactionId, boundPurchase, boundSave, onDecision)

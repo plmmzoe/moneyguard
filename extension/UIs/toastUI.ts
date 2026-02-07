@@ -16,30 +16,26 @@ export function toastUI(msg:string){
 
   const style = document.createElement('style');
   style.textContent = `
-  .title { font-weight: 600; font-size: 16px; color: #465869; margin-bottom: 4px; }
-  .text { font-size: 14px; color: #668192; margin-bottom: 12px; }
-  .buttons { display: flex; gap: 8px; }
-  button {
-    flex: 1;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    transition: opacity 0.2s;
-  }
-  .btn-primary { background: #79aaaf; color: #ffffff; }
-  .btn-secondary { background: #f3f6f7; color: #465869; }
-  button:hover { opacity: 0.9; }
+  .toast-inner { display: flex; align-items: flex-start; gap: 12px; }
+  .text { font-size: 14px; color: #668192; flex: 1; }
+  .mg-close-btn { border: none; background: transparent; padding: 2px; border-radius: 4px; cursor: pointer; color: #94a3b8; font-size: 18px; line-height: 1; flex-shrink: 0; }
+  .mg-close-btn:hover { background: #f1f5f9; color: #475569; }
 `;
 
   const content = document.createElement('div');
   content.innerHTML = `
-  <div class="text">${msg}</div>
+  <div class="toast-inner">
+    <div class="text">${msg}</div>
+    <button type="button" class="mg-close-btn" id="toast-close" aria-label="Close">×</button>
+  </div>
 `;
   shadow.appendChild(style);
   shadow.appendChild(content);
+
+  shadow.getElementById('toast-close')?.addEventListener('click', () => {
+    container.remove();
+  });
+
   setTimeout(() => {
     console.log('Timeout executed after 3 seconds');
     container.remove()

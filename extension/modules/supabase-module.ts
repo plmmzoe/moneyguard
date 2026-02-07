@@ -5,6 +5,7 @@ import { TransactionData } from '../../src/lib/dashboard.type.ts';
 const STORAGE_KEY = 'supabase_session';
 
 async function initClient() {
+  // Use same Supabase project as the web app (same DB). Set in build: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY.
   // @ts-ignore
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   // @ts-ignore
@@ -12,7 +13,7 @@ async function initClient() {
   if (!url || !anonKey) {
     throw new Error('Extension not configured. Build with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
   }
-  const client = await createExtensionSupabaseClient(url,anonKey);
+  const client = await createExtensionSupabaseClient(url, anonKey);
   const stored = await new Promise<{ session?: Session }>((resolve) => {
     chrome.storage.local.get(STORAGE_KEY, (data) => {
       console.log(data);

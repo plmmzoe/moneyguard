@@ -24,23 +24,27 @@ export default function AnalyzePage() {
   const isSubmitting = useRef(false);
   const [profile, setProfile] = useState<Tables<'profiles'> | null>(null);
 
-  const [formData, setFormData] = useState({
-    // Section 1: Purchase Basics
+  const initialFormData = {
     itemName: '',
     price: '',
     currency: 'CAD',
     urgency: '',
-
-    // Section 2: Utility & Context
-    reasonOrContext: '', // merged: what problem it solves / what you use now
+    reasonOrContext: '',
     expectedUsageFrequency: '',
     lastTimeYouNeededThis: '',
     similarItemsOwned: 0,
-
-    // Section 3: Emotional Check
     emotionalTrigger: '',
     sleepOnItTest: '',
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+
+  const handleAnalyzeAnother = () => {
+    setFormData(initialFormData);
+    setAnalysisResult(null);
+    setSavedTransactionId(null);
+    setActiveTab('survey');
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -201,11 +205,7 @@ export default function AnalyzePage() {
                   type="button"
                   variant="outline"
                   size="lg"
-                  onClick={() => {
-                    setAnalysisResult(null);
-                    setSavedTransactionId(null);
-                    setActiveTab('survey');
-                  }}
+                  onClick={handleAnalyzeAnother}
                 >
                   Analyze another
                 </Button>
@@ -221,7 +221,7 @@ export default function AnalyzePage() {
                   <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 </div>
               )}
-              <form onSubmit={handleSubmit} className="space-y-8">
+              <form id="survey-form" onSubmit={handleSubmit} className="space-y-8">
                 <fieldset className="space-y-8" disabled={loading || !!analysisResult}>
                   {/* SECTION 1: Purchase Basics */}
                   <Card className="border-none shadow-sm bg-card/50">
@@ -382,35 +382,35 @@ export default function AnalyzePage() {
                     </div>
                   )}
 
-                  <div className="flex justify-end">
-                    <Button type="submit" disabled={!canSubmit || loading || !!analysisResult} size="lg" className="w-full sm:w-auto">
-                      {analysisResult ? (
-                        <>Analysis Complete</>
-                      ) : loading ? (
-                        <>Analyzing...</>
-                      ) : (
-                        <>Get Analysis <Sparkles className="ml-2 h-4 w-4" /></>
-                      )}
-                    </Button>
-                  </div>
                 </fieldset>
               </form>
-              {analysisResult && (
-                <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-4">
+                {analysisResult ? (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="default"
                     size="lg"
-                    onClick={() => {
-                      setAnalysisResult(null);
-                      setSavedTransactionId(null);
-                      setActiveTab('survey');
-                    }}
+                    className="w-full sm:w-auto"
+                    onClick={handleAnalyzeAnother}
                   >
                     Analyze another
                   </Button>
-                </div>
-              )}
+                ) : (
+                  <Button
+                    type="submit"
+                    form="survey-form"
+                    disabled={!canSubmit || loading}
+                    size="lg"
+                    className="w-full sm:w-auto"
+                  >
+                    {loading ? (
+                      <>Analyzing...</>
+                    ) : (
+                      <>Get Analysis <Sparkles className="ml-2 h-4 w-4" /></>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           </TabsContent>
 
@@ -431,15 +431,7 @@ export default function AnalyzePage() {
                   onStateUpdate={handleStateUpdate}
                 />
                 <div className="flex justify-center mt-8">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => {
-                      setAnalysisResult(null);
-                      setSavedTransactionId(null);
-                      setActiveTab('survey');
-                    }}
-                  >
+                  <Button variant="outline" size="lg" onClick={handleAnalyzeAnother}>
                     Analyze another
                   </Button>
                 </div>
