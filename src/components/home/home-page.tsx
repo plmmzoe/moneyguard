@@ -17,18 +17,18 @@ export function HomePage() {
         {/* Hero Section */}
         <section className="text-center space-y-6 pt-8">
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            SpendGuard AI
+            MoneyGuard AI
           </h1>
           <h2 className="text-xl text-muted-foreground font-medium">
             Evidence-based behavioral intervention for your wallet
           </h2>
           <p className="max-w-2xl mx-auto text-lg text-muted-foreground leading-relaxed">
-            Stop impulse buying before it happens. SpendGuard AI analyzes your purchase intent in real-time,
+            Stop impulse buying before it happens. MoneyGuard AI analyzes your purchase intent in real-time,
             predicts regret, and guides you to smarter financial decisions.
           </p>
         </section>
 
-        {/* What SpendGuard AI Does */}
+        {/* What MoneyGuard AI Does */}
         <section>
           <h3 className="text-2xl font-semibold mb-6 text-foreground border-b border-border pb-2">How It Works</h3>
           <ul className="grid gap-4 sm:grid-cols-2">
@@ -53,10 +53,10 @@ export function HomePage() {
 
         {/* How It's Different */}
         <section className="bg-card p-8 rounded-xl border border-border">
-          <h3 className="text-2xl font-semibold mb-4 text-foreground">Why SpendGuard?</h3>
+          <h3 className="text-2xl font-semibold mb-4 text-foreground">Why MoneyGuard?</h3>
           <p className="text-muted-foreground mb-4">
             Traditional budgeting apps tell you where you went wrong <em>after</em> the money is gone.
-            SpendGuard AI acts as a <strong>behavioral firewall</strong>, intervening <em>before</em>{' '}
+            MoneyGuard AI acts as a <strong>behavioral firewall</strong>, intervening <em>before</em>{' '}
             the transaction occurs.
           </p>
           <p className="text-muted-foreground">
