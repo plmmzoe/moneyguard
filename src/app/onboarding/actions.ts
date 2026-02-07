@@ -92,6 +92,16 @@ export async function createOrUpdateProfile(data: {
     }
   }
 
+  // Mark onboarding as complete
+  const { error: onboardingError } = await supabase
+    .from('profiles')
+    .update({ setup_complete: true })
+    .eq('user_id', user.id);
+
+  if (onboardingError) {
+    throw new Error(`Failed to mark onboarding complete: ${onboardingError.message}`);
+  }
+
   revalidatePath('/onboarding');
   revalidatePath('/profile');
   revalidatePath('/dashboard');

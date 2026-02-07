@@ -20,6 +20,21 @@ export async function signup(data: FormData) {
     return { error: true };
   }
 
+  // Make a new blank profile for the user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: true };
+  }
+  const { error: profileError } = await supabase.from('profiles').insert({
+    user_id: user.id,
+  });
+
+  if (profileError) {
+    return { error: true };
+  }
+
   revalidatePath('/', 'layout');
   redirect('/onboarding');
 }

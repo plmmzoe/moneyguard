@@ -78,6 +78,17 @@ export async function createSavingsGoal(data: {
     throw new Error(`Failed to create savings goal: ${error.message}`);
   }
 
+  // Set the foreign key of the profile's active savings goal if this is the first goal
+  if (isFirstGoal) {
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ active_saving: newSavings.id })
+      .eq('user_id', user.id);
+    if (profileError) {
+      throw new Error(`Failed to update profile's active saving: ${profileError.message}`);
+    }
+  }
+
   revalidatePath('/savings');
   revalidatePath('/dashboard');
 
@@ -186,6 +197,15 @@ export async function deleteSavingsGoal(id: number): Promise<number | null> {
         .update({ is_active: true })
         .eq('id', nextGoal.id);
       nextActiveId = nextGoal.id;
+
+      // Update the profile's active_saving foreign key
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ active_saving: nextActiveId })
+        .eq('user_id', user.id);
+      if (profileError) {
+        throw new Error(`Failed to update profile's active saving: ${profileError.message}`);
+      }
     }
   }
 
@@ -235,6 +255,15 @@ export async function setActiveSavingsGoal(id: number) {
 
   if (activateError) {
     throw new Error(`Failed to activate savings goal: ${activateError.message}`);
+  }
+
+  // Update the profile's active_saving foreign key
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ active_saving: id })
+    .eq('user_id', user.id);
+  if (profileError) {
+    throw new Error(`Failed to update profile's active saving: ${profileError.message}`);
   }
 
   revalidatePath('/savings');

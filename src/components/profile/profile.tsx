@@ -45,7 +45,7 @@ export default function Profile({
         </Link>
 
         <Link
-          href="/onboarding"
+          href="/savings"
           className="inline-flex items-center px-3 py-1.5 rounded-md border border-border text-sm font-medium hover:bg-primary/5"
         >
               Edit Goals
