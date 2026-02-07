@@ -1,7 +1,9 @@
 'use client';
 
 import { Anchor, Mountain, Plane } from 'lucide-react';
+import Link from 'next/link';
 
+import { Button } from '@/components/ui/button';
 import { Tables } from '@/lib/database.types';
 
 interface Props {
@@ -59,7 +61,9 @@ export function GoalAnchor({ profile, saving }: Props) {
               <div className="flex justify-between text-xs font-medium text-white/80">
                 <span>Saved</span>
                 <span>
-                  {savedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} {currency} / {goalAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} {currency}
+                  {savedAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}{' '}
+                  {currency} / {goalAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}{' '}
+                  {currency}
                 </span>
               </div>
               <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
@@ -78,6 +82,12 @@ export function GoalAnchor({ profile, saving }: Props) {
                 : '"Set a savings goal in your profile to track progress."'}
             </p>
           </div>
+
+          <Link href="/savings">
+            <Button variant="outline" className="w-full text-xs" size="sm">
+              Manage Savings Goals
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

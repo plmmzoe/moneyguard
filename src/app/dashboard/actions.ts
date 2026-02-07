@@ -27,6 +27,7 @@ export async function getProfile():Promise<Profile|null> {
     `)
     .eq('user_id', user.id)
     .single();
+
   if (error) {
     throw new Error(`Failed to fetch profile: ${error.message}`);
   }
@@ -52,13 +53,15 @@ export async function getTransactions() {
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
-  if (error) {
-    throw new Error(`Failed to fetch user transactions: ${error.message}`);
-  }
 
   if (!transactions) {
     return null;
   }
+
+  if (error) {
+    throw new Error(`Failed to fetch user transactions: ${error}`);
+  }
+
   return transactions;
 }
 
@@ -123,6 +126,7 @@ export async function postTransaction(transactionData:TransactionData) {
   const { data, error } = await supabase
     .from('transactions')
     .insert([transaction]);
+
   if (error) {
     console.error('Failed to post user transaction:', error);
     throw new Error(`Error posting transaction: ${error.message}`);
@@ -223,4 +227,29 @@ export async function updateMindset(mindset: string) {
     console.error('Error updating mindset:', error);
     throw new Error('Failed to update mindset');
   }
+}
+
+export async function getActiveSavingsGoal() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const { data: goal, error } = await supabase
+    .from('savings')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching active savings goal:', error);
+    throw new Error('Failed to fetch active savings goal');
+  }
+
+  return goal || null;
 }

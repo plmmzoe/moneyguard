@@ -1,6 +1,7 @@
 'use client';
 
 import Header from '@/components/home/header/header';
+import { OnboardingNotification } from '@/components/onboarding/onboarding-notification';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { createClient } from '@/utils/supabase/client';
 
@@ -12,6 +13,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-muted">
+      <OnboardingNotification user={user} />
       <Header user={user} />
       <AppMobileNav />
       <div className="flex max-w-7xl mx-auto px-6 py-8 gap-6">

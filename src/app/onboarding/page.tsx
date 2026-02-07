@@ -17,10 +17,9 @@ export default async function OnboardingPage() {
       username: profile.username,
       monthlyBudget: profile.monthlyBudget,
       currency: profile.currency,
-      monthlyIrregularSpending: profile.monthlyIrregularSpending,
-      savingsGoalAmount: profile.savingsGoalAmount,
-      savingsGoalReward: profile.savingsGoalReward,
-      savingsGoalTargetDate: profile.savingsGoalTargetDate,
+      savingsGoalAmount: 0,
+      savingsGoalReward: '',
+      savingsGoalTargetDate: '',
       hobbies: profile.hobbies,
     }
     : undefined;

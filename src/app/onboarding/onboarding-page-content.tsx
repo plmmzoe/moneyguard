@@ -13,10 +13,6 @@ interface OnboardingPageProps {
     username: string;
     monthlyBudget: number;
     currency: string;
-    monthlyIrregularSpending: number | null | undefined;
-    savingsGoalAmount: number | null | undefined;
-    savingsGoalReward: string | null | undefined;
-    savingsGoalTargetDate: string | null | undefined;
     hobbies: { name: string; rating: number }[] | null | undefined;
   };
   isUpdate?: boolean;
@@ -27,14 +23,16 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
   const router = useRouter();
   const { toast } = useToast();
 
+  const handleSkip = () => {
+    // Skip onboarding and redirect to dashboard
+    router.push('/dashboard');
+    router.refresh();
+  };
+
   const handleSubmit = async (data: {
     username: string;
     monthlyBudget: number;
     currency: string;
-    monthlyIrregularSpending: number;
-    savingsGoalAmount: number;
-    savingsGoalReward: string;
-    savingsGoalTargetDate: string;
     hobbies: { name: string; rating: number }[];
   }) => {
     setIsLoading(true);
@@ -78,6 +76,7 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
         <OnboardingForm
           initialData={initialProfile}
           onSubmit={handleSubmit}
+          onSkip={handleSkip}
           isLoading={isLoading}
         />
       </div>

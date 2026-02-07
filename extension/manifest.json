@@ -3,7 +3,14 @@
   "name": "MoneyGuard",
   "version": "1.0.0",
   "description": "MoneyGuard Chrome Extension - sign in with your existing account",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "action": {
+    "default_icon": "icons/icon48.png",
+    "default_title": "MoneyGuard",
     "default_popup": "popup.html"
   },
   "background": {
