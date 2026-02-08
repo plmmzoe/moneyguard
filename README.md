@@ -112,7 +112,7 @@ Click **Deploy** when you're done. Wait for Vercel to build.
 
 [Create products and prices](https://developer.paddle.com/build/products/create-products-prices?utm_source=dx&utm_medium=paddle-nextjs-starter-kit) in Paddle for your subscription plans. We recommend creating three products for your plans, with two prices for each product to describe how you bill. For example, create a product called "Pro plan" with two prices for "monthly" and "annual."
 
-Next, copy your price IDs and update the [`pricing-tier.ts`](src/constants/pricing-tier.ts) constants file with your new prices.
+Next, copy your price IDs and update the constants file with your new prices.
 
 Commit and push your changes to `main`.
 

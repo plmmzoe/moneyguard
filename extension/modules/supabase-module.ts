@@ -1,7 +1,6 @@
 import { createExtensionSupabaseClient } from '../scripts/supabase-extension';
 import { type Session, SupabaseClient, User } from '@supabase/supabase-js';
-import { Item } from '../shared/types.ts';
-import { TransactionData } from '../../src/lib/dashboard.type.ts';
+import { TransactionDetails } from '../shared/types.ts';
 const STORAGE_KEY = 'supabase_session';
 
 async function initClient() {
@@ -71,70 +70,18 @@ export async function getProfile(userID:string)  {
   }
 }
 
-export async function updateSavings(userID:string, amount:number){
+export async function addTransactions(itemDetails:TransactionDetails) {
   const client = await initClient();
   if (!client) {
     throw new Error("client init failed");
   }
-  // @ts-ignore
-  const {data,error} = await client
-    .rpc('increment', { x: parseFloat(amount.toString()), row_id: userID });
-  if (error){
-    throw new Error(`Error updating profile: ${error.message}`);
-  }
-}
-
-export async function addTransactions(userID:string, items: Item[]) {
-  const client = await initClient();
-  if (!client) {
-    throw new Error("client init failed");
-  }
-  const current = new Date();
-  const transactionItems = items.map((item:Item) : TransactionData => {
-    return {
-      amount: item.quantity * item.price,
-      created_at: current.toISOString(),
-      transaction_description: item.name,
-      user_id: userID
-    }
-  })
   // @ts-ignore
   const {data,error} = await client
     .from('transactions')
-    .insert(transactionItems)
-
+    .insert(itemDetails)
   if (error){
     throw new Error(`Error posting transaction: ${error.message}`);
   }
-}
-
-export type AnalysisTransactionInput = {
-  transaction_description: string;
-  amount: number;
-  analysis: string;
-  verdict?: string | null;
-};
-
-/** Create a draft transaction from analysis; returns transaction_id (uuid) for later state update. */
-export async function createAnalysisTransaction(userID: string, input: AnalysisTransactionInput): Promise<string> {
-  const client = await initClient();
-  if (!client) throw new Error('client init failed');
-  const transaction_id = crypto.randomUUID();
-  const { data, error } = await client
-    .from('transactions')
-    .insert({
-      transaction_id,
-      user_id: userID,
-      amount: input.amount,
-      transaction_description: input.transaction_description,
-      analysis: input.analysis,
-      verdict: input.verdict ?? null,
-      transaction_state: 'draft',
-    })
-    .select('transaction_id')
-    .single();
-  if (error) throw new Error(`Error creating analysis transaction: ${error.message}`);
-  return data.transaction_id;
 }
 
 /** Update transaction_state (and optionally cooloff_expiry for waiting). */

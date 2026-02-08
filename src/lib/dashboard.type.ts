@@ -8,8 +8,11 @@ export type TransactionData = Omit<Tables<'transactions'>, 'user_id'|'transactio
 
 export type TransactionGoal = Tables<'transactions'> & {
   cooloff_expiry: string;
-  transaction_state: 'bought' | 'waiting' | 'discarded' | 'draft';
+  transaction_state: TransactionState;
 };
+export type Verdict = 'high' | 'medium' | 'low';
+
+export type TransactionState = 'draft' | 'waiting' | 'discarded' | 'bought';
 
 export type Saving = Tables<'savings'> & {total_amount:number}
 

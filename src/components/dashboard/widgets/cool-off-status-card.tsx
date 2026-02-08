@@ -1,15 +1,24 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
+import {
+  deleteTransactions,
+  getCoolOffs,
+  updateExpiredTransactions,
+  updateTransaction,
+} from '@/app/dashboard/actions';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { TransactionGoal } from '@/lib/dashboard.type';
+import { dayInMs, hourInMs, monthInMs, weekInMs, yearInMs } from '@/constants/consts';
+import { TransactionGoal, TransactionState } from '@/lib/dashboard.type';
+import { Tables } from '@/lib/database.types';
 
 interface Props {
   transactions: TransactionGoal[];
 }
-
+const expiryPeriod = weekInMs;
 function parseUnit(time:number, unit:number, postfix:string) {
   let unitStr = '';
   let timeLeft = time;
@@ -24,16 +33,11 @@ function parseUnit(time:number, unit:number, postfix:string) {
 }
 
 function parseTime(time:number) {
-  const minute = 60000;
-  const hour = minute * 60;
-  const day = hour * 24;
-  const month = day * 30;
-  const year = month * 12;
-  const yearLeft = parseUnit(time, year, 'yrs');
-  const monthLeft = parseUnit(yearLeft.timeLeft, month, 'mths');
-  const dayLeft = parseUnit(monthLeft.timeLeft, day, 'days');
-  const hourLeft = parseUnit(dayLeft.timeLeft, hour, 'hrs');
-  const minuteLeft = parseUnit(hourLeft.timeLeft, minute, 'mins');
+  const yearLeft = parseUnit(time, yearInMs, 'yrs');
+  const monthLeft = parseUnit(yearLeft.timeLeft, monthInMs, 'mths');
+  const dayLeft = parseUnit(monthLeft.timeLeft, dayInMs, 'days');
+  const hourLeft = parseUnit(dayLeft.timeLeft, hourInMs, 'hrs');
+  const minuteLeft = parseUnit(hourLeft.timeLeft, monthInMs, 'mins');
   return yearLeft.unitStr + monthLeft.unitStr + dayLeft.unitStr + hourLeft.unitStr + minuteLeft.unitStr;
 }
 
@@ -49,11 +53,26 @@ export function calcuateTimeProgress(start:string, end:string) {
 }
 
 export function CoolOffStatusCard({ transactions }: Props) {
-  const validTransactions = transactions.filter(
-    (t): t is TransactionGoal => t.cooloff_expiry != null && t.cooloff_expiry !== '',
-  );
-
-  if (validTransactions.length === 0) {
+  const [ts, setTs] = useState<TransactionGoal[]>(transactions);
+  function updateStatus(status: TransactionState, t: TransactionGoal) {
+    const temp = t;
+    temp.transaction_state = status;
+    updateTransaction(temp);
+    updateTs();
+  }
+  async function handleDeleteRow(transaction: Tables<'transactions'>) {
+    await deleteTransactions([transaction]);
+    updateTs();
+  }
+  async function updateTs() {
+    setTs(await getCoolOffs());
+  }
+  useEffect(() => {
+    updateExpiredTransactions().then(_ => {
+      updateTs();
+    });
+  }, []);
+  if (ts.length === 0) {
     return (
       <Card className="bg-card rounded-xl p-4 shadow-sm border border-border flex flex-col justify-between h-full min-h-[200px]">
         <div>
@@ -80,11 +99,23 @@ export function CoolOffStatusCard({ transactions }: Props) {
   return (
     <Card className="bg-card rounded-xl p-4 shadow-sm border border-border flex flex-col justify-between h-full min-h-[200px]">
       <div className="overflow-x-auto snap-y snap-mandatory max-h-[320px] snap-always no-scrollbar">
-        {validTransactions.map((transaction) => (
+        {ts.map((transaction) => (
           <div key={transaction.transaction_id} className="snap-center py-2 pb-4 border-b border-border/50 last:border-0 last:pb-0">
-            <h3 className="text-sm font-bold text-foreground leading-tight line-clamp-1">
-              {transaction.transaction_description}
-            </h3>
+            <div className={'grid grid-cols-2 w-full'}>
+              <h3 className="text-sm font-bold text-foreground leading-tight line-clamp-1">
+                {transaction.transaction_description}
+              </h3>
+              <div className="text-right">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  onClick={() => handleDeleteRow(transaction)}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
             {transaction.analysis && (
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-snug">
                 {transaction.analysis}
@@ -98,23 +129,32 @@ export function CoolOffStatusCard({ transactions }: Props) {
                 />
               </div>
               <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">
-                {calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).timeLeft} left
+                {calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).timeLeft.length > 0
+                  ? `${calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).timeLeft  } left`
+                  : `Cooldown complete:
+                  Expires in: ${calcuateTimeProgress(new Date().toISOString(), new Date(new Date(transaction.cooloff_expiry).getTime() + expiryPeriod).toISOString()).timeLeft}`}
               </span>
             </div>
             <div className="flex gap-1.5 mt-2 flex-wrap">
               <button
                 type="button"
                 className="flex-1 min-w-0 py-1.5 px-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-[11px] transition-colors flex items-center justify-center gap-1"
+                onClick={() => updateStatus('discarded', transaction)}
               >
                 <span className="rounded-full bg-primary w-1.5 h-1.5 shrink-0" />
                 <span className="truncate">Not buying</span>
               </button>
               <Link href={`/analyze?id=${transaction.transaction_id}`} className="flex-1 min-w-0">
-                <Button variant="outline" size="sm" className="w-full h-7 text-[11px] rounded-full py-0 px-2">
+                <Button
+                  variant="outline" size="sm" className="w-full h-7 text-[11px] rounded-full py-0 px-2"
+                >
                   Analyze again
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" className="flex-1 min-w-0 h-7 text-[11px] rounded-full py-0 px-2">
+              <Button
+                variant="outline" size="sm" className="flex-1 min-w-0 h-7 text-[11px] rounded-full py-0 px-2"
+                onClick={() => updateStatus('bought', transaction)}
+              >
                 I bought it
               </Button>
             </div>

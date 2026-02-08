@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 
-import { TransactionData, deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
+import { deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
 import { AppLayout } from '@/components/app-layout';
 import { calcuateTimeProgress } from '@/components/dashboard/widgets/cool-off-status-card';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { weekInMs } from '@/constants/consts';
 import { useProfileInfo } from '@/hooks/useProfileInfo';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { TransactionData } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/client';
 
@@ -47,7 +49,7 @@ export default function HistoryPage() {
 
   async function handleDeleteRow(transaction: Tables<'transactions'>) {
     try {
-      await deleteTransactions(transaction);
+      await deleteTransactions([transaction]);
       setTransactions((prev) => prev.filter((t) => t.transaction_id !== transaction.transaction_id));
       toast({ description: 'Transaction deleted.' });
     } catch {
@@ -170,7 +172,9 @@ export default function HistoryPage() {
                               >
                                 <span className="size-1.5 rounded-full bg-current" />
                                 {t.transaction_state === 'waiting' && t.cooloff_expiry
-                                  ? (`Cooloff: ${calcuateTimeProgress(new Date().toISOString(), new Date(t.cooloff_expiry).toISOString()).timeLeft  } left`)
+                                  ? calcuateTimeProgress(new Date().toISOString(), new Date(t.cooloff_expiry).toISOString()).timeLeft.length > 0
+                                    ? (`Cooloff: ${calcuateTimeProgress(new Date().toISOString(), new Date(t.cooloff_expiry).toISOString()).timeLeft  } left`)
+                                    : (`Cooloff complete, Expired in: ${calcuateTimeProgress(new Date().toISOString(), new Date(new Date(t.cooloff_expiry).getTime() + weekInMs).toISOString()).timeLeft}`)
                                   : (t.transaction_state)}
                               </span>
                             ) : (
@@ -216,6 +220,7 @@ function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved:
   const [category, setCategory] = useState('');
   const [emotion, setEmotion] = useState('excited');
   const [trigger, setTrigger] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 16)); // yyyy-MM-ddTHH:mm
   const [saving, setSaving] = useState(false);
   const { profile } = useProfileInfo(supabase);
@@ -380,18 +385,6 @@ function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved:
               value={trigger}
               onChange={(e) => setTrigger(e.target.value)}
             />
-          </div>
-
-          <div className="flex items-center gap-4 py-2 text-xs text-muted-foreground">
-            <div className="flex flex-col gap-1">
-              <Label className="text-sm font-semibold">Date &amp; time</Label>
-              <Input
-                type="datetime-local"
-                className="h-9 text-xs max-w-[220px]"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </div>
           </div>
 
           <div className="flex flex-col gap-3 pt-2">
