@@ -167,9 +167,9 @@ export function analysisUI(
       <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">${hasUser ? 'Choose one option. Your choice will be saved.' : 'Sign in to save your choice.'}</p>
       ${hasUser
         ? `<div class="mg-decision-grid">
-        <button type="button" class="mg-decision-btn btn-red" id="btn-bought" data-state="bought">I will buy</button>
-        <button type="button" class="mg-decision-btn btn-amber" id="btn-waiting" data-state="waiting">Send to cool-off</button>
-        <button type="button" class="mg-decision-btn btn-green" id="btn-discarded" data-state="discarded">I won't buy</button>
+        <button type="button" class="mg-decision-btn btn-red" id="btn-bought" data-state="bought">Proceed with purchase</button>
+        <button type="button" class="mg-decision-btn btn-amber" id="btn-waiting" data-state="waiting">Revisit in a day</button>
+        <button type="button" class="mg-decision-btn btn-green" id="btn-discarded" data-state="discarded">Cancel the purchase and save money</button>
       </div>`
         : ''
       }
