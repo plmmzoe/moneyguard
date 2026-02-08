@@ -54,7 +54,7 @@ const options = [
     label: 'Just browsing',
     value: 'Just browsing',
     message: 'Want a quick guardrail while you scroll?',
-    action: { label: 'Set a soft limit for today', href: '#' },
+    action: { label: 'Set a limit for yourself', href: '/profile' },
     icon: Search,
     theme: 'grey' as const,
   },
@@ -157,12 +157,13 @@ export function QuickIntentCheckIn({ initialMindset = null }: QuickIntentCheckIn
       </div>
 
       {selectedOption && (
-        <div className="mt-6 p-4 rounded-xl bg-muted/60 text-center animate-in fade-in slide-in-from-top-2">
-          <p className="text-muted-foreground mb-3 font-medium">{selectedOption.message}</p>
+        <div className="mt-4 py-2.5 px-3 rounded-lg bg-muted/60 flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <p className="text-muted-foreground text-sm font-medium">{selectedOption.message}</p>
           {selectedOption.action && (
             <Button
               onClick={() => selectedOption.action?.href && router.push(selectedOption.action.href)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6"
+              size="xs"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 text-xs font-semibold shrink-0"
             >
               {selectedOption.action.label}
             </Button>
