@@ -87,20 +87,27 @@ export async function getAnalyses(): Promise<Tables<'transactions'>[]> {
   return data ?? [];
 }
 
-export async function updateTransactions(transactionData:TransactionData) {
+export async function updateTransaction(transactionData:Partial<Tables<'transactions'>>) {
   const supabase = await createClient();
-  const transaction = transactionData;
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return [];
-  }
   const { data, error } = await supabase
     .from('transactions')
-    .update([transaction])
-    .eq('user_id', user.id);
+    .update(transactionData)
+    .eq('transaction_id', transactionData.transaction_id);
+
+  if (error) {
+    console.error('Failed to update user transaction:', error);
+    throw new Error(`Error updating transaction: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+export async function updateTransactions(transactionData:Partial<Tables<'transactions'>>, ids:string[]) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('transactions')
+    .update(transactionData)
+    .in('transaction_id', ids);
 
   if (error) {
     console.error('Failed to update user transaction:', error);
@@ -132,7 +139,7 @@ export async function postTransaction(transactionData:TransactionData) {
   return data;
 }
 
-export async function deleteTransactions(transaction:Tables<'transactions'>) {
+export async function deleteTransactions(transactions:Tables<'transactions'>[]) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -141,10 +148,11 @@ export async function deleteTransactions(transaction:Tables<'transactions'>) {
   if (!user) {
     return [];
   }
+  const ids = transactions.map((t) => {return t.transaction_id;});
   const { data, error } = await supabase
     .from('transactions')
     .delete()
-    .eq('transaction_id', transaction.transaction_id);
+    .in('transaction_id', ids);
   if (error) {
     console.error('Failed to delete user transaction:', error);
     throw new Error(`Error deleting transaction: ${error.message}`);
@@ -220,7 +228,6 @@ export async function getCoolOffs(): Promise<TransactionGoal[]> {
     .select('*')
     .eq('user_id', user.id)
     .eq('transaction_state', 'waiting')
-    .gt('cooloff_expiry', new Date().toISOString())
     .order('cooloff_expiry', { ascending: true })
     .limit(5);
   if (error || !transactions) {

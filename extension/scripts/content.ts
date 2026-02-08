@@ -47,14 +47,13 @@ function getUser(success:(x:any)=>void,failure:()=>void) : void {
 }
 
 function proceedWithUser(userID:string){
-  const textContent = document.body.innerText.toLowerCase();
   getProfile(userID,
     function(profile:any) {
-      proceedWithProfile(userID, profile, textContent)
+      proceedWithProfile(userID, profile)
     },
     function(){
       console.error("Error getting profile; proceeding with no profile.");
-      proceedWithProfile(userID, null, textContent)
+      proceedWithProfile(userID, null)
     })
 }
 function getProfile(userID:string,success:(x:any)=>void,failure:()=>void) : void {
@@ -75,9 +74,10 @@ function getProfile(userID:string,success:(x:any)=>void,failure:()=>void) : void
   })
 }
 
-function proceedWithProfile(userID:string | null, profile:any, textContent:string){
+function proceedWithProfile(userID:string | null, profile:any){
   console.log("user data retrieved", userID ? "with user" : "without user")
   const permissionUI = showPermissionUI(()=>{
+    const textContent = document.body.innerText.toLowerCase();
     const loadingScreen = loadingUI();
     const userContext = JSON.stringify(profile ?? null)
     document.body.appendChild(loadingScreen);
@@ -125,6 +125,10 @@ function proceedWithProfile(userID:string | null, profile:any, textContent:strin
               if (updateResp?.success) {
                 const toast = toastUI('Decision saved to your history.');
                 document.body.appendChild(toast);
+                if (payload.transaction_state === 'discarded' || payload.transaction_state === 'waiting') {
+                  const returnMsg:MsgRequest = {type:"PREV_TAB"}
+                  chrome.runtime.sendMessage(returnMsg)
+                }
               } else {
                 warningToast('Failed to save decision. Please try again.');
               }

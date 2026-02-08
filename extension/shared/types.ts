@@ -11,7 +11,7 @@ export type LlmResponse = {
   verdict?: Verdict,
   impulseScore?: number,
   summary?: string,
-  transaction_state?: 'draft' | 'waiting' | 'discarded' | 'bought',
+  transaction_state?: TransactionState,
 }
 
 export type MsgRequest = {

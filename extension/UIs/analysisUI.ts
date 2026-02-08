@@ -98,7 +98,7 @@ export function analysisUI(
   .mg-decision-btn.btn-red { background: #fef2f2; color: #991b1b; }
   .mg-decision-btn.btn-red:hover:not(:disabled) { background: #fee2e2; }
   .mg-decision-btn.btn-red.selected { border-color: #dc2626; }
-  .mg-decision-btn.btn-green { background: #f0fdf4; color: #166534; }
+  .mg-decision-btn.btn-green { background: #f0fdf4; color: #166534; grid-column:span 2; }
   .mg-decision-btn.btn-green:hover:not(:disabled) { background: #dcfce7; }
   .mg-decision-btn.btn-green.selected { border-color: #16a34a; }
   .mg-decision-btn.btn-amber { background: #fffbeb; color: #92400e; }
@@ -167,10 +167,9 @@ export function analysisUI(
       <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">${hasUser ? 'Choose one option. Your choice will be saved.' : 'Sign in to save your choice.'}</p>
       ${hasUser
         ? `<div class="mg-decision-grid">
-        <button type="button" class="mg-decision-btn btn-red" id="btn-discarded" data-state="discarded">I won't buy</button>
-        <button type="button" class="mg-decision-btn btn-green" id="btn-bought" data-state="bought">I will buy</button>
+        <button type="button" class="mg-decision-btn btn-red" id="btn-bought" data-state="bought">I will buy</button>
         <button type="button" class="mg-decision-btn btn-amber" id="btn-waiting" data-state="waiting">Send to cool-off</button>
-        <button type="button" class="mg-decision-btn btn-gray" id="btn-draft" data-state="draft">Just browsing</button>
+        <button type="button" class="mg-decision-btn btn-green" id="btn-discarded" data-state="discarded">I won't buy</button>
       </div>`
         : ''
       }

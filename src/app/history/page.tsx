@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, useCallback } from 'react';
 
-import { TransactionData, deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
+import { deleteTransactions, getTransactions, postTransaction } from '@/app/dashboard/actions';
 import { AppLayout } from '@/components/app-layout';
 import { calcuateTimeProgress } from '@/components/dashboard/widgets/cool-off-status-card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { useProfileInfo } from '@/hooks/useProfileInfo';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { TransactionData } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/client';
 
@@ -47,7 +48,7 @@ export default function HistoryPage() {
 
   async function handleDeleteRow(transaction: Tables<'transactions'>) {
     try {
-      await deleteTransactions(transaction);
+      await deleteTransactions([transaction]);
       setTransactions((prev) => prev.filter((t) => t.transaction_id !== transaction.transaction_id));
       toast({ description: 'Transaction deleted.' });
     } catch {
