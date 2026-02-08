@@ -199,18 +199,6 @@ export default function AnalyzePage() {
           </TabsList>
 
           <TabsContent value="survey" className="space-y-6">
-            {analysisResult && (
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={handleAnalyzeAnother}
-                >
-                  Analyze another
-                </Button>
-              </div>
-            )}
             <div className="gap-6 relative">
               {loading && (
                 <div

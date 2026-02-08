@@ -172,7 +172,7 @@ export function analysisUI(
         <button type="button" class="mg-decision-btn btn-amber" id="btn-waiting" data-state="waiting">Send to cool-off</button>
         <button type="button" class="mg-decision-btn btn-gray" id="btn-draft" data-state="draft">Just browsing</button>
       </div>`
-        : `<a id="btn-signin" href="#" class="mg-decision-btn btn-primary mg-signin-link">Sign in to save your decision</a>`
+        : ''
       }
     </div>
   </div>
@@ -210,15 +210,6 @@ export function analysisUI(
     shadow.getElementById('btn-discarded')?.addEventListener('click', () => handleDecision('discarded'));
     shadow.getElementById('btn-waiting')?.addEventListener('click', () => handleDecision('waiting'));
     shadow.getElementById('btn-draft')?.addEventListener('click', () => handleDecision('draft'));
-  } else {
-    const signInBtn = shadow.getElementById('btn-signin');
-    if (signInBtn) {
-      signInBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const popupUrl = typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL('popup.html') : '#';
-        window.open(popupUrl, '_blank', 'noopener,noreferrer');
-      });
-    }
   }
 
   return container;

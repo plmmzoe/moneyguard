@@ -21,6 +21,7 @@ export type Database = {
           currency: string | null
           monthly_budget: number | null
           setup_complete: boolean
+          spending_mindset: string | null
           updated_at: string | null
           user_id: string
           username: string | null
@@ -36,6 +37,7 @@ export type Database = {
           currency?: string | null
           monthly_budget?: number | null
           setup_complete?: boolean
+          spending_mindset?: string | null
           updated_at?: string | null
           user_id: string
           username?: string | null
@@ -51,6 +53,7 @@ export type Database = {
           currency?: string | null
           monthly_budget?: number | null
           setup_complete?: boolean
+          spending_mindset?: string | null
           updated_at?: string | null
           user_id?: string
           username?: string | null

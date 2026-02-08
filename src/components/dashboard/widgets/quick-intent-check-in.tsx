@@ -2,13 +2,44 @@
 
 import { Flame, Search, ShoppingCart, Smile } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { updateMindset } from '@/app/dashboard/actions';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+
+const colorThemes = {
+  green: {
+    card: 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300',
+    cardSelected: 'bg-emerald-100 border-emerald-400 ring-2 ring-emerald-300 ring-offset-2 ring-offset-background',
+    iconBg: 'bg-emerald-100 group-hover:bg-emerald-200',
+    iconText: 'text-emerald-700',
+    labelText: 'text-emerald-900',
+  },
+  grey: {
+    card: 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300',
+    cardSelected: 'bg-slate-200 border-slate-400 ring-2 ring-slate-300 ring-offset-2 ring-offset-background',
+    iconBg: 'bg-slate-100 group-hover:bg-slate-200',
+    iconText: 'text-slate-700',
+    labelText: 'text-slate-900',
+  },
+  yellow: {
+    card: 'bg-amber-50 border-amber-200 hover:bg-amber-100 hover:border-amber-300',
+    cardSelected: 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 ring-offset-2 ring-offset-background',
+    iconBg: 'bg-amber-100 group-hover:bg-amber-200',
+    iconText: 'text-amber-700',
+    labelText: 'text-amber-900',
+  },
+  red: {
+    card: 'bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300',
+    cardSelected: 'bg-red-100 border-red-400 ring-2 ring-red-300 ring-offset-2 ring-offset-background',
+    iconBg: 'bg-red-100 group-hover:bg-red-200',
+    iconText: 'text-red-700',
+    labelText: 'text-red-900',
+  },
+} as const;
 
 const options = [
   {
@@ -17,15 +48,15 @@ const options = [
     message: "Great. We'll be here when you need us.",
     action: null,
     icon: Smile,
-    iconClass: 'text-emerald-600',
+    theme: 'green' as const,
   },
   {
     label: 'Just browsing',
     value: 'Just browsing',
     message: 'Want a quick guardrail while you scroll?',
-    action: { label: 'Set a soft limit for today', href: '#' },
+    action: { label: 'Set a limit for yourself', href: '/profile' },
     icon: Search,
-    iconClass: 'text-blue-600',
+    theme: 'grey' as const,
   },
   {
     label: 'Feeling tempted',
@@ -33,7 +64,7 @@ const options = [
     message: "Let's slow things down together.",
     action: { label: 'Talk through this purchase', href: '/analyze' },
     icon: Flame,
-    iconClass: 'text-amber-600',
+    theme: 'yellow' as const,
   },
   {
     label: 'About to buy',
@@ -41,13 +72,22 @@ const options = [
     message: 'Take 30 seconds before you decide.',
     action: { label: 'Run a quick check', href: '/analyze' },
     icon: ShoppingCart,
-    iconClass: 'text-red-600',
+    theme: 'red' as const,
   },
 ] as const;
 
-export function QuickIntentCheckIn() {
-  const [selected, setSelected] = useState<string | null>(null);
+interface QuickIntentCheckInProps {
+  /** Current spending mindset from profile (displayed and user can change). */
+  initialMindset?: string | null;
+}
+
+export function QuickIntentCheckIn({ initialMindset = null }: QuickIntentCheckInProps) {
+  const [selected, setSelected] = useState<string | null>(initialMindset ?? null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setSelected(initialMindset ?? null);
+  }, [initialMindset]);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -83,20 +123,17 @@ export function QuickIntentCheckIn() {
           {options.map((option) => {
             const isSelected = selected === option.value;
             const Icon = option.icon;
+            const theme = colorThemes[option.theme];
 
-            const isTempted = option.value === 'Feeling tempted';
             const cardClasses = cn(
               'group flex flex-col items-center justify-center gap-3 p-5 rounded-xl border text-center transition-all cursor-pointer min-h-[120px]',
-              isTempted && (isSelected ? 'bg-amber-100 border-amber-300' : 'bg-amber-50 border-amber-200'),
-              !isTempted && isSelected && 'bg-primary/10 border-primary ring-2 ring-primary/30 ring-offset-2 ring-offset-background',
-              !isTempted && !isSelected && 'bg-muted/30 border-border hover:border-primary hover:bg-primary/5',
+              isSelected ? theme.cardSelected : theme.card,
             );
 
             const iconWrapperClasses = cn(
               'p-3 rounded-xl transition-colors',
-              isTempted && 'bg-amber-100 group-hover:bg-amber-200',
-              !isTempted && isSelected && 'bg-primary/20',
-              !isTempted && !isSelected && 'bg-background group-hover:bg-primary/10',
+              theme.iconBg,
+              theme.iconText,
             );
 
             return (
@@ -107,13 +144,10 @@ export function QuickIntentCheckIn() {
                 disabled={loading}
                 className={cardClasses}
               >
-                <div className={cn(iconWrapperClasses, isTempted ? 'text-amber-700' : isSelected ? 'text-primary' : option.iconClass)}>
+                <div className={iconWrapperClasses}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <span className={cn(
-                  'text-xs font-semibold leading-tight',
-                  isTempted ? 'text-amber-900' : isSelected ? 'text-primary' : 'text-foreground',
-                )}>
+                <span className={cn('text-xs font-semibold leading-tight', theme.labelText)}>
                   {option.label}
                 </span>
               </button>
@@ -123,12 +157,13 @@ export function QuickIntentCheckIn() {
       </div>
 
       {selectedOption && (
-        <div className="mt-6 p-4 rounded-xl bg-muted/60 text-center animate-in fade-in slide-in-from-top-2">
-          <p className="text-muted-foreground mb-3 font-medium">{selectedOption.message}</p>
+        <div className="mt-4 py-2.5 px-3 rounded-lg bg-muted/60 flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <p className="text-muted-foreground text-sm font-medium">{selectedOption.message}</p>
           {selectedOption.action && (
             <Button
               onClick={() => selectedOption.action?.href && router.push(selectedOption.action.href)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6"
+              size="xs"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 text-xs font-semibold shrink-0"
             >
               {selectedOption.action.label}
             </Button>

@@ -19,11 +19,13 @@ interface Props {
 }
 
 export function DashboardPage({ profile, coolOffs, saving, savedTowardsGoal, monthlySpending }: Props) {
+  const mindset = profile?.spending_mindset ?? null;
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
-      <DecisionReadinessBanner mindset={null} />
+      <DecisionReadinessBanner mindset={mindset} />
       <div className="rounded-xl bg-card border border-border p-6 space-y-8">
-        <QuickIntentCheckIn />
+        <QuickIntentCheckIn initialMindset={mindset} />
         {profile?.monthly_budget && profile.currency ? (
           <BudgetBanner
             budget={profile.monthly_budget}
