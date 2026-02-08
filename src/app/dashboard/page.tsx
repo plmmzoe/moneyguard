@@ -13,7 +13,7 @@ export default async function Dashboard() {
   if (!user) {
     return (
       <AppLayout>
-        <div className="w-full max-w-4xl mx-auto rounded-xl bg-card border border-border p-8 text-center">
+        <div className="w-full max-w-4xl mx-auto rounded-xl bg-card border border-border p-4 sm:p-6 md:p-8 text-center">
           <p className="text-muted-foreground mb-4">Please log in to view your dashboard.</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link

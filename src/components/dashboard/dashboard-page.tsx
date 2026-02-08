@@ -24,7 +24,7 @@ export function DashboardPage({ profile, coolOffs, saving, savedTowardsGoal, mon
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
       <DecisionReadinessBanner mindset={mindset} />
-      <div className="rounded-xl bg-card border border-border p-6 space-y-8">
+      <div className="rounded-xl bg-card border border-border p-4 sm:p-6 space-y-6 sm:space-y-8">
         <QuickIntentCheckIn initialMindset={mindset} />
         {profile?.monthly_budget && profile.currency ? (
           <BudgetBanner

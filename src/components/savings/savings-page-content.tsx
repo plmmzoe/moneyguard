@@ -105,7 +105,7 @@ export function SavingsPageContent() {
     return (
       <div className="w-full max-w-4xl mx-auto">
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent className="p-4 sm:p-6 md:p-8 text-center">
             <p className="text-muted-foreground">Loading savings goals...</p>
           </CardContent>
         </Card>
@@ -139,7 +139,7 @@ export function SavingsPageContent() {
       {/* Goals List or Empty State */}
       {goals.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center space-y-4">
+          <CardContent className="p-4 sm:p-6 md:p-8 text-center space-y-4">
             <p className="text-muted-foreground">No savings goals yet</p>
             {!isAddingNew && (
               <Button onClick={() => setIsAddingNew(true)}>Create Your First Goal</Button>

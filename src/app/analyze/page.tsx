@@ -170,13 +170,13 @@ export default function AnalyzePage() {
 
   return (
     <AppLayout>
-      <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
-        <div className="flex flex-col items-center mb-10 text-center space-y-2">
+      <div className="rounded-xl bg-card border border-border p-4 sm:p-6 w-full max-w-4xl mx-auto">
+        <div className="flex flex-col items-center mb-6 sm:mb-10 text-center space-y-2">
           <div className="p-3 bg-primary/10 rounded-full mb-2">
             <Sparkles className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Quick Check</h1>
-          <p className="text-muted-foreground max-w-lg">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Quick Check</h1>
+          <p className="text-muted-foreground max-w-lg text-sm sm:text-base">
             Thinking about buying something? Answer a few quick questions and get an AI-powered
             recommendation on whether it&apos;s worth it.
           </p>

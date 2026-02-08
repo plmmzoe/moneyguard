@@ -10,7 +10,7 @@ export default function Profile({
   email?: string | null;
 }) {
   return (
-    <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
+    <div className="rounded-xl bg-card border border-border p-4 sm:p-6 w-full max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Profile</h1>
       {profile ? (
         <>

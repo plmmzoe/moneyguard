@@ -12,13 +12,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useUserInfo(supabase);
 
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen bg-muted overflow-x-hidden">
       <OnboardingNotification user={user} />
       <Header user={user} />
       <AppMobileNav />
-      <div className="flex max-w-7xl mx-auto px-6 py-8 gap-6">
+      <div className="flex max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 gap-4 sm:gap-6">
         <AppSidebar />
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="flex-1 min-w-0 overflow-x-hidden">{children}</main>
       </div>
     </div>
   );

@@ -15,21 +15,21 @@ interface Props {
 export default function Header({ user }: Props) {
   return (
     <nav className="bg-card border-b border-border">
-      <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Link href="/" className="flex items-center gap-2 min-w-0">
             <Image
               src="/assets/logo/logo.png"
               alt="MoneyGuard"
               width={60}
               height={60}
-              className="rounded-xl"
+              className="rounded-xl shrink-0 w-10 h-10 sm:w-[60px] sm:h-[60px]"
               priority
             />
-            <span className="text-2xl font-bold text-[#465869]">MoneyGuard</span>
+            <span className="text-lg sm:text-2xl font-bold text-[#465869] truncate">MoneyGuard</span>
           </Link>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {user?.id ? (
             <>
               <Link

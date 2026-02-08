@@ -71,7 +71,7 @@ export default function HistoryPage() {
   if (!user) {
     return (
       <AppLayout>
-        <div className="w-full max-w-4xl mx-auto rounded-xl bg-card border border-border p-8 text-center">
+        <div className="w-full max-w-4xl mx-auto rounded-xl bg-card border border-border p-4 sm:p-6 md:p-8 text-center">
           <p className="text-muted-foreground mb-4">Please log in to view your history.</p>
           <Link
             href="/login"
@@ -282,14 +282,14 @@ function LogImpulseOverlay({ onClose, onSaved }: { onClose: () => void; onSaved:
         aria-label="Close"
         onClick={onClose}
       />
-      <Card className="relative z-50 w-full max-w-[640px] max-h-[75vh] flex flex-col bg-card border-border overflow-hidden">
-        <div className="shrink-0 p-6 md:p-8 pb-0 space-y-2">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Log an Impulse Purchase</h2>
+      <Card className="relative z-50 w-full max-w-[640px] max-h-[85vh] sm:max-h-[75vh] flex flex-col bg-card border-border overflow-hidden mx-2">
+        <div className="shrink-0 p-4 sm:p-6 md:p-8 pb-0 space-y-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Log an Impulse Purchase</h2>
           <p className="text-sm text-muted-foreground">
             Take a breath. Awareness is the first step to intentional saving.
           </p>
         </div>
-        <div className="flex-1 min-h-0 overflow-y-auto p-6 md:p-8 pt-4 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 md:p-8 pt-4 space-y-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor="product" className="text-sm font-semibold">
             Product name <span className="text-red-500">*</span>

@@ -1,9 +1,16 @@
 import '../styles/globals.css';
 import '../styles/layout.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 
 import { Toaster } from '@/components/ui/toaster';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+};
 
 const siteTitle = 'Money Guard';
 const siteDescription =
@@ -58,7 +65,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="min-h-full">
-      <body>
+      <body className="min-h-full overflow-x-hidden">
         {children}
         <Toaster />
       </body>

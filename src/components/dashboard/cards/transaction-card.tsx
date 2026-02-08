@@ -35,7 +35,7 @@ const TransactionCard = (
               Transaction History
             </CardTitle>
           </CardHeader>
-          <CardContent className={'min-w-[400px]'}>
+          <CardContent className="min-w-0 overflow-x-auto">
             <PlotFigure
               options={{
                 width: 600,
