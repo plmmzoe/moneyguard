@@ -8,26 +8,37 @@ export type Item = {
 export type LlmResponse = {
   items: Item[],
   analysis: string,
-  verdict?: 'high' | 'medium' | 'low',
+  verdict?: Verdict,
   impulseScore?: number,
   summary?: string,
   transaction_state?: 'draft' | 'waiting' | 'discarded' | 'bought',
 }
 
 export type MsgRequest = {
-  type: string,
+  type: RequestTypes,
   [key:string]:any,
 }
 
+export type MsgResp = {
+  success: boolean,
+  [key:string]:any,
+}
+
+export type Verdict = 'high' | 'medium' | 'low';
+
 export type TransactionState = 'draft' | 'waiting' | 'discarded' | 'bought';
 
-export const requestTypes = {
-  openAnalysis: "OPEN_ANALYSIS",
-  addTransaction: "ADD_TRANSACTION",
-  updateSaving: "UPDATE_SAVINGS",
-  getProfile: "GET_PROFILE",
-  getUser: "GET_USER",
-  prevTab: "PREV_TAB",
-  createAnalysisTransaction: "CREATE_ANALYSIS_TRANSACTION",
-  updateTransactionState: "UPDATE_TRANSACTION_STATE",
+export type RequestTypes = "OPEN_ANALYSIS" | "ADD_TRANSACTION" | "UPDATE_SAVINGS" | "GET_PROFILE" | "GET_USER" | "PREV_TAB"|"UPDATE_TRANSACTION_STATE";
+
+export type TransactionDetails = {
+  amount: number
+  analysis?: string | null
+  associated_savings?: number | null
+  cooloff_expiry?: string | null
+  created_at?: string
+  transaction_description: string
+  transaction_id?: string
+  transaction_state?: TransactionState | null
+  user_id: string
+  verdict?: Verdict | null
 }

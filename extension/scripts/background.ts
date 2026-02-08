@@ -4,13 +4,11 @@
 
 import {
   addTransactions,
-  updateSavings,
   getProfile,
   getUser,
-  createAnalysisTransaction,
   updateTransactionState,
 } from '../modules/supabase-module.ts';
-import { Item, MsgRequest, requestTypes } from '../shared/types.ts';
+import { MsgRequest, TransactionDetails } from '../shared/types.ts';
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('MoneyGuard Extension Installed');
@@ -38,42 +36,15 @@ const handleGetProfile = async (user:string,sendResponse:(response:any) => void)
   })
 }
 
-const handleUpdateSavings = async (user:string,amount:number,sendResponse:(response:any) => void) => {
-  updateSavings(user,amount).then(r=>{
-    console.log('updated savings');
-    console.log(r)
-    sendResponse({user: r,success:true})
-  }).catch(err=>{
-    console.error("Failed to update savings"+err);
-    sendResponse({success:false})
-  })
-}
-
-const handleAddTransactions = async (user:string,items:Item[],sendResponse:(response:any) => void) => {
-  addTransactions(user,items).then(r=>{
+const handleAddTransactions = async (itemDetails:TransactionDetails,sendResponse:(response:any) => void) => {
+  addTransactions(itemDetails).then(_=>{
     console.log('added transactions');
-    console.log(r)
-    sendResponse({user: r,success:true})
+    sendResponse({success:true})
   }).catch(err=>{
     console.error("Failed to add transactions "+err);
     sendResponse({success:false})
   })
 }
-
-const handleCreateAnalysisTransaction = async (
-  user: string,
-  payload: { transaction_description: string; amount: number; analysis: string; verdict?: string | null },
-  sendResponse: (response: any) => void
-) => {
-  createAnalysisTransaction(user, payload)
-    .then((transaction_id) => {
-      sendResponse({ success: true, transaction_id });
-    })
-    .catch((err) => {
-      console.error('Failed to create analysis transaction', err);
-      sendResponse({ success: false });
-    });
-};
 
 const handleUpdateTransactionState = async (
   user: string,
@@ -98,7 +69,7 @@ chrome.runtime.onMessage.addListener(
       "From a content script:" + sender.tab.url :
       "From the extension"
     );
-    if (request.type === requestTypes.openAnalysis) {
+    if (request.type === "OPEN_ANALYSIS") {
       const { item, price } = request.data;
       const baseUrl = 'http://localhost:3000/analyze';
       const queryParams = new URLSearchParams({
@@ -116,30 +87,22 @@ chrome.runtime.onMessage.addListener(
         width: 500,
         height: 800
       });
-    }else if (request.type === requestTypes.addTransaction) {
-      const data:Item[] = request.items
-      const user:string = request.user
-      handleAddTransactions(user,data,sendResponse)
-    }else if (request.type === requestTypes.updateSaving) {
-      const amount:number = request.amount
-      const user:string = request.user
-      handleUpdateSavings(user,amount,sendResponse)
-    }else if (request.type === requestTypes.getUser) {
+    }else if (request.type === "ADD_TRANSACTION") {
+      console.log("add transaction request")
+      const data:TransactionDetails = request.itemDetails
+      handleAddTransactions(data,sendResponse)
+    } else if (request.type === "GET_USER") {
       handleGetUser(sendResponse);
-    }else if (request.type === requestTypes.getProfile) {
+    }else if (request.type === "GET_PROFILE") {
       const user:string = request.user
       handleGetProfile(user,sendResponse)
-    } else if (request.type === requestTypes.prevTab) {
+    } else if (request.type === "PREV_TAB") {
       chrome.tabs.goBack().then(_=>{
         console.log('return tab success');
       }).catch(err=>{
         console.error(err);
       })
-    } else if (request.type === requestTypes.createAnalysisTransaction) {
-      const user = request.user as string;
-      const payload = request.payload as { transaction_description: string; amount: number; analysis: string; verdict?: string | null };
-      handleCreateAnalysisTransaction(user, payload, sendResponse);
-    } else if (request.type === requestTypes.updateTransactionState) {
+    } else if (request.type === "UPDATE_TRANSACTION_STATE") {
       const user = request.user as string;
       const transactionId = request.transactionId as string;
       const transaction_state = request.transaction_state as string;

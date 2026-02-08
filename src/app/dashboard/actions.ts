@@ -1,11 +1,8 @@
 'use server';
 
-import { Profile, TransactionGoal } from '@/lib/dashboard.type';
+import { Profile, TransactionData, TransactionGoal } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
-
-export type TransactionData = Pick<Tables<'transactions'>, 'amount' | 'transaction_description' | 'created_at'> &
-  Partial<Pick<Tables<'transactions'>, 'user_id' | 'transaction_state' | 'cooloff_expiry' | 'analysis' | 'verdict' | 'associated_savings'>>;
 
 export async function getProfile():Promise<Profile|null> {
   const supabase = await createClient();
@@ -100,12 +97,6 @@ export async function updateTransactions(transactionData:TransactionData) {
   if (!user) {
     return [];
   }
-  transaction.user_id = user.id;
-  if (transaction.associated_savings) {
-    if (transaction.transaction_state !== 'discarded') {
-      transaction.associated_savings = null;
-    }
-  }
   const { data, error } = await supabase
     .from('transactions')
     .update([transaction])
@@ -130,11 +121,6 @@ export async function postTransaction(transactionData:TransactionData) {
     return [];
   }
   transaction.user_id = user.id;
-  if (transaction.associated_savings) {
-    if (transaction.transaction_state !== 'discarded') {
-      transaction.associated_savings = null;
-    }
-  }
   const { data, error } = await supabase
     .from('transactions')
     .insert([transaction]);

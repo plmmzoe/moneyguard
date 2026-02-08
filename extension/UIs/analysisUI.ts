@@ -1,4 +1,4 @@
-import { Item, LlmResponse } from '../shared/types';
+import { LlmResponse,TransactionState } from '../shared/types';
 
 function escapeHtml(s: string): string {
   if (!s) return '';
@@ -23,16 +23,11 @@ function getVerdictDisplay(verdict: string | undefined): { label: string; iconCl
   }
 }
 
-export type DecisionState = 'draft' | 'waiting' | 'discarded' | 'bought';
-
 export function analysisUI(
   user: string,
   resp: LlmResponse,
   profile: any,
-  _transactionId: string,
-  onAccept: (user: string, items: Item[]) => void,
-  onDecline: (user: string, items: Item[]) => void,
-  onDecision: (state: DecisionState) => void
+  onDecision: (state: TransactionState) => void
 ) {
   const hasUser = Boolean(user);
   let cost = 0;
@@ -204,12 +199,10 @@ export function analysisUI(
       });
     };
 
-    const handleDecision = (state: DecisionState) => {
+    const handleDecision = (state: TransactionState) => {
       if (selectedState) return;
       setSelected(state);
-      onDecision(state);
-      if (state === 'bought') onAccept(user, resp.items);
-      else if (state === 'discarded') onDecline(user, resp.items);
+       onDecision(state);
       container.remove();
     };
 

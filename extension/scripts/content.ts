@@ -4,35 +4,7 @@ import { analysisUI } from '../UIs/analysisUI.ts';
 import { analyzePageText } from './gemini.ts';
 import { loadingUI } from '../UIs/loadingUI.ts';
 import { toastUI } from '../UIs/toastUI.ts';
-import type { LlmResponse } from '../shared/types';
-
-type Item = {
-  name: string,
-  price:number,
-  quantity:number,
-}
-
-
-type MsgRequest = {
-  type: string,
-  [key:string]:any,
-}
-
-type MsgResp = {
-  success: boolean,
-  [key:string]:any,
-}
-
-const requestTypes = {
-  openAnalysis: "OPEN_ANALYSIS",
-  addTransaction: "ADD_TRANSACTION",
-  updateSaving: "UPDATE_SAVINGS",
-  getProfile: "GET_PROFILE",
-  getUser: "GET_USER",
-  prevTab: "PREV_TAB",
-  createAnalysisTransaction: "CREATE_ANALYSIS_TRANSACTION",
-  updateTransactionState: "UPDATE_TRANSACTION_STATE",
-}
+import type { LlmResponse,MsgRequest,Item,MsgResp,TransactionState,TransactionDetails } from '../shared/types';
 
 function parseItem(text: string): LlmResponse | undefined {
   try{
@@ -59,7 +31,7 @@ function analyze(){
 
 function getUser(success:(x:any)=>void,failure:()=>void) : void {
   const msg:MsgRequest = {
-    type: requestTypes.getUser
+    type: "GET_USER"
   }
   chrome.runtime.sendMessage(msg,function(resp:MsgResp){
     console.log(resp)
@@ -69,8 +41,7 @@ function getUser(success:(x:any)=>void,failure:()=>void) : void {
     } else {
       warningToast("Login to enable more features.");
       console.error("Failed to get user; proceeding without account (no budget, no save).");
-      const textContent = document.body.innerText.toLowerCase();
-      proceedWithProfile(null, null, textContent);
+      failure()
     }
   })
 }
@@ -88,7 +59,7 @@ function proceedWithUser(userID:string){
 }
 function getProfile(userID:string,success:(x:any)=>void,failure:()=>void) : void {
   const msg:MsgRequest = {
-    type: requestTypes.getProfile,
+    type: "GET_PROFILE",
     user:userID
   }
   chrome.runtime.sendMessage(msg,function(resp){
@@ -115,87 +86,57 @@ function proceedWithProfile(userID:string | null, profile:any, textContent:strin
       const txt = r.candidates[0].content.parts[0].text;
       const items = parseItem(txt);
       if (items){
-        const boundPurchase = purchase.bind(null,
-          function(){
-            console.log("Purchase logged");
-          },
-          function(){
-            warningToast("MoneyTracker logging error")
-            console.error("purchase logging failed")
-          })
-        const boundSave = save.bind(null,
-          function(){
-            console.log("saving logged");
-            chrome.runtime.sendMessage({type:requestTypes.prevTab})
-          },
-          function(){
-            warningToast("MoneyTracker logging error")
-            console.error("saving logging failed")
-          })
+        console.log(items)
         const cost = items.items.reduce((s, i) => s + (i.price ?? 0) * (i.quantity ?? 1), 0);
         const transactionDescription = items.items.length
           ? items.items.map((i: Item) => i.name).join(', ')
           : 'Cart';
-        const payload = {
+        let payload:Partial<TransactionDetails> = {
           transaction_description: transactionDescription,
           amount: cost,
           analysis: items.analysis ?? '',
           verdict: items.verdict ?? null,
         };
-
         if (!userID) {
           loadingScreen.remove();
           const onDecisionNoUser = () => {
             warningToast("Sign in to enable more features.");
           };
           document.body.appendChild(
-            analysisUI('', items as LlmResponse, null, '', boundPurchase, boundSave, onDecisionNoUser)
+            analysisUI('', items as LlmResponse, null, onDecisionNoUser)
           );
           return;
         }
-
-        chrome.runtime.sendMessage(
-          { type: requestTypes.createAnalysisTransaction, user: userID, payload },
-          (resp: MsgResp & { transaction_id?: string }) => {
-            loadingScreen.remove();
-            if (resp?.success && typeof resp.transaction_id === 'string') {
-              const transactionId = resp.transaction_id;
-              const onDecision = (state: string) => {
-                const cooloff_expiry = state === 'waiting'
-                  ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-                  : undefined;
-                chrome.runtime.sendMessage(
-                  {
-                    type: requestTypes.updateTransactionState,
-                    user: userID,
-                    transactionId,
-                    transaction_state: state,
-                    cooloff_expiry,
-                  },
-                  (updateResp: MsgResp) => {
-                    if (chrome.runtime.lastError) {
-                      warningToast('Failed to save decision.');
-                      return;
-                    }
-                    if (updateResp?.success) {
-                      const toast = toastUI('Decision saved to your history.');
-                      document.body.appendChild(toast);
-                    } else {
-                      warningToast('Failed to save decision. Please try again.');
-                    }
-                  }
-                );
-              };
-              document.body.appendChild(
-                analysisUI(userID, items as LlmResponse, profile, transactionId, boundPurchase, boundSave, onDecision)
-              );
-            } else {
-              loadingScreen.remove();
-              warningToast("Could not save analysis. Please try again.");
-            }
+        const onDecision = (state: TransactionState) => {
+          const cooloff_expiry = state === 'waiting'
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            : undefined;
+          payload.user_id = userID;
+          payload.transaction_state = state;
+          payload.cooloff_expiry = cooloff_expiry;
+          const msg:MsgRequest = {
+            type: "ADD_TRANSACTION",
+            itemDetails: payload as TransactionDetails
           }
+          console.log("sending transaction")
+          console.log(payload)
+          chrome.runtime.sendMessage(msg,
+            (updateResp: MsgResp) => {
+              if (updateResp?.success) {
+                const toast = toastUI('Decision saved to your history.');
+                document.body.appendChild(toast);
+              } else {
+                warningToast('Failed to save decision. Please try again.');
+              }
+            }
+          );
+        };
+        loadingScreen.remove();
+        document.body.appendChild(
+          analysisUI(userID, items as LlmResponse, profile, onDecision)
         );
       } else {
+        loadingScreen.remove();
         console.log(txt)
         warningToast("Gemini response error")
         console.error("Gemini Response Corruption")
@@ -207,44 +148,6 @@ function proceedWithProfile(userID:string | null, profile:any, textContent:strin
     });
   });
   document.body.appendChild(permissionUI);
-}
-
-function purchase(success:()=>void,failure:()=>void,user:any,items: Item[]) : void {
-  const msg:MsgRequest = {
-    type: requestTypes.addTransaction,
-    items:items,
-    user:user,
-  }
-  chrome.runtime.sendMessage(msg,function(resp){
-    if (resp.success){
-      console.log("Successfully purchased transaction");
-      success()
-    }else{
-      console.error("Failed to purchase transaction");
-      failure()
-    }
-  });
-}
-
-function save(success:()=>void,failure:()=>void,user:any,items: Item[]) : void {
-  let savings = 0;
-  for (const item of items) {
-    savings += item.price * item.quantity;
-  }
-  const msg:MsgRequest = {
-    type: requestTypes.updateSaving,
-    amount:savings,
-    user:user,
-  }
-  chrome.runtime.sendMessage(msg,function(resp){
-    if (resp.success){
-      console.log("Successfully updated savings");
-      success()
-    }else{
-      console.error("Failed to update savings");
-      failure()
-    }
-  })
 }
 
 
