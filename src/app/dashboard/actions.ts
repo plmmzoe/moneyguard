@@ -1,5 +1,6 @@
 'use server';
 
+import { weekInMs } from '@/constants/consts';
 import { Profile, TransactionData, TransactionGoal } from '@/lib/dashboard.type';
 import { Tables } from '@/lib/database.types';
 import { createClient } from '@/utils/supabase/server';
@@ -108,6 +109,25 @@ export async function updateTransactions(transactionData:Partial<Tables<'transac
     .from('transactions')
     .update(transactionData)
     .in('transaction_id', ids);
+
+  if (error) {
+    console.error('Failed to update user transaction:', error);
+    throw new Error(`Error updating transaction: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+export async function updateExpiredTransactions() {
+  const supabase = await createClient();
+  const updateData:Partial<Tables<'transactions'>> = {
+    transaction_state: 'discarded',
+  };
+  const targetDate = new Date(new Date().getTime() - weekInMs).toISOString();
+  const { data, error } = await supabase
+    .from('transactions')
+    .update(updateData)
+    .lt('cooloff_expiry', targetDate);
 
   if (error) {
     console.error('Failed to update user transaction:', error);

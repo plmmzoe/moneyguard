@@ -3,11 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { getCoolOffs, updateTransaction, updateTransactions } from '@/app/dashboard/actions';
+import {
+  deleteTransactions,
+  getCoolOffs,
+  updateExpiredTransactions,
+  updateTransaction,
+} from '@/app/dashboard/actions';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { dayInMs, hourInMs, monthInMs, weekInMs, yearInMs } from '@/constants/consts';
 import { TransactionGoal, TransactionState } from '@/lib/dashboard.type';
+import { Tables } from '@/lib/database.types';
 
 interface Props {
   transactions: TransactionGoal[];
@@ -51,26 +57,21 @@ export function CoolOffStatusCard({ transactions }: Props) {
   function updateStatus(status: TransactionState, t: TransactionGoal) {
     const temp = t;
     temp.transaction_state = status;
-    console.log(temp);
     updateTransaction(temp);
+    updateTs();
+  }
+  async function handleDeleteRow(transaction: Tables<'transactions'>) {
+    await deleteTransactions([transaction]);
     updateTs();
   }
   async function updateTs() {
     setTs(await getCoolOffs());
   }
-
   useEffect(() => {
-    const expired = ts.filter((x) => {
-      const date = new Date(x.cooloff_expiry);
-      const current = new Date();
-      return (current.getTime() - date.getTime() > expiryPeriod);
+    updateExpiredTransactions().then(_ => {
+      updateTs();
     });
-    if (expired.length > 0) {
-      updateTransactions({ transaction_state: 'discarded' }, expired.map((t) => t.transaction_id)).then(_ => {
-        updateTs();
-      });
-    }
-  }, [ts]);
+  }, []);
   if (ts.length === 0) {
     return (
       <Card className="bg-card rounded-xl p-4 shadow-sm border border-border flex flex-col justify-between h-full min-h-[200px]">
@@ -100,9 +101,21 @@ export function CoolOffStatusCard({ transactions }: Props) {
       <div className="overflow-x-auto snap-y snap-mandatory max-h-[320px] snap-always no-scrollbar">
         {ts.map((transaction) => (
           <div key={transaction.transaction_id} className="snap-center py-2 pb-4 border-b border-border/50 last:border-0 last:pb-0">
-            <h3 className="text-sm font-bold text-foreground leading-tight line-clamp-1">
-              {transaction.transaction_description}
-            </h3>
+            <div className={'grid grid-cols-2 w-full'}>
+              <h3 className="text-sm font-bold text-foreground leading-tight line-clamp-1">
+                {transaction.transaction_description}
+              </h3>
+              <div className="text-right">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  onClick={() => handleDeleteRow(transaction)}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
             {transaction.analysis && (
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2 leading-snug">
                 {transaction.analysis}
