@@ -30,6 +30,11 @@ export async function login(data: FormData) {
     return { error: true };
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    await supabase.from('profiles').update({ spending_mindset: null }).eq('user_id', user.id);
+  }
+
   revalidatePath('/', 'layout');
   redirect('/dashboard');
 }
@@ -65,6 +70,11 @@ export async function loginAnonymously() {
 
   if (signInError || updateUserError) {
     return { error: true };
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    await supabase.from('profiles').update({ spending_mindset: null }).eq('user_id', user.id);
   }
 
   revalidatePath('/', 'layout');
