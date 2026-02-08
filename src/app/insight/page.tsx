@@ -92,7 +92,7 @@ export default function InsightPage() {
   if (!user) {
     return (
       <AppLayout>
-        <div className="w-full max-w-4xl mx-auto rounded-xl bg-card border border-border p-8 text-center">
+        <div className="w-full max-w-4xl mx-auto rounded-xl bg-card border border-border p-4 sm:p-6 md:p-8 text-center">
           <p className="text-muted-foreground mb-4">Please log in to view your insight.</p>
           <Link
             href="/login"
@@ -107,7 +107,7 @@ export default function InsightPage() {
 
   return (
     <AppLayout>
-      <div className="rounded-xl bg-card border border-border p-6 w-full max-w-4xl mx-auto">
+      <div className="rounded-xl bg-card border border-border p-4 sm:p-6 w-full max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Insight</h1>
           <p className="text-muted-foreground">
@@ -129,7 +129,7 @@ export default function InsightPage() {
                     Period
                   </Label>
                   <Select value={period} onValueChange={setPeriod}>
-                    <SelectTrigger id="insight-period" className="w-[180px]">
+                    <SelectTrigger id="insight-period" className="w-full min-w-0 sm:w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

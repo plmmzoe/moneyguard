@@ -13,7 +13,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <Header user={user} />
-      <main className="max-w-4xl mx-auto px-6 py-12 space-y-16 font-sans text-foreground">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-12 sm:space-y-16 font-sans text-foreground">
         {/* Hero Section */}
         <section className="text-center space-y-6 pt-8">
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
@@ -52,7 +52,7 @@ export function HomePage() {
         </section>
 
         {/* How It's Different */}
-        <section className="bg-card p-8 rounded-xl border border-border">
+        <section className="bg-card p-4 sm:p-6 md:p-8 rounded-xl border border-border">
           <h3 className="text-2xl font-semibold mb-4 text-foreground">Why MoneyGuard?</h3>
           <p className="text-muted-foreground mb-4">
             Traditional budgeting apps tell you where you went wrong <em>after</em> the money is gone.
