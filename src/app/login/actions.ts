@@ -80,3 +80,40 @@ export async function loginAnonymously() {
   revalidatePath('/', 'layout');
   redirect('/dashboard');
 }
+
+/** Send a password reset email. Redirect URL must be in Supabase Auth > URL Configuration > Redirect URLs. */
+export async function requestPasswordReset(email: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const baseUrl = getAppBaseUrl();
+  const redirectTo = `${baseUrl}/auth/callback?next=/auth/reset-password`;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+  return {};
+}
+
+/** Update the current user's password. Call after user has opened the reset link and landed on reset-password page. */
+export async function updatePassword(newPassword: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'You must be signed in to update your password.' };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/', 'layout');
+  return {};
+}

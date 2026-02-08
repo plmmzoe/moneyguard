@@ -172,9 +172,21 @@ export default function HistoryPage() {
                               >
                                 <span className="size-1.5 rounded-full bg-current" />
                                 {t.transaction_state === 'waiting' && t.cooloff_expiry
-                                  ? calcuateTimeProgress(new Date().toISOString(), new Date(t.cooloff_expiry).toISOString()).timeLeft.length > 0
-                                    ? (`Cooloff: ${calcuateTimeProgress(new Date().toISOString(), new Date(t.cooloff_expiry).toISOString()).timeLeft  } left`)
-                                    : (`Cooloff complete, Expired in: ${calcuateTimeProgress(new Date().toISOString(), new Date(new Date(t.cooloff_expiry).getTime() + weekInMs).toISOString()).timeLeft}`)
+                                  ? (() => {
+                                    const progress = calcuateTimeProgress(
+                                      new Date().toISOString(),
+                                      new Date(t.cooloff_expiry).toISOString(),
+                                    );
+                                    const expiryProgress = calcuateTimeProgress(
+                                      new Date().toISOString(),
+                                      new Date(
+                                        new Date(t.cooloff_expiry).getTime() + weekInMs,
+                                      ).toISOString(),
+                                    );
+                                    return progress.timeLeft.length > 0
+                                      ? `Cooloff: ${progress.timeLeft} left`
+                                      : `Cooloff complete, Expired in: ${expiryProgress.timeLeft}`;
+                                  })()
                                   : (t.transaction_state)}
                               </span>
                             ) : (

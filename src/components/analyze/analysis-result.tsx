@@ -247,7 +247,8 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Button → transaction_state: I won't buy → discarded, I will buy → bought, Send to cool-off → waiting, Just browsing → draft */}
+            {/* Button → transaction_state: I won't buy → discarded, I will buy → bought,
+                Send to cool-off → waiting, Just browsing → draft */}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Button
                 variant="ghost"
