@@ -82,15 +82,6 @@ export function CoolOffStatusCard({ transactions }: Props) {
       <div className="overflow-x-auto snap-y snap-mandatory max-h-[320px] snap-always no-scrollbar">
         {validTransactions.map((transaction) => (
           <div key={transaction.transaction_id} className="snap-center py-2 pb-4 border-b border-border/50 last:border-0 last:pb-0">
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider shrink-0">
-                <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
-                <span>{(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).percentageProgressed * 100).toFixed(0)}%</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground shrink-0">
-                {calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).timeLeft} left
-              </span>
-            </div>
             <h3 className="text-sm font-bold text-foreground leading-tight line-clamp-1">
               {transaction.transaction_description}
             </h3>
@@ -99,11 +90,16 @@ export function CoolOffStatusCard({ transactions }: Props) {
                 {transaction.analysis}
               </p>
             )}
-            <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-2">
-              <div
-                className="bg-blue-500 h-full rounded-full transition-[width]"
-                style={{ width: `${(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).percentageProgressed * 100).toFixed(2)}%` }}
-              />
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="flex-1 min-w-0 bg-muted rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-blue-500 h-full rounded-full transition-[width]"
+                  style={{ width: `${(calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).percentageProgressed * 100).toFixed(2)}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">
+                {calcuateTimeProgress(transaction.created_at, transaction.cooloff_expiry).timeLeft} left
+              </span>
             </div>
             <div className="flex gap-1.5 mt-2 flex-wrap">
               <button

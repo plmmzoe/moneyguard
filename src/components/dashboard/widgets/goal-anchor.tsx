@@ -33,7 +33,7 @@ export function GoalAnchor({ profile, saving }: Props) {
         className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
         style={{
           backgroundImage:
-            "url('https://lh3.googleusercontent.com/aida-public/AB6AXuARtBbgX6xsp2LEh63KbcL_qGc0Mg2g5xq7cpuisK_bTg7g5p9P6rODhtXqSfsdBL02_bZdi-dQPx-H_T6BpAcbvZKtqOFNrTZoF9oBDmlUHZrc7-HQhvKFnADhqitWPxaWzKO2tobO5ZmbMo8UI1CiXvpWR00Ayneh3Y-mEC7FurebwPgqbfLEwrdBN5zhJf3LPpGi1p6qhFgK-uLkoTHJqVdKoTCcWy5NTrg8UYglFMnyoGCIeZcE5Hu801r4pYKDjJSFlcJcRuo')",
+            "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBr_hvdSY9VL5XI0d6NHkSKU9VXis4lwN7dnrzzLovbteIIt55x1q6XyESK3TqQsEbBfWhRZfJu-Or2XE0v6GI0MAhMeErKDIN8QT7b6jbx2oFUXiULB40YF1FsltSZ0hC2Mb5DJdtHfILRl7hbEV3XW5ySOJBA3wxz4JnbeV2cHUeim9ofMFh-VC2rCoR77n8MzDHwxOtCPIT7VWie1uFi9mK8-ATcEz_sMYWWnEuP4-U9Q80v9VVgXaa2Y6AagLoTTsB-eSl8BKg')",
         }}
       />
       {/* Gradient overlay */}
