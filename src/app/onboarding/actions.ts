@@ -80,7 +80,6 @@ export async function createOrUpdateProfile(data: {
         name: data.savingsGoalReward || null,
         description: data.savingsGoalDescription ?? data.savingsGoalReward ?? null,
         expire_at: expireAt,
-        amount: 0,
       });
 
       if (sError) {
