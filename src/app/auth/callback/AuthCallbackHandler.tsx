@@ -28,7 +28,8 @@ export function AuthCallbackHandler() {
       router.replace('/auth/auth-code-error');
       return;
     }
-    const client: SupabaseClient = supabaseClient;
+    // Narrow type for use inside async run() so TS never treats as null
+    const client = supabaseClient as SupabaseClient;
 
     async function run() {
       // 1. PKCE: code in query
