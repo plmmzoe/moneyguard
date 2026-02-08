@@ -19,6 +19,7 @@ export type Database = {
           active_saving: number | null
           created_at: string | null
           currency: string | null
+          interests: string[] | null
           monthly_budget: number | null
           setup_complete: boolean
           spending_mindset: string | null
@@ -35,6 +36,7 @@ export type Database = {
           active_saving?: number | null
           created_at?: string | null
           currency?: string | null
+          interests?: string[] | null
           monthly_budget?: number | null
           setup_complete?: boolean
           spending_mindset?: string | null
@@ -51,6 +53,7 @@ export type Database = {
           active_saving?: number | null
           created_at?: string | null
           currency?: string | null
+          interests?: string[] | null
           monthly_budget?: number | null
           setup_complete?: boolean
           spending_mindset?: string | null

@@ -1,5 +1,6 @@
 'use client';
 
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -22,16 +23,17 @@ export function AuthCallbackHandler() {
     const type = searchParams.get('type');
     const next = searchParams.get('next') ?? '/dashboard';
 
-    const supabase = createClient();
-    if (!supabase) {
+    const supabaseClient = createClient();
+    if (!supabaseClient) {
       router.replace('/auth/auth-code-error');
       return;
     }
+    const client: SupabaseClient = supabaseClient;
 
     async function run() {
       // 1. PKCE: code in query
       if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const { error } = await client.auth.exchangeCodeForSession(code);
         if (!error) {
           router.replace(next);
           return;
@@ -40,7 +42,7 @@ export function AuthCallbackHandler() {
 
       // 2. Recovery / magic link: token_hash + type in query
       if (tokenHash && (type === 'recovery' || type === 'magiclink' || type === 'email')) {
-        const { error } = await supabase.auth.verifyOtp({
+        const { error } = await client.auth.verifyOtp({
           token_hash: tokenHash,
           type: type as 'recovery' | 'magiclink' | 'email',
         });
@@ -56,7 +58,7 @@ export function AuthCallbackHandler() {
         if (hash) {
           for (let i = 0; i < 5; i++) {
             await new Promise((r) => setTimeout(r, 300));
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await client.auth.getSession();
             if (session) {
               router.replace(next);
               return;

@@ -3,8 +3,11 @@
 import {
   CheckCircle,
   Info,
+  Pencil,
+  Tag,
   User,
   Wallet,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -48,6 +51,7 @@ export default function Profile({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [username, setUsername] = useState(profile?.username ?? '');
   const [monthlyBudget, setMonthlyBudget] = useState(
@@ -59,6 +63,21 @@ export default function Profile({
       ? String(profile.monthly_irregular_spending)
       : '',
   );
+  const [interests, setInterests] = useState<string[]>(profile?.interests ?? []);
+  const [interestInput, setInterestInput] = useState('');
+
+  function cancelEdit() {
+    setUsername(profile?.username ?? '');
+    setMonthlyBudget(profile?.monthly_budget != null ? String(profile.monthly_budget) : '');
+    setCurrency(profile?.currency ?? 'USD');
+    setIrregularBudget(
+      profile?.monthly_irregular_spending != null
+        ? String(profile.monthly_irregular_spending)
+        : '',
+    );
+    setInterests(profile?.interests ?? []);
+    setIsEditing(false);
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -68,8 +87,10 @@ export default function Profile({
         monthly_budget: Number(monthlyBudget) || 0,
         currency,
         monthly_irregular_spending: irregularBudget ? Number(irregularBudget) : null,
+        interests: interests.length > 0 ? interests : null,
       });
       toast({ description: 'Profile updated.' });
+      setIsEditing(false);
       router.refresh();
     } catch (e) {
       toast({
@@ -115,6 +136,34 @@ export default function Profile({
             </p>
           </div>
         </div>
+        {isEditing ? (
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" onClick={cancelEdit} disabled={saving}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded-lg px-8 py-3 bg-primary text-primary-foreground font-bold shadow-md hover:bg-primary/90 flex items-center gap-2"
+            >
+              {saving ? 'Saving...' : (
+                <>
+                  <CheckCircle className="h-5 w-5" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="default"
+            onClick={() => setIsEditing(true)}
+            className="rounded-lg px-6 py-3 font-bold shadow-md flex items-center gap-2 shrink-0"
+          >
+            <Pencil className="h-5 w-5" />
+            Edit
+          </Button>
+        )}
       </header>
 
       <div className="grid grid-cols-1 gap-8">
@@ -127,12 +176,16 @@ export default function Profile({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-foreground">Full Name</Label>
-              <Input
-                className="w-full rounded-lg border-border focus:ring-primary focus:border-primary"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Your name"
-              />
+              {isEditing ? (
+                <Input
+                  className="w-full rounded-lg border-border focus:ring-primary focus:border-primary"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Your name"
+                />
+              ) : (
+                <p className="text-sm py-2 text-foreground">{username || '—'}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-foreground">Email Address</Label>
@@ -174,84 +227,145 @@ export default function Profile({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-foreground">Monthly Target</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                  $
-                </span>
-                <Input
-                  type="number"
-                  min={0}
-                  step={1}
-                  className="w-full pl-7 rounded-lg border-border focus:ring-primary focus:border-primary"
-                  value={monthlyBudget}
-                  onChange={(e) => setMonthlyBudget(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
+              {isEditing ? (
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                    $
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className="w-full pl-7 rounded-lg border-border focus:ring-primary focus:border-primary"
+                    value={monthlyBudget}
+                    onChange={(e) => setMonthlyBudget(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm py-2 text-foreground">{monthlyBudget ? `$${monthlyBudget}` : '—'}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-foreground">Currency</Label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-full rounded-lg border-border focus:ring-primary">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isEditing ? (
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger className="w-full rounded-lg border-border focus:ring-primary">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-sm py-2 text-foreground">{currency}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-foreground">Irregular Budget</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                  $
-                </span>
-                <Input
-                  type="number"
-                  min={0}
-                  step={1}
-                  className="w-full pl-7 rounded-lg border-border focus:ring-primary focus:border-primary"
-                  value={irregularBudget}
-                  onChange={(e) => setIrregularBudget(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
+              {isEditing ? (
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                    $
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    className="w-full pl-7 rounded-lg border-border focus:ring-primary focus:border-primary"
+                    value={irregularBudget}
+                    onChange={(e) => setIrregularBudget(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm py-2 text-foreground">{irregularBudget ? `$${irregularBudget}` : '—'}</p>
+              )}
             </div>
           </div>
         </section>
 
-        {/* Save & Links */}
-        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 pb-8">
-          <div className="flex flex-wrap gap-3">
-            <Link href="/onboarding">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                Edit full profile
-              </Button>
-            </Link>
-            <Link href="/savings">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                Edit goals
-              </Button>
-            </Link>
-          </div>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg px-8 py-3 bg-primary text-primary-foreground font-bold shadow-md hover:bg-primary/90 flex items-center gap-2 shrink-0"
-          >
-            {saving ? (
-              'Saving...'
-            ) : (
-              <>
-                <CheckCircle className="h-5 w-5" />
-                Save Changes
-              </>
-            )}
-          </Button>
+        {/* Interests */}
+        <section className="bg-card rounded-xl border border-border p-4 sm:p-6">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+            <Tag className="h-5 w-5 text-primary" />
+            Interests
+          </h3>
+          {isEditing ? (
+            <div className="space-y-3">
+              <div className="flex gap-2 items-end">
+                <Input
+                  className="flex-1"
+                  placeholder="e.g. Photography, Cycling"
+                  value={interestInput}
+                  onChange={(e) => setInterestInput(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    if (interestInput.trim()) {
+                      setInterests((prev) => [...prev, interestInput.trim()]);
+                      setInterestInput('');
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {interests.map((item, index) => (
+                  <span
+                    key={`${item}-${index}`}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm"
+                  >
+                    {item}
+                    <button
+                      type="button"
+                      className="rounded-full p-0.5 hover:bg-primary/20"
+                      onClick={() => setInterests((prev) => prev.filter((_, i) => i !== index))}
+                      aria-label={`Remove ${item}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {interests.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No interests set.</p>
+              ) : (
+                interests.map((item, index) => (
+                  <span
+                    key={`${item}-${index}`}
+                    className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm text-foreground"
+                  >
+                    {item}
+                  </span>
+                ))
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* Links */}
+        <div className="flex flex-wrap gap-3 pt-4 pb-8">
+          <Link href="/onboarding">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              Edit full profile
+            </Button>
+          </Link>
+          <Link href="/savings">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              Edit goals
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

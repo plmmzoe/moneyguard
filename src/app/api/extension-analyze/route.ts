@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('hobbies, monthly_budget, currency, savings_goal_reward, savings_goal_amount')
+        .select('interests, hobbies, monthly_budget, currency, savings_goal_reward, savings_goal_amount')
         .eq('user_id', user.id)
         .single();
 
@@ -57,9 +57,13 @@ export async function POST(request: Request) {
             amount: profile.savings_goal_amount ?? undefined,
           };
         }
-        if (profile.hobbies && Array.isArray(profile.hobbies) && profile.hobbies.length > 0) {
-          userProfile.hobbies = profile.hobbies
-            .map((h: { name?: string; rating?: number }) => `${h.name} (Inv: ${h.rating}/10)`)
+        const raw = profile as { interests?: string[]; hobbies?: { name?: string }[] };
+        if (raw.interests && raw.interests.length > 0) {
+          userProfile.hobbies = raw.interests.join(', ');
+        } else if (raw.hobbies && Array.isArray(raw.hobbies) && raw.hobbies.length > 0) {
+          userProfile.hobbies = raw.hobbies
+            .map((h) => (typeof h === 'string' ? h : h?.name ?? ''))
+            .filter(Boolean)
             .join(', ');
         }
       }

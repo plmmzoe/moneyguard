@@ -23,7 +23,7 @@ interface OnboardingFormProps {
     savingsGoalReward?: string | null;
     savingsGoalDescription?: string | null;
     savingsGoalTargetDate?: string | null;
-    hobbies?: { name: string; rating: number }[] | null;
+    interests?: string[] | null;
   };
   onSubmit: (data: {
     username: string;
@@ -33,7 +33,7 @@ interface OnboardingFormProps {
     savingsGoalReward: string;
     savingsGoalDescription: string;
     savingsGoalTargetDate: string;
-    hobbies: { name: string; rating: number }[];
+    interests: string[];
   }) => Promise<void>;
   onSkip?: () => Promise<void>;
   isLoading?: boolean;
@@ -64,16 +64,11 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
     savingsGoalReward: initialData?.savingsGoalReward || '',
     savingsGoalDescription: initialData?.savingsGoalDescription || '',
     savingsGoalTargetDate: initialData?.savingsGoalTargetDate?.split('T')[0] || '',
-    hobbies: (initialData?.hobbies || []).map(h => ({
-      name: h.name,
-      rating: h.rating,
-      id: `${h.name}-${h.rating}`,
-    })) as { name: string; rating: number; id?: string }[],
+    interests: initialData?.interests ?? [],
   });
 
-  // Hobbies local state
-  const [hobbyInput, setHobbyInput] = useState('');
-  const [hobbyRating, setHobbyRating] = useState(5);
+  // Interests local state
+  const [interestInput, setInterestInput] = useState('');
 
   // savings description local optional field is part of formData
 
@@ -139,7 +134,7 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
           savingsGoalReward: formData.savingsGoalReward,
           savingsGoalDescription: formData.savingsGoalDescription,
           savingsGoalTargetDate: formData.savingsGoalTargetDate,
-          hobbies: formData.hobbies.map(({ name, rating }) => ({ name, rating })),
+          interests: formData.interests,
         });
       } catch (error) {
         setErrors({
@@ -294,45 +289,28 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
           {step === 'hobbies' && (
             <>
               <h2 className="text-lg font-semibold">Hobbies & Interests</h2>
-              <p className="text-sm text-muted-foreground">Add your hobbies and rate how much you are invested in them (1-10).</p>
+              <p className="text-sm text-muted-foreground">Add your hobbies and interests.</p>
 
               <div className="space-y-4">
                 <div className="flex gap-2 items-end">
                   <div className="grid flex-1 gap-2">
-                    <Label htmlFor="hobbyName">Hobby / Interest</Label>
+                    <Label htmlFor="interestName">Interest</Label>
                     <Input
-                      id="hobbyName"
+                      id="interestName"
                       placeholder="e.g. Photography, Cycling"
-                      value={hobbyInput}
-                      onChange={(e) => setHobbyInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid w-20 gap-2">
-                    <Label htmlFor="hobbyRating">Rating</Label>
-                    <Input
-                      id="hobbyRating"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={hobbyRating}
-                      onChange={(e) => setHobbyRating(parseInt(e.target.value) || 0)}
+                      value={interestInput}
+                      onChange={(e) => setInterestInput(e.target.value)}
                     />
                   </div>
                   <Button
                     type="button"
                     onClick={() => {
-                      if (hobbyInput.trim() && hobbyRating >= 1 && hobbyRating <= 10) {
-                        const newHobby = {
-                          name: hobbyInput.trim(),
-                          rating: hobbyRating,
-                          id: `${Date.now().toString()  }-${  Math.random().toString(36).slice(2)}`,
-                        };
+                      if (interestInput.trim()) {
                         setFormData(prev => ({
                           ...prev,
-                          hobbies: [...prev.hobbies, newHobby],
+                          interests: [...prev.interests, interestInput.trim()],
                         }));
-                        setHobbyInput('');
-                        setHobbyRating(5);
+                        setInterestInput('');
                       }
                     }}
                     variant="secondary"
@@ -342,15 +320,12 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
                 </div>
 
                 <div className="space-y-2">
-                  {formData.hobbies.length === 0 && (
-                    <p className="text-sm text-muted-foreground italic">No hobbies added yet.</p>
+                  {formData.interests.length === 0 && (
+                    <p className="text-sm text-muted-foreground italic">No interests added yet.</p>
                   )}
-                  {formData.hobbies.map((hobby) => (
-                    <div key={hobby.id ?? `${hobby.name}-${hobby.rating}`} className="flex justify-between items-center p-2 border rounded-md">
-                      <div>
-                        <span className="font-medium">{hobby.name}</span>
-                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{hobby.rating}/10</span>
-                      </div>
+                  {formData.interests.map((interest, index) => (
+                    <div key={`${interest}-${index}`} className="flex justify-between items-center p-2 border rounded-md">
+                      <span className="font-medium">{interest}</span>
                       <Button
                         type="button"
                         variant="ghost"
@@ -358,7 +333,7 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
                         onClick={() => {
                           setFormData(prev => ({
                             ...prev,
-                            hobbies: prev.hobbies.filter((h) => h.id !== hobby.id),
+                            interests: prev.interests.filter((_, i) => i !== index),
                           }));
                         }}
                       >

@@ -20,7 +20,7 @@ export default async function OnboardingPage() {
       savingsGoalAmount: 0,
       savingsGoalReward: '',
       savingsGoalTargetDate: '',
-      hobbies: profile.hobbies,
+      interests: profile.interests,
     }
     : undefined;
 

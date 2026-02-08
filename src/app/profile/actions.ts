@@ -9,6 +9,7 @@ export async function updateProfile(data: {
   monthly_budget: number;
   currency: string;
   monthly_irregular_spending?: number | null;
+  interests?: string[] | null;
 }) {
   const supabase = await createClient();
   const {
@@ -27,6 +28,7 @@ export async function updateProfile(data: {
       currency: data.currency,
       monthly_irregular_spending:
         data.monthly_irregular_spending != null ? data.monthly_irregular_spending : null,
+      interests: data.interests != null ? data.interests : null,
       updated_at: new Date().toISOString(),
     })
     .eq('user_id', user.id);

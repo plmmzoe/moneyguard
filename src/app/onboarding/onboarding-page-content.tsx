@@ -13,7 +13,7 @@ interface OnboardingPageProps {
     username: string;
     monthlyBudget: number;
     currency: string;
-    hobbies: { name: string; rating: number }[] | null | undefined;
+    interests?: string[] | null;
   };
   isUpdate?: boolean;
 }
@@ -24,7 +24,7 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
   const { toast } = useToast();
 
   const handleSkip = (): Promise<void> => {
-    router.push('/dashboard');
+    router.push('/profile');
     router.refresh();
     return Promise.resolve();
   };
@@ -33,7 +33,7 @@ export function OnboardingPageContent({ initialProfile, isUpdate }: OnboardingPa
     username: string;
     monthlyBudget: number;
     currency: string;
-    hobbies: { name: string; rating: number }[];
+    interests: string[];
   }) => {
     setIsLoading(true);
     try {

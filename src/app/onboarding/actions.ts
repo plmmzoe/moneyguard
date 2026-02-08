@@ -12,7 +12,7 @@ export async function createOrUpdateProfile(data: {
   savingsGoalReward?: string;
   savingsGoalDescription?: string;
   savingsGoalTargetDate?: string;
-  hobbies?: { name: string; rating: number }[];
+  interests?: string[];
 }) {
   const supabase = await createClient();
   const {
@@ -22,6 +22,8 @@ export async function createOrUpdateProfile(data: {
   if (!user) {
     throw new Error('User not authenticated');
   }
+
+  const interests = data.interests && data.interests.length > 0 ? data.interests : null;
 
   // Check if profile exists
   const { data: existingProfile } = await supabase
@@ -38,6 +40,7 @@ export async function createOrUpdateProfile(data: {
         username: data.username,
         monthly_budget: data.monthlyBudget,
         currency: data.currency,
+        interests,
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', user.id);
@@ -52,6 +55,7 @@ export async function createOrUpdateProfile(data: {
       username: data.username,
       monthly_budget: data.monthlyBudget,
       currency: data.currency,
+      interests,
     });
 
     if (error) {
@@ -148,6 +152,15 @@ export async function getProfile() {
     throw new Error(`Failed to fetch savings: ${sError.message}`);
   }
 
+  // Support both interests (text[]) and legacy hobbies (jsonb) for initial data
+  const raw = profile as Record<string, unknown>;
+  const interests: string[] =
+    Array.isArray(raw.interests) && raw.interests.length > 0
+      ? (raw.interests as string[])
+      : Array.isArray(raw.hobbies)
+        ? (raw.hobbies as { name?: string }[]).map((h) => (typeof h === 'string' ? h : h?.name ?? '')).filter(Boolean)
+        : [];
+
   return {
     id: profile.id,
     userId: profile.user_id,
@@ -157,7 +170,7 @@ export async function getProfile() {
     savingsGoalAmount: savings ? savings.goal : null,
     savingsGoalReward: savings ? savings.name : null,
     savingsGoalTargetDate: savings ? savings.expire_at : null,
-    hobbies: profile.hobbies as { name: string; rating: number }[] | null,
+    interests,
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
   };
