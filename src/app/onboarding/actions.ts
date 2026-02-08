@@ -152,14 +152,8 @@ export async function getProfile() {
     throw new Error(`Failed to fetch savings: ${sError.message}`);
   }
 
-  // Support both interests (text[]) and legacy hobbies (jsonb) for initial data
-  const raw = profile as Record<string, unknown>;
   const interests: string[] =
-    Array.isArray(raw.interests) && raw.interests.length > 0
-      ? (raw.interests as string[])
-      : Array.isArray(raw.hobbies)
-        ? (raw.hobbies as { name?: string }[]).map((h) => (typeof h === 'string' ? h : h?.name ?? '')).filter(Boolean)
-        : [];
+    Array.isArray(profile.interests) && profile.interests.length > 0 ? profile.interests : [];
 
   return {
     id: profile.id,

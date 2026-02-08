@@ -145,7 +145,7 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto">
       <Card className="p-6 space-y-6">
         {/* Step Indicator */}
         <div className="space-y-2">
@@ -157,7 +157,7 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
               Rewards
             </span>
             <span className={`font-medium ${step === 'hobbies' ? 'text-primary' : 'text-muted-foreground'}`}>
-              Interests
+              Hobbies & Interests
             </span>
           </div>
           <div className="flex gap-2">
@@ -294,7 +294,7 @@ export function OnboardingForm({ initialData, onSubmit, onSkip, isLoading = fals
               <div className="space-y-4">
                 <div className="flex gap-2 items-end">
                   <div className="grid flex-1 gap-2">
-                    <Label htmlFor="interestName">Interest</Label>
+                    <Label htmlFor="interestName">Hobby or interest</Label>
                     <Input
                       id="interestName"
                       placeholder="e.g. Photography, Cycling"

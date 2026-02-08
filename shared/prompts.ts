@@ -26,7 +26,8 @@ export interface UserProfile {
   monthlyBudget?: number;
   currency?: string;
   savingsGoal?: { name?: string; amount?: number };
-  hobbies?: string;
+  /** Hobbies and interests (from profiles.interests); included in prompt for context. */
+  interests?: string[];
 }
 
 /** Input accepted by the unified prompt generator. */
@@ -108,7 +109,7 @@ RULES — follow strictly:
     const parts: string[] = [];
     if (p.monthlyBudget != null) {parts.push(`Monthly budget: ${p.currency ?? 'USD'} ${p.monthlyBudget}`);}
     if (p.savingsGoal?.name) {parts.push(`Savings goal: ${p.savingsGoal.name} ($${p.savingsGoal.amount ?? '?'})`);}
-    if (p.hobbies) {parts.push(`Hobbies & interests: ${p.hobbies}`);}
+    if (p.interests) {parts.push(`Hobbies & interests: ${p.interests.join(', ')}`);}
     if (parts.length) {
       sections.push(`USER PROFILE:\n${parts.join('\n')}`);
     }
@@ -195,15 +196,38 @@ Rules for "verdict" (impulse/regret risk — maps to transactions.verdict):
 }
 
 // ────────────────────────────────────────────────────────────────
-// Insight (transaction history) prompt — unchanged
+// Insight (transaction history) prompt
 // ────────────────────────────────────────────────────────────────
 
-export const generateInsightAnalysisPrompt = (start: string, end: string, transactions: string) => `
-      Analyze the following user's transactions between ${start} and ${end}. 
-      Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis. 
-      
-      Return JSON with keys: summary, impulseCandidates, recommendations. 
-      Return your response in a single key value pair in your json response such as { response: "Your entire written response here of multiple paragraphs, include any newline special characters to separate paragraphs" }. 
-      
-      Transactions: ${transactions}
-    `;
+export function generateInsightAnalysisPrompt(
+  start: string,
+  end: string,
+  transactions: string,
+  userProfile?: UserProfile,
+): string {
+  const sections: string[] = [];
+  if (userProfile) {
+    const p = userProfile;
+    const parts: string[] = [];
+    if (p.monthlyBudget != null) {
+      parts.push(`Monthly budget: ${p.currency ?? 'USD'} ${p.monthlyBudget}`);
+    }
+    if (p.savingsGoal?.name) {
+      parts.push(`Savings goal: ${p.savingsGoal.name} ($${p.savingsGoal.amount ?? '?'})`);
+    }
+    if (p.interests) {
+      parts.push(`Hobbies & interests: ${p.interests}`);
+    }
+    if (parts.length) {
+      sections.push(`USER PROFILE:\n${parts.join('\n')}`);
+    }
+  }
+  sections.push(`Analyze the following user's transactions between ${start} and ${end}.
+Utilize the transactions' description, amount, and created_at date to identify spending trends, likely impulse purchases, and to suggest three actionable recommendations to help correct any irregular spending habits found in the analysis.
+
+Return JSON with keys: summary, impulseCandidates, recommendations.
+Return your response in a single key value pair in your json response such as { response: "Your entire written response here of multiple paragraphs, include any newline special characters to separate paragraphs" }.
+
+Transactions: ${transactions}`);
+  return sections.join('\n\n');
+}

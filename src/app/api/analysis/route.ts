@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 import { createClient as createSupabaseClient } from '@/utils/supabase/server';
-import { generateInsightAnalysisPrompt } from 'shared/prompts';
+import { generateInsightAnalysisPrompt, type UserProfile } from 'shared/prompts';
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -139,10 +139,32 @@ export async function POST(request: Request) {
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
         const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
+        // Fetch user profile (including interests) for context
+        const userProfile: UserProfile = {};
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('interests, monthly_budget, currency, savings_goal_reward, savings_goal_amount')
+          .eq('user_id', user.id)
+          .single();
+        if (profile) {
+          userProfile.monthlyBudget = profile.monthly_budget ?? undefined;
+          userProfile.currency = profile.currency ?? undefined;
+          if (profile.savings_goal_reward) {
+            userProfile.savingsGoal = {
+              name: profile.savings_goal_reward,
+              amount: profile.savings_goal_amount ?? undefined,
+            };
+          }
+          if (profile.interests && profile.interests.length > 0) {
+            userProfile.interests = profile.interests.join(', ');
+          }
+        }
+
         const prompt = generateInsightAnalysisPrompt(
           start,
           end,
           JSON.stringify(transactions.slice(0, 200)),
+          userProfile,
         );
         const result = await model.generateContent(prompt);
         const response = await result.response;

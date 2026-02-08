@@ -289,11 +289,11 @@ export default function Profile({
           </div>
         </section>
 
-        {/* Interests */}
+        {/* Hobbies and interests */}
         <section className="bg-card rounded-xl border border-border p-4 sm:p-6">
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
             <Tag className="h-5 w-5 text-primary" />
-            Interests
+            Hobbies & Interests
           </h3>
           {isEditing ? (
             <div className="space-y-3">
