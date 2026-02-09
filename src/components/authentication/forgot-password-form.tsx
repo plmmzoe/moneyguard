@@ -1,5 +1,6 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -90,7 +91,14 @@ export function ForgotPasswordForm() {
         />
       </div>
       <Button type="submit" variant="secondary" className="w-full" disabled={loading}>
-        {loading ? 'Sending…' : 'Send reset link'}
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Sending…
+          </>
+        ) : (
+          'Send reset link'
+        )}
       </Button>
       <Link href="/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">
         Back to log in

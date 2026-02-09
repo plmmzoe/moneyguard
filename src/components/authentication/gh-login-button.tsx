@@ -1,6 +1,8 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { useState } from 'react';
 
 import { signInWithGithub } from '@/app/login/actions';
 import { Button } from '@/components/ui/button';
@@ -10,6 +12,17 @@ interface Props {
   label: string;
 }
 export function GhLoginButton({ label }: Props) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleClick() {
+    setIsLoading(true);
+    try {
+      await signInWithGithub();
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <div
       className={
@@ -21,16 +34,25 @@ export function GhLoginButton({ label }: Props) {
         <div className={'text-border text-xs font-medium px-4'}>or</div>
         <Separator className={'w-5/12 bg-border'} />
       </div>
-      <Button onClick={() => signInWithGithub()} variant={'secondary'} className={'w-full'}>
-        <Image
-          height="24"
-          className={'mr-3'}
-          width="24"
-          src="https://cdn.simpleicons.org/github/878989"
-          unoptimized={true}
-          alt={'GitHub logo'}
-        />
-        {label}
+      <Button onClick={handleClick} variant={'secondary'} className={'w-full'} disabled={isLoading}>
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+            Signing in…
+          </>
+        ) : (
+          <>
+            <Image
+              height="24"
+              className={'mr-3'}
+              width="24"
+              src="https://cdn.simpleicons.org/github/878989"
+              unoptimized={true}
+              alt={'GitHub logo'}
+            />
+            {label}
+          </>
+        )}
       </Button>
     </div>
   );

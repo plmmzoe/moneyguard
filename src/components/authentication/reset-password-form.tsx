@@ -1,5 +1,6 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -104,7 +105,14 @@ export function ResetPasswordForm() {
         />
       </div>
       <Button type="submit" variant="secondary" className="w-full" disabled={loading}>
-        {loading ? 'Updating…' : 'Update password'}
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Updating…
+          </>
+        ) : (
+          'Update password'
+        )}
       </Button>
       <Link href="/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">
         Back to log in
