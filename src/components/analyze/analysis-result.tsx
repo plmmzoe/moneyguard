@@ -15,9 +15,9 @@ import {
 import { useState } from 'react';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { TransactionState } from '@/lib/transaction-state';
+import { cn } from '@/lib/utils';
 
 // Schema-aligned verdict (transactions.verdict): high | medium | low
 export type SchemaVerdict = 'high' | 'medium' | 'low';
@@ -51,6 +51,42 @@ export interface AnalysisResultData {
   /** transactions.transaction_state when saving. */
   transaction_state?: 'draft' | 'waiting' | 'discarded' | 'bought';
 }
+
+/** Same color/highlight pattern as mindset (quick-intent-check-in) for "Log your decision" buttons. */
+const decisionButtonThemes = {
+  red: {
+    card: 'bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300',
+    cardSelected: 'bg-red-100 border-red-400 ring-2 ring-red-300 ring-offset-2 ring-offset-background',
+    labelText: 'text-red-900',
+  },
+  green: {
+    card: 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300',
+    cardSelected: 'bg-emerald-100 border-emerald-400 ring-2 ring-emerald-300 ring-offset-2 ring-offset-background',
+    labelText: 'text-emerald-900',
+  },
+  amber: {
+    card: 'bg-amber-50 border-amber-200 hover:bg-amber-100 hover:border-amber-300',
+    cardSelected: 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 ring-offset-2 ring-offset-background',
+    labelText: 'text-amber-900',
+  },
+  grey: {
+    card: 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300',
+    cardSelected: 'bg-slate-200 border-slate-400 ring-2 ring-slate-300 ring-offset-2 ring-offset-background',
+    labelText: 'text-slate-900',
+  },
+} as const;
+
+const decisionOptions: Array<{
+  state: TransactionState;
+  label: string;
+  icon: typeof XCircle;
+  theme: keyof typeof decisionButtonThemes;
+}> = [
+  { state: 'discarded', label: "I won't buy", icon: XCircle, theme: 'red' },
+  { state: 'bought', label: 'I will buy', icon: ShoppingBag, theme: 'green' },
+  { state: 'waiting', label: 'Send to cool-off', icon: Hourglass, theme: 'amber' },
+  { state: 'draft', label: 'Just browsing', icon: Eye, theme: 'grey' },
+];
 
 /** Map schema verdict (high | medium | low) to display verdict for UI styling. */
 function schemaVerdictToDisplay(verdict: string | undefined): DisplayVerdict {
@@ -116,9 +152,7 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
   } = result;
 
   const handleDecideClick = async (state: TransactionState) => {
-    if (selectedState != null || isUpdating) {
-      return;
-    }
+    if (isUpdating) {return;}
     const fn = onStateUpdate;
     if (!fn) {
       setSelectedState(state);
@@ -129,7 +163,7 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
       await Promise.resolve(fn(state));
       setSelectedState(state);
     } catch {
-      // On failure: leave selectedState null so buttons stay enabled and unhighlighted
+      // On failure: leave selectedState unchanged so user can try again
     } finally {
       setIsUpdating(false);
     }
@@ -140,6 +174,10 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
   const savingsImpact = financialImpact?.savingsImpact;
   const showCoolOff = coolOff?.recommended && (coolOff.delay || coolOff.reflectionPrompt);
   const isLowConfidence = confidence === 'low';
+
+  /** When verdict says "considered" but impulse score is high, show borderline so label and score align. */
+  const effectiveVerdict =
+    aiVerdict === 'considered' && impulseScore >= 60 ? 'borderline' : aiVerdict;
 
   const getVerdictStyle = (v: string) => {
     switch (v?.toLowerCase()) {
@@ -178,7 +216,7 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
     }
   };
 
-  const verdictStyles = getVerdictStyle(aiVerdict);
+  const verdictStyles = getVerdictStyle(effectiveVerdict);
 
   const getScoreColor = (score: number) => {
     if (score < 30) {return 'text-emerald-600';}
@@ -242,62 +280,33 @@ export function AnalysisResult({ result, transactionId, onStateUpdate }: Analysi
           <CardHeader>
             <CardTitle className="text-base">Log your decision</CardTitle>
             <CardDescription>
-              Choose one option to save to your history. You can revisit this later from your
-              dashboard.
+              Choose one option to save to your history. You can change your choice anytime—it will
+              be saved to your dashboard.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Button → transaction_state: I won't buy → discarded, I will buy → bought,
-                Send to cool-off → waiting, Just browsing → draft */}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={selectedState != null || isUpdating}
-                className={`rounded-lg bg-red-50 hover:bg-red-100 text-red-900 font-medium border-2 h-auto py-2.5 ${
-                  selectedState === 'discarded' ? 'border-red-800' : 'border-transparent'
-                }`}
-                onClick={() => handleDecideClick('discarded')}
-              >
-                <XCircle className="h-4 w-4 mr-1.5 shrink-0" />
-                I won&apos;t buy
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={selectedState != null || isUpdating}
-                className={`rounded-lg bg-green-50 hover:bg-green-100 text-green-900 font-medium border-2 h-auto py-2.5 ${
-                  selectedState === 'bought' ? 'border-green-800' : 'border-transparent'
-                }`}
-                onClick={() => handleDecideClick('bought')}
-              >
-                <ShoppingBag className="h-4 w-4 mr-1.5 shrink-0" />
-                I will buy
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={selectedState != null || isUpdating}
-                className={`rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-medium border-2 h-auto py-2.5 ${
-                  selectedState === 'waiting' ? 'border-amber-800' : 'border-transparent'
-                }`}
-                onClick={() => handleDecideClick('waiting')}
-              >
-                <Hourglass className="h-4 w-4 mr-1.5 shrink-0" />
-                Send to cool-off
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={selectedState != null || isUpdating}
-                className={`rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium border-2 h-auto py-2.5 ${
-                  selectedState === 'draft' ? 'border-gray-800' : 'border-transparent'
-                }`}
-                onClick={() => handleDecideClick('draft')}
-              >
-                <Eye className="h-4 w-4 mr-1.5 shrink-0" />
-                Just browsing
-              </Button>
+              {decisionOptions.map(({ state, label, icon: Icon, theme: themeKey }) => {
+                const isSelected = selectedState === state;
+                const theme = decisionButtonThemes[themeKey];
+                const cardClasses = cn(
+                  'group flex flex-row items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-center transition-all cursor-pointer font-medium text-xs',
+                  isSelected ? theme.cardSelected : theme.card,
+                  theme.labelText,
+                );
+                return (
+                  <button
+                    key={state}
+                    type="button"
+                    disabled={isUpdating}
+                    className={cardClasses}
+                    onClick={() => handleDecideClick(state)}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
