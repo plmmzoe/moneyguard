@@ -26,7 +26,7 @@ export function SavingsPageContent() {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const [profile, setProfile]  = useState<Profile|null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   const loadGoals = useCallback(async () => {
     try {
@@ -126,6 +126,8 @@ export function SavingsPageContent() {
     );
   }
 
+  const editingGoal = editingId !== null ? goals.find((g) => g.id === editingId) : null;
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -172,12 +174,29 @@ export function SavingsPageContent() {
               )}
             </div>
             {profile?.savings ? (
-              <SavingsGoalCard
-                goal={profile.savings}
-                isActive
-                onEdit={() => setEditingId(profile?.savings?.id ?? 0)}
-                onDelete={() => handleDelete(profile?.savings?.id ?? 0)}
-              />
+              <div className="space-y-3">
+                <SavingsGoalCard
+                  goal={profile.savings}
+                  isActive
+                  onEdit={() => setEditingId(profile?.savings?.id ?? 0)}
+                  onDelete={() => handleDelete(profile?.savings?.id ?? 0)}
+                />
+                {editingId === profile.savings.id && editingGoal && (
+                  <Card className="border-primary/50 bg-primary/5">
+                    <CardHeader>
+                      <CardTitle>Edit Savings Goal</CardTitle>
+                      <CardDescription>Update the details of your savings goal</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <EditSavingsGoalForm
+                        goal={editingGoal}
+                        onSuccess={handleGoalUpdated}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             ) : (
               <Card>
                 <CardContent className="p-4 text-center text-muted-foreground">
@@ -195,7 +214,7 @@ export function SavingsPageContent() {
                 {goals
                   .filter((g) => g.id !== profile?.savings?.id)
                   .map((goal) => (
-                    <div key={goal.id} className="flex items-center gap-3">
+                    <div key={goal.id} className="flex flex-col gap-3">
                       <div className="flex-1">
                         <SavingsGoalCard
                           goal={goal}
@@ -205,31 +224,26 @@ export function SavingsPageContent() {
                           onSetActive={() => handleSetActive(goal.id)}
                         />
                       </div>
+                      {editingId === goal.id && editingGoal && (
+                        <Card className="border-primary/50 bg-primary/5">
+                          <CardHeader>
+                            <CardTitle>Edit Savings Goal</CardTitle>
+                            <CardDescription>Update the details of your savings goal</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <EditSavingsGoalForm
+                              goal={editingGoal}
+                              onSuccess={handleGoalUpdated}
+                              onCancel={() => setEditingId(null)}
+                            />
+                          </CardContent>
+                        </Card>
+                      )}
                     </div>
                   ))}
               </div>
             </div>
           )}
-
-          {/* Edit Form */}
-          {editingId !== null && (() => {
-            const editingGoal = goals.find((g) => g.id === editingId);
-            return editingGoal ? (
-              <Card className="border-primary/50 bg-primary/5">
-                <CardHeader>
-                  <CardTitle>Edit Savings Goal</CardTitle>
-                  <CardDescription>Update the details of your savings goal</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <EditSavingsGoalForm
-                    goal={editingGoal}
-                    onSuccess={handleGoalUpdated}
-                    onCancel={() => setEditingId(null)}
-                  />
-                </CardContent>
-              </Card>
-            ) : null;
-          })()}
 
           {/* Add Another Goal Button */}
           {!isAddingNew && !editingId && (

@@ -29,7 +29,7 @@ export function SavingsGoalCard({
   const isGoalReached = progressPercent >= 100;
 
   return (
-    <Card className={isActive ? 'border-primary bg-primary/5' : ''}>
+    <Card className={!isActive ? 'border-primary bg-primary/5' : ''}>
       <CardContent className="p-4 space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
