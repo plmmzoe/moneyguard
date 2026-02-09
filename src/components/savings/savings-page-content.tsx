@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { getProfile } from '@/app/dashboard/actions';
 import {
+  deactivateReachedGoal,
   deleteSavingsGoal,
   getSavings,
   setActiveSavingsGoal,
@@ -47,6 +48,18 @@ export function SavingsPageContent() {
   useEffect(() => {
     loadGoals();
   }, [loadGoals]);
+
+  // When active goal is reached, auto-set it inactive and switch to another or none
+  useEffect(() => {
+    const active = profile?.savings;
+    if (!active || !active.goal || active.goal <= 0) {return;}
+    const total = active.total_amount ?? 0;
+    if (total < active.goal) {return;}
+    deactivateReachedGoal(active.id).then(() => {
+      loadGoals();
+      router.refresh();
+    }).catch(() => {});
+  }, [profile?.savings?.id, profile?.savings?.goal, profile?.savings?.total_amount, loadGoals, router]);
 
   const handleDelete = async (id: number) => {
     // eslint-disable-next-line no-alert -- simple delete confirmation

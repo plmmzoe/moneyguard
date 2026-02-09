@@ -270,6 +270,51 @@ export async function setActiveSavingsGoal(id: number) {
   revalidatePath('/dashboard');
 }
 
+/** If the given goal is the active one and has been reached (call only when client knows it's reached), set it inactive and set profile active to another goal or null. */
+export async function deactivateReachedGoal(goalId: number) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const { data: saving } = await supabase
+    .from('savings')
+    .select('id, user_id, is_active')
+    .eq('id', goalId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!saving || !saving.is_active) {
+    return;
+  }
+
+  await supabase.from('savings').update({ is_active: false }).eq('id', goalId);
+
+  const { data: nextGoal } = await supabase
+    .from('savings')
+    .select('id')
+    .eq('user_id', user.id)
+    .neq('id', goalId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (nextGoal) {
+    await supabase.from('savings').update({ is_active: true }).eq('id', nextGoal.id);
+    await supabase.from('profiles').update({ active_saving: nextGoal.id }).eq('user_id', user.id);
+  } else {
+    await supabase.from('profiles').update({ active_saving: null }).eq('user_id', user.id);
+  }
+
+  revalidatePath('/savings');
+  revalidatePath('/dashboard');
+}
+
 export async function getActiveSavingsGoal() {
   const supabase = await createClient();
 

@@ -1,4 +1,4 @@
-import { Trash2, Edit2, Star } from 'lucide-react';
+import { PartyPopper, Trash2, Edit2, Star } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +23,11 @@ export function SavingsGoalCard({
   const progressPercent = Math.min(100, progress * 100);
   const remaining = goal.goal && goal.goal > 0 ? Math.max(0, goal.goal - (goal.total_amount || 0)) : goal.goal;
 
+  const targetDate = goal.expire_at ? new Date(goal.expire_at) : null;
+  const now = new Date();
+  const isPastTarget = targetDate ? now > targetDate : false;
+  const isGoalReached = progressPercent >= 100;
+
   return (
     <Card className={isActive ? 'border-primary bg-primary/5' : ''}>
       <CardContent className="p-4 space-y-4">
@@ -38,25 +43,45 @@ export function SavingsGoalCard({
               <p className="text-sm text-muted-foreground">{goal.description}</p>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onEdit}
-              title="Edit goal"
-            >
-              <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              title="Delete goal"
-            >
-              <Trash2 className="w-4 h-4" />
+          {!isGoalReached && (
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onEdit}
+                title="Edit goal"
+              >
+                <Edit2 className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDelete}
+                title="Delete goal"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Congratulations when 100% reached */}
+        {isGoalReached && (
+          <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-emerald-800 text-sm font-medium">
+            <PartyPopper className="h-4 w-4 shrink-0" />
+            <span>🎉 Congratulations! You&apos;ve reached your goal! 🎉</span>
+          </div>
+        )}
+
+        {/* Past target date: prompt to update goal (only if goal not reached) */}
+        {isPastTarget && !isGoalReached && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-800 text-sm">
+            <span>This goal&apos;s target date has passed. Would you like to update your goal?</span>
+            <Button variant="outline" size="sm" onClick={onEdit} className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100">
+              Update goal
             </Button>
           </div>
-        </div>
+        )}
 
         {/* Goal Amount and Progress */}
         {goal.goal && goal.goal > 0 ? (
@@ -110,8 +135,8 @@ export function SavingsGoalCard({
           </div>
         )}
 
-        {/* Set Active Button (for inactive goals) */}
-        {!isActive && onSetActive && (
+        {/* Set Active Button (for inactive goals; hide when goal reached) */}
+        {!isActive && onSetActive && !isGoalReached && (
           <Button
             onClick={onSetActive}
             variant="outline"
