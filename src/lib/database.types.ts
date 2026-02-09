@@ -85,7 +85,6 @@ export type Database = {
           id: number
           is_active: boolean
           name: string
-          url: string | null
           user_id: string
         }
         Insert: {
@@ -96,7 +95,6 @@ export type Database = {
           id?: number
           is_active?: boolean
           name: string
-          url?: string | null
           user_id: string
         }
         Update: {
@@ -107,7 +105,6 @@ export type Database = {
           id?: number
           is_active?: boolean
           name?: string
-          url?: string | null
           user_id?: string
         }
         Relationships: []

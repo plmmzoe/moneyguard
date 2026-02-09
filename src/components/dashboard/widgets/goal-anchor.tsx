@@ -28,7 +28,7 @@ export function GoalAnchor({ profile, saving }: Props) {
 
   return (
     <div className="relative overflow-hidden rounded-xl shadow-sm border border-border bg-gray-900 h-full min-h-[280px]">
-      {/* Background image */}
+      {/* Static background image */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
         style={{
