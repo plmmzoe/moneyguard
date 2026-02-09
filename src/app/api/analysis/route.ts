@@ -137,7 +137,7 @@ export async function POST(request: Request) {
     if (GEMINI_KEY) {
       try {
         const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-        const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
 
         // Fetch user profile (including interests) for context
         const userProfile: UserProfile = {};
