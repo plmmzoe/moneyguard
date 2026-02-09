@@ -1,14 +1,14 @@
-- [Security Policy](#security-policy)
-  - [Reporting a Vulnerability](#reporting-a-vulnerability)
-
 # Security policy
 
 ## Reporting a vulnerability
 
-Please see the [Paddle Vulnerability Disclosure Policy](https://www.paddle.com/vulnerability-disclosure-policy) and
-report any vulnerabilities using https://vdp.paddle.com/p/Report-a-Vulnerability.
+If you believe you've found a security vulnerability in MoneyGuard, please report it privately. **Do not open a public issue** — issues are visible to everyone and could be used by malicious actors.
 
-> [!WARNING]
-> Do not create issues for potential security vulnerabilities. Issues are public and can be seen by potentially malicious actors.
+**How to report:**
 
-Thanks for helping to make the Paddle platform safe for everyone.
+- **GitHub** — Use the **Security** tab of this repository and click **Report a vulnerability** to open a private security advisory, or
+- **Email** — Contact the maintainers privately (e.g. via the contact method listed in the repo or your preferred secure channel).
+
+Include a clear description of the issue, steps to reproduce, and any impact you’re aware of. We’ll respond as soon as we can and will keep you updated on the status of the report.
+
+Thanks for helping keep MoneyGuard safe.
